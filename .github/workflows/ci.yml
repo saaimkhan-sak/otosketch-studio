@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm evaluate:synthetic
+      - run: pnpm verify:privacy
+      - run: pnpm verify:atlas:pages
+      - run: pnpm build
+      - run: pnpm build:static:remote-atlas
+      - run: pnpm verify:static
+      - run: pnpm verify:static:runtime
+      - run: pnpm exec wrangler deploy --dry-run --config worker/wrangler.toml
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm e2e

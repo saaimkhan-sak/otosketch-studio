@@ -1,0 +1,14 @@
+name = "oto-diagram-extract"
+main = "src/index.ts"
+compatibility_date = "2026-06-27"
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[vars]
+CLOUDFLARE_AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
+RATE_LIMIT_REQUESTS_PER_MINUTE = "60"
+
+[ai]
+binding = "AI"

@@ -1,0 +1,5323 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --background: #f2f5f3;
+  --foreground: #17302d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  overflow-wrap: anywhere;
+}
+
+button,
+a,
+p,
+h1,
+h2,
+h3,
+h4,
+label,
+li,
+summary,
+blockquote {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+img,
+svg,
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+::selection {
+  background: #cce6da;
+  color: #17302d;
+}
+
+.app-workspace {
+  width: min(100%, 1600px);
+  margin: 0 auto;
+  padding: 24px clamp(16px, 2.5vw, 40px) 48px;
+}
+
+.product-header,
+.workflow-intro,
+.composer-heading,
+.evidence-heading,
+.diagram-workbench-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.product-header {
+  padding: 2px 0 20px;
+  border-bottom: 1px solid #d9e3df;
+}
+
+.product-identity,
+.product-status,
+.composer-heading,
+.evidence-heading {
+  display: flex;
+  align-items: center;
+}
+
+.product-identity {
+  min-width: 0;
+  gap: 12px;
+}
+.product-identity > div:last-child {
+  min-width: 0;
+}
+
+.product-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  align-items: end;
+  padding: 8px;
+  border-radius: 8px;
+  background: #123b3a;
+}
+
+.product-mark span {
+  display: block;
+  border-radius: 2px;
+  background: #d8e8d1;
+}
+.product-mark span:nth-child(1) {
+  height: 42%;
+}
+.product-mark span:nth-child(2) {
+  height: 76%;
+  background: #f1c96a;
+}
+.product-mark span:nth-child(3) {
+  height: 58%;
+}
+
+.product-kicker,
+.eyebrow {
+  margin: 0;
+  color: #416258;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.product-header h1 {
+  margin: 3px 0 0;
+  font-size: 1.15rem;
+  line-height: 1.15;
+  font-weight: 750;
+  color: #17302d;
+}
+
+.product-status {
+  max-width: 100%;
+  gap: 7px;
+  padding: 8px 11px;
+  border: 1px solid #c4ddd1;
+  border-radius: 999px;
+  background: #e7f2ec;
+  color: #235447;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.workflow-intro {
+  padding: 22px 0 26px;
+}
+
+.workflow-summary {
+  max-width: 660px;
+  margin: 5px 0 0;
+  color: #415c55;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.workflow-intro > div {
+  min-width: 0;
+}
+
+.workflow-steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #526a62;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.workflow-steps li {
+  white-space: nowrap;
+}
+.workflow-steps a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  color: inherit;
+  text-decoration: none;
+}
+.workflow-steps a:hover {
+  color: #17302d;
+}
+.workflow-steps a:focus-visible {
+  outline: 2px solid #35615a;
+  outline-offset: 3px;
+}
+.workflow-steps span {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid #c8d5d0;
+  border-radius: 50%;
+  background: #fff;
+  color: #4e6860;
+  font-size: 0.72rem;
+}
+.workflow-steps .is-active {
+  color: #17302d;
+}
+.workflow-steps .is-active span {
+  border-color: #123b3a;
+  background: #123b3a;
+  color: #fff;
+}
+
+.workspace-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.composer-column,
+.visual-column,
+.evidence-column {
+  min-width: 0;
+}
+.composer-column {
+  order: 1;
+  position: static;
+}
+.visual-column {
+  display: contents;
+}
+.visual-column > * {
+  order: 2;
+}
+.evidence-column {
+  display: grid;
+  order: 3;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+.evidence-heading {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+.evidence-column > :last-child {
+  grid-column: 1 / -1;
+}
+.review-share-stage {
+  order: 4;
+}
+
+.surface > *,
+.diagram-workbench > *,
+.template-summary *,
+.evidence-column *,
+.review-share-stage * {
+  min-width: 0;
+}
+
+.composer-heading,
+.evidence-heading {
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.stage-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.stage-heading > div {
+  min-width: 0;
+}
+.stage-heading h2 {
+  margin: 2px 0 0;
+  color: #17302d;
+  font-size: 1rem;
+  font-weight: 750;
+}
+.stage-heading p:not(.eyebrow) {
+  margin: 3px 0 0;
+  color: #4d655d;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.step-icon {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #c9ddd3;
+  border-radius: 7px;
+  background: #e9f3ee;
+  color: #245a4d;
+}
+.composer-heading h2,
+.evidence-heading h2 {
+  margin: 2px 0 0;
+  color: #17302d;
+  font-size: 1rem;
+  font-weight: 750;
+}
+.composer-heading p:not(.eyebrow),
+.evidence-heading p:not(.eyebrow) {
+  margin: 3px 0 0;
+  color: #4d655d;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.composer-surface {
+  padding: 18px;
+}
+
+.diagram-workbench {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #d9e3df;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgb(16 45 39 / 0.035);
+}
+
+.diagram-workbench-header {
+  align-items: flex-end;
+}
+.diagram-workbench-header > div {
+  min-width: 0;
+}
+.diagram-workbench-header > button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.diagram-workbench-header h2 {
+  margin: 3px 0 0;
+  font-size: 1.1rem;
+}
+.diagram-workbench-copy {
+  margin: 4px 0 0;
+  color: #4d655d;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+.diagram-pair-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.diagram-frame {
+  border-color: #d8e2de;
+  border-radius: 7px;
+  box-shadow: none;
+}
+
+.template-summary {
+  padding: 15px;
+  border: 1px solid #dce6e2;
+  border-radius: 7px;
+  background: #f8fbf9;
+}
+.template-review-status {
+  margin-top: 12px;
+  padding: 9px 11px;
+  border: 1px solid #f2c66d;
+  border-radius: 6px;
+  background: #fff8e6;
+  color: #7c4700;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.template-source-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  align-items: center;
+  border: 1px solid #d9e3df;
+  border-radius: 6px;
+  background: #fff;
+  padding: 9px 10px;
+  color: #475569;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  text-decoration: none;
+}
+.template-source-link > :first-child {
+  grid-column: 1 / -1;
+}
+.template-source-link:hover {
+  border-color: #91b7a8;
+}
+.template-details summary,
+.review-fields-details summary {
+  cursor: pointer;
+  color: #17302d;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+.template-details summary::marker,
+.review-fields-details summary::marker {
+  color: #416258;
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.review-share-stage {
+  display: grid;
+  gap: 18px;
+}
+
+.visual-column > .surface,
+.evidence-column .surface {
+  border-color: #d9e3df;
+  box-shadow: 0 4px 16px rgb(16 45 39 / 0.025);
+}
+
+.visual-column > .surface {
+  padding: 18px;
+}
+.evidence-column .surface {
+  padding: 16px;
+}
+
+.fact-row {
+  border-color: #e0e8e5;
+  background: #fcfefd;
+  color: #34534a;
+}
+.fact-row > :first-child {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.fact-row > :last-child {
+  flex: 0 0 auto;
+}
+.status-pill {
+  border-color: #c9ddd3;
+  background: #edf7f1;
+  color: #245447;
+}
+
+.atlas-card {
+  border-color: #dce6e2;
+  background: #fbfdfc;
+}
+.atlas-card:hover {
+  border-color: #91b7a8;
+}
+.atlas-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+  gap: 16px;
+  align-items: end;
+}
+.atlas-mobile-diagram {
+  display: none;
+}
+
+@media (max-width: 840px) {
+  .app-workspace {
+    padding: 16px 14px 36px;
+  }
+  .product-header,
+  .workflow-intro,
+  .diagram-workbench-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .product-header {
+    gap: 14px;
+  }
+  .workflow-intro {
+    gap: 14px;
+  }
+  .workflow-steps {
+    justify-content: flex-start;
+  }
+  .evidence-column,
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+  .evidence-column > :last-child {
+    grid-column: auto;
+  }
+  .diagram-pair-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .atlas-search-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .app-workspace {
+    padding-inline: 12px;
+  }
+
+  .product-header {
+    padding-bottom: 16px;
+  }
+  .product-identity {
+    width: 100%;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .product-mark {
+    width: 38px;
+    height: 38px;
+    padding: 7px;
+    flex: 0 0 auto;
+  }
+  .product-kicker {
+    font-size: 0.64rem;
+    letter-spacing: 0.065em;
+  }
+  .product-header h1 {
+    font-size: 1.05rem;
+  }
+  .product-status {
+    max-width: 100%;
+    padding: 7px 10px;
+    font-size: 0.75rem;
+  }
+
+  .workflow-intro {
+    padding: 18px 0 22px;
+  }
+  .workflow-summary {
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .workflow-steps {
+    width: 100%;
+    gap: 8px 14px;
+  }
+  .workflow-steps li {
+    white-space: normal;
+  }
+
+  .composer-heading,
+  .evidence-heading {
+    width: 100%;
+  }
+  .composer-heading > div,
+  .evidence-heading > div {
+    min-width: 0;
+  }
+  .composer-surface,
+  .visual-column > .surface,
+  .evidence-column .surface,
+  .diagram-workbench {
+    padding: 14px;
+  }
+
+  .fact-row {
+    width: 100%;
+    min-width: 0;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .fact-row > :first-child,
+  .fact-row > :last-child {
+    width: 100%;
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+
+  .diagram-workbench-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .diagram-workbench-header > button {
+    width: fit-content;
+    align-self: flex-start;
+  }
+
+  .atlas-desktop-diagram {
+    display: none !important;
+  }
+  .atlas-mobile-diagram {
+    display: grid;
+    gap: 12px;
+    padding: 12px;
+  }
+  .atlas-mobile-heading {
+    display: grid;
+    gap: 1px;
+  }
+  .atlas-mobile-heading strong {
+    color: #0f172a;
+    font-size: 1rem;
+  }
+  .atlas-mobile-heading span {
+    color: #526a62;
+    font-size: 0.78rem;
+  }
+  .atlas-mobile-heading .atlas-mobile-laterality {
+    margin-top: 4px;
+    color: #17302d;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+  .atlas-mobile-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid #d9e3df;
+    border-radius: 7px;
+    background: #fff;
+  }
+  .atlas-mobile-callouts {
+    display: grid;
+    gap: 8px;
+  }
+  .atlas-mobile-callout {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 9px;
+    align-items: start;
+    border: 1px solid #d9e3df;
+    border-radius: 7px;
+    background: #fff;
+    padding: 10px;
+    color: #17302d;
+    text-align: left;
+  }
+  .atlas-mobile-callout.is-active {
+    border-color: #17302d;
+    background: #f6faf8;
+  }
+  .atlas-mobile-callout strong,
+  .atlas-mobile-callout small {
+    display: block;
+  }
+  .atlas-mobile-callout strong {
+    font-size: 0.82rem;
+    line-height: 1.3;
+  }
+  .atlas-mobile-callout small {
+    margin-top: 2px;
+    color: #526a62;
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+  .atlas-mobile-number {
+    display: inline-grid;
+    width: 26px;
+    height: 26px;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+  .atlas-mobile-number.atlas-marker-finding {
+    background: #b91c1c;
+  }
+  .atlas-mobile-number.atlas-marker-repair {
+    background: #1d4ed8;
+  }
+  .atlas-mobile-number.atlas-marker-neutral {
+    background: #475569;
+  }
+  .atlas-mobile-number.atlas-marker-unknown {
+    background: #d97706;
+  }
+  .atlas-mobile-number.atlas-mobile-status-symbol {
+    background: #166534;
+  }
+  .atlas-mobile-provenance {
+    margin: 0;
+    border-top: 1px solid #e0e8e5;
+    padding-top: 9px;
+    color: #526a62;
+    font-size: 0.72rem;
+    line-height: 1.45;
+  }
+  .atlas-mobile-empty {
+    margin: 0;
+    color: #526a62;
+    font-size: 0.8rem;
+  }
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+select {
+  text-overflow: ellipsis;
+}
+
+.surface {
+  border: 1px solid #d9e3df;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow:
+    0 1px 2px rgb(16 45 39 / 0.04),
+    0 8px 24px rgb(16 45 39 / 0.025);
+}
+
+.section-heading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #17302d;
+}
+
+.fact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 2.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.status-pill {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #f8fafc;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.diagram-frame {
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+}
+
+.diagram-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #ffffff;
+}
+
+.diagram-bg {
+  fill: #fbfdff;
+}
+
+.diagram-cavity {
+  fill: none;
+  stroke: #cbd5e1;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.diagram-tm {
+  fill: #f8fafc;
+  stroke: #334155;
+  stroke-width: 5;
+}
+
+.diagram-malleus-shadow {
+  fill: none;
+  stroke: #94a3b8;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.diagram-ossicle {
+  fill: none;
+  stroke: #334155;
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.diagram-ossicle-fill {
+  fill: #f1f5f9;
+  stroke: #334155;
+  stroke-width: 5;
+}
+
+.diagram-eroded {
+  fill: none;
+  stroke: #b91c1c;
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-dasharray: 16 10;
+}
+
+.diagram-abnormal-fill {
+  fill: #fee2e2;
+  stroke: #b91c1c;
+  stroke-width: 4;
+}
+
+.diagram-abnormal-ring {
+  fill: rgb(254 226 226 / 0.45);
+  stroke: #b91c1c;
+  stroke-width: 4;
+}
+
+.diagram-gap {
+  fill: none;
+  stroke: #b91c1c;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: 12 12;
+}
+
+.diagram-unknown {
+  fill: none;
+  stroke: #94a3b8;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 10 8;
+}
+
+.diagram-undocumented-outline {
+  fill: none;
+  stroke: #94a3b8;
+  stroke-width: 4;
+  stroke-dasharray: 8 8;
+}
+
+.diagram-undocumented-label {
+  fill: #64748b;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.diagram-graft {
+  fill: #ecfdf5;
+  stroke: #047857;
+  stroke-width: 4;
+}
+
+.diagram-cement {
+  fill: none;
+  stroke: #1d4ed8;
+  stroke-width: 16;
+  stroke-linecap: round;
+}
+
+.diagram-repair-fill {
+  fill: rgb(219 234 254 / 0.75);
+  stroke: #1d4ed8;
+  stroke-width: 3;
+}
+
+.diagram-prosthesis {
+  fill: none;
+  stroke: #1d4ed8;
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+
+.diagram-prosthesis-fill {
+  fill: #dbeafe;
+  stroke: #1d4ed8;
+  stroke-width: 4;
+}
+
+.diagram-label {
+  fill: #334155;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.diagram-label.warning {
+  fill: #991b1b;
+}
+
+.diagram-label.repaired {
+  fill: #1d4ed8;
+}
+
+.diagram-panel-title {
+  fill: #0f172a;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.diagram-subtitle {
+  fill: #475569;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.diagram-selectable {
+  cursor: pointer;
+  outline: none;
+}
+
+.diagram-selectable:focus-visible,
+.diagram-selectable:hover {
+  filter: drop-shadow(0 0 4px rgb(15 23 42 / 0.24));
+}
+
+.diagram-selected {
+  filter: drop-shadow(0 0 5px rgb(29 78 216 / 0.55));
+}
+
+.diagram-warning-bg {
+  fill: #fffbeb;
+  stroke: #f59e0b;
+  stroke-width: 2;
+}
+
+.diagram-warning-text {
+  fill: #92400e;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.atlas-template-svg {
+  background: #fbfdff;
+}
+
+.atlas-image-bg {
+  fill: #ffffff;
+  stroke: #d9e2ec;
+  stroke-width: 2;
+}
+
+.atlas-marker {
+  stroke: #ffffff;
+  stroke-width: 4;
+}
+
+.atlas-marker-selected-ring {
+  fill: rgb(15 23 42 / 0.12);
+  stroke: #0f172a;
+  stroke-width: 4;
+}
+
+.atlas-marker-finding {
+  fill: #b91c1c;
+}
+
+.atlas-marker-repair {
+  fill: #1d4ed8;
+}
+
+.atlas-marker-neutral {
+  fill: #475569;
+}
+
+.atlas-marker-unknown {
+  fill: #f59e0b;
+}
+
+.atlas-laterality-label {
+  fill: #17302d;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.atlas-status-symbol {
+  fill: #166534;
+  font-size: 25px;
+  font-weight: 900;
+}
+
+.atlas-overlay-bone-cement {
+  fill: #f4cf7f;
+  stroke: #7c3f17;
+  stroke-width: 5;
+  opacity: 0.98;
+  filter: drop-shadow(0 1px 2px rgb(15 23 42 / 0.25));
+}
+
+.atlas-overlay-graft {
+  fill: rgb(45 160 175 / 0.34);
+  stroke: #0f6f78;
+  stroke-width: 5;
+  stroke-dasharray: 14 8;
+  opacity: 0.96;
+  filter: drop-shadow(0 1px 2px rgb(15 23 42 / 0.18));
+}
+
+.atlas-overlay-selected {
+  stroke: #0f172a;
+  stroke-width: 7;
+  filter: drop-shadow(0 0 5px rgb(15 23 42 / 0.38));
+}
+
+.atlas-marker-text {
+  fill: #ffffff;
+  font-size: 16px;
+  font-weight: 800;
+  text-anchor: middle;
+  letter-spacing: 0;
+}
+
+.atlas-callout-heading {
+  fill: #0f172a;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.atlas-callout-row rect {
+  fill: #ffffff;
+  stroke: #d9e2ec;
+  stroke-width: 2;
+}
+
+.atlas-callout-row-active rect,
+.atlas-callout-row:hover rect,
+.atlas-callout-row:focus-visible rect {
+  stroke: #0f172a;
+  fill: #f8fafc;
+}
+
+.atlas-callout-label {
+  fill: #0f172a;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.atlas-callout-detail {
+  fill: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.atlas-provenance-bg {
+  fill: #f8fafc;
+  stroke: #cbd5e1;
+  stroke-width: 2;
+}
+
+.atlas-provenance-text {
+  fill: #334155;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-width: 2px;
+  border-radius: 3px;
+}
+
+.atlas-card {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 0.75rem;
+  min-height: 106px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 0.65rem;
+}
+
+.education-mode-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 1px solid #d4e1dc;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8fbf9 0%, #eef5f2 100%);
+}
+
+.education-mode-switcher > div {
+  min-width: 0;
+}
+.education-mode-switcher h2 {
+  margin: 3px 0 0;
+  color: #17302d;
+  font-size: 1rem;
+  font-weight: 780;
+}
+.education-mode-switcher [role="group"] {
+  display: inline-grid;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px;
+  border: 1px solid #c9d9d3;
+  border-radius: 9px;
+  background: #e7efeb;
+}
+.education-mode-switcher button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  padding: 8px 13px;
+  color: #49635b;
+  font-size: 0.8rem;
+  font-weight: 760;
+  cursor: pointer;
+}
+.education-mode-switcher button.is-active {
+  background: #fff;
+  color: #17302d;
+  box-shadow: 0 2px 7px rgb(18 59 58 / 0.12);
+}
+.education-mode-switcher button:focus-visible {
+  outline: 2px solid #35615a;
+  outline-offset: 1px;
+}
+
+/* Stacked three-stage workspace */
+.stage-nav {
+  display: grid;
+  width: min(100%, 18rem);
+  gap: 6px;
+  margin: 18px 0 24px;
+}
+
+.stage-nav a {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  color: #49635b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.stage-nav a:hover {
+  color: #17302d;
+}
+.stage-nav a:focus-visible {
+  outline: 2px solid #35615a;
+  outline-offset: 2px;
+}
+.stage-nav span,
+.stage-number {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #173f3b;
+  color: #fff;
+  font-weight: 800;
+}
+.stage-nav span {
+  width: 26px;
+  height: 26px;
+  font-size: 0.75rem;
+}
+
+.stage-stack {
+  display: grid;
+  gap: 28px;
+}
+
+.stage-shell {
+  min-width: 0;
+  padding: clamp(18px, 2.4vw, 30px);
+  border: 1px solid #d7e3de;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 14px 36px rgb(17 55 49 / 0.045);
+}
+
+.stage-shell > * {
+  min-width: 0;
+}
+
+.stage-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stage-number {
+  width: 32px;
+  height: 32px;
+  font-size: 0.82rem;
+}
+.stage-header > div {
+  min-width: 0;
+}
+.stage-header h2 {
+  margin: 0;
+  color: #17302d;
+  font-size: clamp(1.1rem, 1.6vw, 1.35rem);
+  font-weight: 780;
+  line-height: 1.2;
+}
+.stage-header p {
+  margin: 4px 0 0;
+  color: #526a62;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.input-mode-tabs {
+  display: inline-grid;
+  max-width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 4px;
+  border: 1px solid #d7e3de;
+  border-radius: 10px;
+  background: #f3f7f5;
+}
+
+.input-mode-tabs button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  padding: 8px 15px;
+  color: #4c665e;
+  font-size: 0.84rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+.input-mode-tabs button:hover {
+  color: #17302d;
+}
+.input-mode-tabs button:focus-visible {
+  outline: 2px solid #35615a;
+  outline-offset: 1px;
+}
+.input-mode-tabs button.is-active {
+  background: #fff;
+  color: #17302d;
+  box-shadow: 0 1px 5px rgb(18 59 58 / 0.12);
+}
+
+.create-case-grid {
+  display: grid;
+  grid-template-columns: minmax(17rem, 0.72fr) minmax(0, 1.28fr);
+  gap: 22px;
+  align-items: start;
+}
+.create-case-grid.is-clinic {
+  grid-template-columns: minmax(15rem, 0.55fr) minmax(0, 1.45fr);
+}
+
+.clinic-plan-intro {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid #cfe0d8;
+  border-radius: 10px;
+  background: #eef6f2;
+  color: #36584f;
+}
+.clinic-plan-intro strong {
+  color: #17302d;
+  font-size: 0.94rem;
+}
+.clinic-plan-intro p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.clinic-plan-intro ul {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.case-source-panel {
+  display: grid;
+  min-width: 0;
+  gap: 15px;
+  padding: 18px;
+  border: 1px solid #dce6e2;
+  border-radius: 10px;
+  background: #f8fbf9;
+}
+
+.create-case-grid > .surface {
+  box-shadow: none;
+}
+
+.compact-details summary,
+.export-requirements summary {
+  cursor: pointer;
+  color: #254b43;
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+.manual-mode-intro {
+  display: grid;
+  gap: 4px;
+  color: #31574e;
+}
+.manual-mode-intro strong {
+  color: #17302d;
+  font-size: 0.94rem;
+}
+.manual-mode-intro span {
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.structured-builder-column {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+}
+.structured-builder-column > * {
+  min-width: 0;
+}
+.builder-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.source-fields-details {
+  border-top: 1px solid #dce6e2;
+  padding-top: 12px;
+}
+.source-fields-details > summary {
+  cursor: pointer;
+  color: #31574e;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+.source-fields-details .surface {
+  box-shadow: none;
+}
+.surgery-builder-root select,
+.surgery-builder-root input,
+.surgery-builder-root textarea,
+.surgery-builder-root button {
+  min-width: 0;
+  max-width: 100%;
+}
+.surgery-builder-layer-card,
+.surgery-builder-layer-group,
+.surgery-builder-procedures {
+  min-width: 0;
+  overflow: hidden;
+}
+.surgery-builder-layer-header > div,
+.surgery-builder-layer-group-header > div {
+  min-width: 0;
+}
+.surgery-builder-layer-group-header select {
+  max-width: min(100%, 18rem);
+}
+.surgery-builder-management-field textarea {
+  resize: vertical;
+}
+.surgery-builder-layer-summary {
+  cursor: pointer;
+  padding: 13px 15px;
+  color: #17302d;
+}
+.surgery-builder-procedure-summary {
+  cursor: pointer;
+  padding: 13px 15px;
+  color: #17302d;
+}
+.surgery-builder-procedure-summary::marker {
+  color: #4c6d63;
+}
+.surgery-builder-procedure-summary > span {
+  display: inline-flex;
+  width: calc(100% - 12px);
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.surgery-builder-procedure-summary > span > :first-child,
+.surgery-builder-layer-summary > span > :first-child {
+  min-width: 0;
+}
+.surgery-builder-procedure-summary > span > :last-child,
+.surgery-builder-layer-summary > span > :last-child {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.surgery-builder-procedure-summary:focus-visible {
+  outline: 2px solid #35615a;
+  outline-offset: -2px;
+}
+.surgery-builder-procedures[open] > .surgery-builder-procedure-summary {
+  border-bottom: 1px solid #dce6e2;
+  background: #f5f9f7;
+}
+.surgery-builder-layer-summary::marker {
+  color: #4c6d63;
+}
+.surgery-builder-layer-summary > span {
+  display: inline-flex;
+  width: calc(100% - 12px);
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.surgery-builder-layer-summary:focus-visible {
+  outline: 2px solid #35615a;
+  outline-offset: -2px;
+}
+.surgery-builder-layer-group[open] > .surgery-builder-layer-summary {
+  border-bottom: 1px solid #dce6e2;
+  background: #f5f9f7;
+}
+.surgery-builder-layer-body {
+  padding: 14px;
+}
+
+.stage-shell .diagram-workbench {
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+.diagram-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.diagram-status-row span {
+  border: 1px solid #cfe0d8;
+  border-radius: 999px;
+  background: #f1f7f4;
+  padding: 5px 9px;
+  color: #365c52;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+.composed-diagram-phases,
+.atlas-diagram-phases {
+  display: grid;
+  min-width: 0;
+  gap: 24px;
+}
+.composed-diagram-phases > .surgery-scene-stack + .surgery-scene-stack {
+  border-top: 2px solid #cbdcd4;
+  padding-top: 24px;
+}
+.atlas-template-panel {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+.atlas-diagram-phases > .atlas-template-panel + .atlas-template-panel,
+.atlas-diagram-phases > .procedure-atlas-panel + .procedure-atlas-panel {
+  border-top: 2px solid #cbdcd4;
+  padding-top: 24px;
+}
+
+.atlas-inline-attribution {
+  margin: -12px 0 0;
+  color: #526a62;
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.atlas-rights-notice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  border: 1px solid #e4c982;
+  border-radius: 9px;
+  background: #fffaf0;
+  padding: 13px 14px;
+  color: #704b0f;
+}
+.atlas-rights-notice > svg {
+  margin-top: 2px;
+}
+.atlas-rights-notice strong {
+  display: block;
+  color: #61400d;
+  font-size: 0.84rem;
+}
+.atlas-rights-notice p {
+  margin: 3px 0 0;
+  font-size: 0.77rem;
+  line-height: 1.48;
+}
+.atlas-rights-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 8px;
+}
+.atlas-rights-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #5a451c;
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+.atlas-export-note {
+  margin: 0;
+  border: 1px solid #e4c982;
+  border-radius: 7px;
+  background: #fffaf0;
+  padding: 9px 11px;
+  color: #704b0f;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.atlas-summary-lock {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+  border: 1px solid #e4c982;
+  border-radius: 7px;
+  background: #fffaf0;
+  padding: 10px 11px;
+  color: #704b0f;
+}
+.atlas-summary-lock > svg {
+  margin-top: 2px;
+}
+.atlas-summary-lock p {
+  margin: 0;
+  font-size: 0.77rem;
+  line-height: 1.45;
+}
+.atlas-load-fallback {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 10px;
+  border: 1px solid #e4c982;
+  border-radius: 7px;
+  background: #fffaf0;
+  padding: 10px 12px;
+  color: #704b0f;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.atlas-load-fallback strong,
+.atlas-load-fallback span {
+  grid-column: 1 / -1;
+}
+
+.procedure-atlas-panel {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  overflow: hidden;
+  border: 1px solid #d6e2dd;
+  border-radius: 12px;
+  background: #fbfdfc;
+}
+.procedure-atlas-header {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #dce6e2;
+  padding: 13px 16px;
+  background: #fff;
+}
+.procedure-atlas-header > div {
+  min-width: 0;
+}
+.procedure-atlas-header p {
+  margin: 0;
+  color: #4f6b62;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.procedure-atlas-header h3 {
+  margin: 3px 0 0;
+  color: #17302d;
+  font-size: 1rem;
+  font-weight: 780;
+  line-height: 1.25;
+}
+.procedure-atlas-header span {
+  display: block;
+  margin-top: 3px;
+  color: #526a62;
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+.procedure-atlas-header > strong {
+  max-width: 46%;
+  color: #31574e;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-align: right;
+}
+.procedure-atlas-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(17rem, 0.65fr);
+  gap: 14px;
+  padding: 0 14px;
+}
+.procedure-atlas-canvas {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #dbe5e1;
+  border-radius: 9px;
+  background: #fff;
+}
+.procedure-atlas-svg {
+  width: 100%;
+  height: auto;
+}
+.procedure-atlas-image-bg {
+  fill: #fff;
+}
+.procedure-atlas-overlay {
+  fill: rgb(12 129 126 / 0.24);
+  stroke: #087d79;
+  stroke-width: 7;
+  filter: drop-shadow(0 2px 4px rgb(8 67 65 / 0.25));
+  pointer-events: none;
+}
+.procedure-atlas-overlay.is-finding {
+  fill: rgb(185 28 28 / 0.08);
+  stroke: #b91c1c;
+  stroke-dasharray: 14 10;
+}
+.procedure-atlas-overlay.is-selected {
+  stroke: #123b3a;
+  stroke-width: 10;
+}
+.procedure-atlas-overlay-detail {
+  fill: none;
+  stroke: #087d79;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.procedure-atlas-overlay.is-tube {
+  fill: #d6efeb;
+}
+.procedure-atlas-overlay.is-graft path:first-child {
+  fill: rgb(93 171 157 / 0.48);
+}
+.procedure-atlas-overlay.is-prosthesis {
+  fill: rgb(40 128 170 / 0.08);
+  stroke: #256c8c;
+}
+.procedure-atlas-overlay.is-prosthesis .procedure-atlas-overlay-detail,
+.procedure-atlas-overlay.is-piston .procedure-atlas-overlay-detail,
+.procedure-atlas-overlay.is-electrode,
+.procedure-atlas-overlay.is-bone_implant {
+  stroke: #256c8c;
+}
+.procedure-atlas-overlay.is-mastoid {
+  fill: rgb(27 138 129 / 0.17);
+  stroke-dasharray: 15 9;
+}
+.procedure-atlas-overlay.is-piston {
+  fill: rgb(214 236 243 / 0.7);
+  stroke: #256c8c;
+}
+.procedure-atlas-overlay.is-electrode {
+  fill: none;
+  stroke-width: 11;
+}
+.procedure-atlas-electrode-contact {
+  fill: #eaf7f8;
+  stroke: #256c8c;
+  stroke-width: 2;
+}
+.procedure-atlas-overlay.is-bone_implant {
+  fill: rgb(213 235 241 / 0.76);
+}
+.procedure-atlas-overlay.is-canal {
+  fill: rgb(13 148 136 / 0.12);
+}
+.procedure-atlas-overlay.is-balloon {
+  fill: rgb(73 190 187 / 0.36);
+}
+.procedure-atlas-device-opening {
+  fill: #173f3b;
+  stroke: #fff;
+  stroke-width: 3;
+}
+.procedure-atlas-marker {
+  fill: #173f3b;
+  stroke: #fff;
+  stroke-width: 3;
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.28));
+}
+.procedure-atlas-marker-text {
+  fill: #fff;
+  font-size: 18px;
+  font-weight: 850;
+  pointer-events: none;
+}
+.procedure-atlas-callouts {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.procedure-atlas-callouts button,
+.procedure-atlas-callouts li > div {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 9px;
+  border: 1px solid #dce6e2;
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+  color: #31574e;
+  text-align: left;
+}
+.procedure-atlas-callouts button {
+  cursor: pointer;
+}
+.procedure-atlas-callouts button:hover,
+.procedure-atlas-callouts button.is-active {
+  border-color: #83aa9d;
+  background: #f3f8f5;
+}
+.procedure-atlas-callouts button:focus-visible {
+  outline: 2px solid #35615a;
+  outline-offset: 2px;
+}
+.procedure-atlas-callout-number,
+.procedure-atlas-callout-status {
+  display: inline-grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 50%;
+  background: #173f3b;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+.procedure-atlas-callout-status {
+  background: #6b7f78;
+}
+.procedure-atlas-callouts strong,
+.procedure-atlas-callouts small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.procedure-atlas-callouts strong {
+  color: #17302d;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+.procedure-atlas-callouts small {
+  margin-top: 3px;
+  color: #526a62;
+  font-size: 0.7rem;
+  line-height: 1.42;
+}
+.procedure-atlas-footer {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #dce6e2;
+  padding: 11px 14px 0;
+  color: #526a62;
+}
+.procedure-atlas-footer > div {
+  min-width: 0;
+}
+.procedure-atlas-footer strong,
+.procedure-atlas-footer span {
+  display: block;
+}
+.procedure-atlas-footer strong {
+  color: #31574e;
+  font-size: 0.74rem;
+}
+.procedure-atlas-footer span {
+  margin-top: 2px;
+  font-size: 0.69rem;
+  line-height: 1.42;
+}
+.procedure-atlas-footer a {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  color: #31574e;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+.procedure-atlas-panel > .atlas-inline-attribution {
+  margin: 0;
+  padding: 0 14px 12px;
+}
+
+.preop-guide {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #d5e2dd;
+  border-radius: 11px;
+  background: #f8fbf9;
+}
+.preop-guide.is-compact {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.preop-guide-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.preop-guide-header > div {
+  min-width: 0;
+}
+.preop-guide-header h3 {
+  margin: 3px 0 0;
+  color: #17302d;
+  font-size: 1.05rem;
+  font-weight: 780;
+  line-height: 1.25;
+}
+.preop-guide-header > span {
+  flex: 0 0 auto;
+  border: 1px solid #cfe0d8;
+  border-radius: 999px;
+  background: #edf6f1;
+  padding: 5px 9px;
+  color: #356057;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+.preop-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.preop-guide-card {
+  min-width: 0;
+  border: 1px solid #dce6e2;
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px 13px;
+}
+.preop-guide-card h4 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: #17302d;
+  font-size: 0.82rem;
+  font-weight: 780;
+}
+.preop-guide-card ul {
+  display: grid;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding-left: 17px;
+  color: #4d655d;
+  font-size: 0.76rem;
+  line-height: 1.47;
+}
+.preop-change-notice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 7px 10px;
+  border: 1px solid #e4c982;
+  border-radius: 8px;
+  background: #fffaf0;
+  padding: 10px 12px;
+  color: #704b0f;
+  font-size: 0.77rem;
+  line-height: 1.45;
+}
+.preop-change-notice strong {
+  color: #61400d;
+}
+.plan-issue-list {
+  display: grid;
+  gap: 7px;
+}
+.plan-issue-list > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 10px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+.plan-issue-list .is-blocking {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #8e1f2d;
+}
+.plan-issue-list .is-review {
+  border: 1px solid #edd49b;
+  background: #fffaf0;
+  color: #754d0d;
+}
+.diagram-blocker {
+  display: grid;
+  gap: 5px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff1f2;
+  padding: 18px;
+  color: #8e1f2d;
+  font-size: 0.85rem;
+}
+.template-summary > summary {
+  cursor: pointer;
+  color: #254b43;
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+.template-summary > summary:focus-visible {
+  outline: 2px solid #35615a;
+  outline-offset: 3px;
+}
+.diagram-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow-y: auto;
+  background: rgb(15 23 42 / 0.72);
+  padding: 18px;
+}
+.diagram-dialog {
+  width: min(100%, 1540px);
+  margin: 0 auto;
+  border-radius: 14px;
+  background: #fff;
+  padding: clamp(15px, 2vw, 26px);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.28);
+}
+.diagram-dialog > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.diagram-dialog > header h3 {
+  margin: 0;
+  color: #17302d;
+  font-size: 1.1rem;
+}
+.diagram-dialog > header p {
+  margin: 3px 0 0;
+  color: #5b716a;
+  font-size: 0.8rem;
+}
+
+.verify-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 0.8fr);
+  gap: 16px;
+  margin-top: 18px;
+  align-items: start;
+}
+
+.verify-grid > .surface {
+  box-shadow: none;
+}
+.verify-grid > :only-child {
+  grid-column: 1 / -1;
+}
+.verify-grid > section[role="alert"] {
+  grid-column: 1 / -1;
+}
+
+.export-requirements {
+  margin-bottom: 16px;
+  border: 1px solid #edd49b;
+  border-radius: 9px;
+  background: #fffaf0;
+  padding: 12px 14px;
+  color: #754d0d;
+}
+.export-requirements ul {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+#review-export .review-grid {
+  grid-template-columns: minmax(0, 46rem);
+  margin-bottom: 16px;
+}
+
+@media (max-width: 1100px) {
+  .create-case-grid,
+  .create-case-grid.is-clinic,
+  .verify-grid {
+    grid-template-columns: 1fr;
+  }
+  .diagram-pair-grid {
+    grid-template-columns: 1fr;
+  }
+  .procedure-atlas-layout {
+    grid-template-columns: 1fr;
+  }
+  .procedure-atlas-callouts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .education-mode-switcher {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 14px;
+  }
+  .education-mode-switcher [role="group"] {
+    width: 100%;
+  }
+  .education-mode-switcher button {
+    min-width: 0;
+    padding-inline: 8px;
+  }
+  .stage-shell {
+    padding: 15px;
+    border-radius: 10px;
+  }
+  .stage-stack {
+    gap: 18px;
+  }
+  .stage-nav {
+    margin-block: 12px 18px;
+  }
+  .input-mode-tabs {
+    display: grid;
+    width: 100%;
+  }
+  .input-mode-tabs button {
+    min-width: 0;
+    padding-inline: 8px;
+    font-size: 0.78rem;
+  }
+  .case-source-panel {
+    padding: 14px;
+  }
+  .diagram-workbench-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .diagram-workbench-header > button {
+    width: fit-content;
+    align-self: flex-start;
+  }
+  .diagram-status-row span {
+    max-width: 100%;
+    overflow-wrap: normal;
+    white-space: nowrap;
+    word-break: normal;
+  }
+  .diagram-dialog-backdrop {
+    padding: 6px;
+  }
+  .diagram-dialog {
+    border-radius: 8px;
+  }
+  .plan-issue-list > div {
+    grid-template-columns: 1fr;
+  }
+  .builder-history-actions {
+    justify-content: stretch;
+  }
+  .builder-history-actions > button {
+    flex: 1 1 0;
+  }
+  .surgery-builder-layer-group-header > div:last-child {
+    justify-content: stretch;
+  }
+  .surgery-builder-layer-group-header select,
+  .surgery-builder-layer-group-header button {
+    width: 100%;
+  }
+  .preop-guide-grid {
+    grid-template-columns: 1fr;
+  }
+  .preop-guide-header {
+    flex-direction: column;
+  }
+  .preop-change-notice {
+    grid-template-columns: 1fr;
+  }
+  .procedure-atlas-header,
+  .procedure-atlas-footer {
+    flex-direction: column;
+  }
+  .procedure-atlas-header > strong {
+    max-width: 100%;
+    text-align: left;
+  }
+  .procedure-atlas-callouts {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Original deterministic surgery templates */
+.surgery-scene-stack {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+.surgery-scene {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #d6e2dd;
+  border-radius: 12px;
+  background: #fbfdfc;
+}
+.surgery-scene-header {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #dce6e2;
+  padding: 13px 16px;
+  background: #fff;
+}
+.surgery-scene-header > div {
+  min-width: 0;
+}
+.surgery-scene-header p {
+  margin: 0;
+  color: #4f6b62;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.surgery-scene-header h3 {
+  margin: 3px 0 0;
+  color: #17302d;
+  font-size: 1rem;
+  font-weight: 780;
+  line-height: 1.25;
+}
+.surgery-scene-meta {
+  display: flex;
+  min-width: 0;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.surgery-scene-meta span {
+  flex: 0 1 auto;
+  border-radius: 999px;
+  background: #edf5f1;
+  padding: 5px 9px;
+  color: #31574e;
+  font-size: 0.72rem;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+.surgery-scene-canvas {
+  min-width: 0;
+  background: #f8fbfa;
+}
+.composed-surgery-svg {
+  min-width: 0;
+  max-height: 680px;
+}
+.surgery-scene-bg {
+  fill: #f8fbfa;
+}
+
+.surgery-canal-ring {
+  fill: #f2dfd4;
+  stroke: #b78b78;
+  stroke-width: 18;
+}
+.surgery-tm-base {
+  fill: #eef3f5;
+  stroke: #4c6871;
+  stroke-width: 5;
+}
+.surgery-malleus-handle {
+  fill: none;
+  stroke: #9f7d57;
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+.surgery-tm-radials {
+  fill: none;
+  stroke: #b8c8cc;
+  stroke-width: 2;
+}
+.surgery-finding-dashed {
+  fill: rgb(185 28 28 / 0.08);
+  stroke: #b91c1c;
+  stroke-width: 5;
+  stroke-dasharray: 12 9;
+}
+.surgery-perforation {
+  fill: #6d3940;
+  stroke: #b91c1c;
+  stroke-width: 6;
+  opacity: 0.94;
+}
+.surgery-repaired-defect-outline {
+  fill: none;
+  stroke: #8d4b52;
+  stroke-width: 4;
+  stroke-dasharray: 9 8;
+  opacity: 0.7;
+}
+.surgery-graft-overlay {
+  fill: rgb(55 172 165 / 0.72);
+  stroke: #056a67;
+  stroke-width: 7;
+}
+.surgery-myringotomy {
+  fill: none;
+  stroke: #b91c1c;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+.surgery-device-fill {
+  fill: #d9f0ee;
+  stroke: #087d79;
+  stroke-width: 5;
+}
+.surgery-device-opening {
+  fill: #173f3b;
+}
+
+.surgery-cavity-line {
+  fill: none;
+  stroke: #b9cbc6;
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+.surgery-tm-side,
+.surgery-tm-side-line {
+  fill: #e9f1f3;
+  stroke: #526b72;
+  stroke-width: 6;
+}
+.surgery-ossicle {
+  fill: none;
+  stroke: #a47742;
+  stroke-width: 17;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.surgery-ossicle.small {
+  stroke-width: 13;
+}
+.surgery-ossicle.is-reference,
+.surgery-ossicle-node.is-reference,
+.surgery-footplate.is-reference {
+  opacity: 0.34;
+}
+.surgery-ossicle.is-documented,
+.surgery-ossicle-node.is-documented,
+.surgery-footplate.is-documented {
+  opacity: 1;
+}
+.surgery-ossicle.is-abnormal {
+  stroke: #b91c1c;
+  stroke-dasharray: 18 11;
+}
+.surgery-ossicle-node {
+  fill: #f3d6a7;
+  stroke: #7b5730;
+  stroke-width: 5;
+}
+.surgery-absent-gap {
+  fill: none;
+  stroke: #b91c1c;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+.surgery-footplate {
+  fill: none;
+  stroke: #a47742;
+  stroke-width: 13;
+  stroke-linecap: round;
+}
+.surgery-footplate.is-fixed {
+  stroke: #b91c1c;
+  stroke-width: 19;
+}
+.surgery-finding-gap {
+  fill: none;
+  stroke: #b91c1c;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: 10 10;
+}
+.surgery-cement-bridge {
+  fill: none;
+  stroke: #c47a21;
+  stroke-width: 24;
+  stroke-linecap: round;
+}
+.surgery-prosthesis-line {
+  fill: none;
+  stroke: #1d5f9f;
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+.surgery-prosthesis-body {
+  fill: #dbeafe;
+  stroke: #1d5f9f;
+  stroke-width: 5;
+}
+.surgery-cartilage-interposition {
+  fill: #d8c490;
+  stroke: #7a632d;
+  stroke-width: 6;
+}
+.surgery-autologous-reconstruction {
+  fill: none;
+  stroke: #a47742;
+  stroke-width: 21;
+  stroke-linecap: round;
+}
+.surgery-protection-cap {
+  fill: #8cc9c1;
+  stroke: #056a67;
+  stroke-width: 5;
+}
+.surgery-piston {
+  fill: none;
+  stroke: #1d5f9f;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+.surgery-fenestra {
+  fill: #dbeafe;
+  stroke: #1d5f9f;
+  stroke-width: 5;
+}
+.surgery-fenestra.is-stapedectomy {
+  fill: rgb(219 234 254 / 0.76);
+}
+
+.surgery-canal-line {
+  fill: none;
+  stroke: #b9917e;
+  stroke-width: 52;
+  stroke-linecap: round;
+}
+.surgery-mastoid-shell {
+  fill: #f2dfd4;
+  stroke: #a77e6a;
+  stroke-width: 8;
+}
+.surgery-mastoid-cell {
+  fill: #fff7f2;
+  stroke: #b9917e;
+  stroke-width: 5;
+}
+.surgery-disease-mass {
+  fill: rgb(185 28 28 / 0.58);
+  stroke: #991b1b;
+  stroke-width: 6;
+}
+.surgery-mastoid-action {
+  fill: rgb(40 156 152 / 0.34);
+  stroke: #087d79;
+  stroke-width: 7;
+  stroke-dasharray: 15 9;
+}
+.surgery-mastoid-action.is-obliteration {
+  fill: rgb(196 122 33 / 0.38);
+  stroke: #9a5a13;
+}
+.surgery-mastoid-action.is-canal-wall-down {
+  fill: rgb(40 156 152 / 0.25);
+}
+.surgery-mastoid-action.is-subtotal-petrosectomy {
+  fill: rgb(29 95 159 / 0.2);
+  stroke: #1d5f9f;
+}
+.surgery-canal-wall-reconstruction {
+  fill: none;
+  stroke: #1d5f9f;
+  stroke-width: 13;
+  stroke-dasharray: 12 8;
+}
+
+.surgery-skull-outline,
+.surgery-skull-profile {
+  fill: #f3e5dc;
+  stroke: #aa806c;
+  stroke-width: 9;
+}
+.surgery-receiver-base,
+.surgery-implant-body {
+  fill: #dbeafe;
+  stroke: #1d5f9f;
+  stroke-width: 8;
+}
+.surgery-cochlea-shell {
+  fill: #f3e5dc;
+  stroke: #aa806c;
+  stroke-width: 8;
+}
+.surgery-cochlea-spiral {
+  fill: none;
+  stroke: #aa806c;
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+.surgery-electrode-path {
+  fill: none;
+  stroke: #087d79;
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+.surgery-electrode-path.is-partial {
+  stroke-dasharray: 18 8;
+}
+.surgery-electrode-path.is-split-array {
+  stroke-width: 8;
+  stroke-dasharray: 13 7;
+}
+.surgery-electrode-contact {
+  fill: #e9fffb;
+  stroke: #065f5b;
+  stroke-width: 2;
+}
+.surgery-partial-marker {
+  stroke: #b91c1c;
+  stroke-width: 8;
+}
+.surgery-pinna {
+  fill: #eac9b8;
+  stroke: #a97761;
+  stroke-width: 7;
+}
+.surgery-abutment {
+  fill: #dbeafe;
+  stroke: #1d5f9f;
+  stroke-width: 6;
+}
+.surgery-implant-magnet {
+  fill: #eff6ff;
+  stroke: #1d5f9f;
+  stroke-width: 5;
+}
+.surgery-implant-skin {
+  stroke: #a97761;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+.surgery-implant-fixture {
+  fill: #dbeafe;
+  stroke: #1d5f9f;
+  stroke-width: 7;
+}
+
+.surgery-canal-wall {
+  fill: none;
+  stroke: #b9917e;
+  stroke-width: 28;
+  stroke-linecap: round;
+}
+.surgery-exostosis {
+  fill: none;
+  stroke: #c1a18f;
+  stroke-width: 58;
+  stroke-linecap: round;
+}
+.surgery-canal-repaired {
+  fill: none;
+  stroke: #087d79;
+  stroke-width: 11;
+  stroke-linecap: round;
+}
+.surgery-canal-repaired.is-partial {
+  stroke-dasharray: 17 9;
+}
+.surgery-middle-ear-space {
+  fill: #f2dfd4;
+  stroke: #a77e6a;
+  stroke-width: 8;
+}
+.surgery-et-path {
+  fill: none;
+  stroke: #b9917e;
+  stroke-width: 48;
+  stroke-linecap: round;
+}
+.surgery-nasopharynx {
+  fill: none;
+  stroke: #b9917e;
+  stroke-width: 40;
+  stroke-linecap: round;
+}
+.surgery-balloon-catheter {
+  fill: none;
+  stroke: #1d5f9f;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+.surgery-balloon {
+  fill: rgb(40 156 152 / 0.42);
+  stroke: #087d79;
+  stroke-width: 6;
+}
+.surgery-balloon.is-partial {
+  stroke-dasharray: 11 7;
+}
+
+.surgery-marker circle {
+  fill: #b91c1c;
+  stroke: #fff;
+  stroke-width: 4;
+}
+.surgery-marker.is-status circle {
+  fill: #9a5a13;
+}
+.surgery-marker.is-selected circle {
+  stroke: #0f172a;
+  stroke-width: 7;
+}
+.surgery-marker text {
+  fill: #fff;
+  font-size: 16px;
+  font-weight: 850;
+  text-anchor: middle;
+}
+
+.surgery-layer-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  border-top: 1px solid #dce6e2;
+  padding: 12px;
+  background: #fff;
+}
+.surgery-status-only-list {
+  border: 1px solid #dce6e2;
+  border-radius: 10px;
+}
+.surgery-layer-row {
+  display: grid;
+  min-width: 0;
+  min-height: 50px;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  border: 1px solid #dce6e2;
+  border-radius: 8px;
+  background: #fff;
+  padding: 9px;
+  color: #17302d;
+  text-align: left;
+  cursor: pointer;
+}
+.surgery-layer-row:hover {
+  border-color: #8fb4a6;
+}
+.surgery-layer-row:focus-visible {
+  outline: 2px solid #35615a;
+  outline-offset: 2px;
+}
+.surgery-layer-row.is-active {
+  border-color: #173f3b;
+  background: #f3f8f5;
+}
+.surgery-layer-number {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  background: #173f3b;
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+.surgery-layer-copy {
+  display: block;
+  min-width: 0;
+}
+.surgery-layer-copy strong,
+.surgery-layer-copy small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.surgery-layer-copy strong {
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+.surgery-layer-copy small {
+  margin-top: 3px;
+  color: #5b716a;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+.surgery-scene-empty {
+  margin: 0;
+  border-top: 1px solid #dce6e2;
+  padding: 12px 16px;
+  background: #fff;
+  color: #637871;
+  font-size: 0.8rem;
+}
+.surgery-text-only-notice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 10px;
+  border: 1px solid #edd49b;
+  border-radius: 8px;
+  background: #fffaf0;
+  padding: 11px 13px;
+  color: #754d0d;
+  font-size: 0.8rem;
+}
+.surgery-diagram-empty {
+  display: grid;
+  gap: 4px;
+  border: 1px dashed #b8cbc3;
+  border-radius: 10px;
+  background: #f8fbf9;
+  padding: 24px;
+  color: #4f6960;
+}
+.surgery-diagram-empty strong {
+  color: #17302d;
+}
+.surgery-diagram-empty span {
+  font-size: 0.82rem;
+}
+
+@media (max-width: 700px) {
+  .surgery-layer-list {
+    grid-template-columns: 1fr;
+  }
+  .surgery-scene-header {
+    padding: 11px 12px;
+  }
+  .surgery-scene-meta {
+    max-width: 55%;
+  }
+  .surgery-scene-meta span {
+    white-space: normal;
+    text-align: right;
+  }
+  .surgery-marker {
+    display: none;
+  }
+}
+
+.atlas-thumb-wrap {
+  display: block;
+  width: 92px;
+  height: 92px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.atlas-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.print-export-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0.35in;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    display: block !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .surface,
+  .diagram-frame {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+
+  .surface {
+    border: 0;
+    padding: 0 !important;
+  }
+
+  .print-export-only {
+    display: block;
+    color: #0f172a;
+  }
+
+  .print-export-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid #94a3b8;
+    padding-bottom: 0.12in;
+  }
+
+  .print-export-header h2 {
+    margin: 0;
+    font-size: 17pt;
+    line-height: 1.15;
+  }
+
+  .print-export-header p {
+    margin: 0.04in 0 0;
+    font-size: 9pt;
+    color: #334155;
+  }
+
+  .print-diagram-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.12in;
+    margin-top: 0.16in;
+  }
+
+  .print-diagram-stack {
+    display: grid;
+    gap: 0.14in;
+    margin-top: 0.16in;
+  }
+
+  .print-diagram-stack .surgery-scene {
+    break-inside: avoid;
+    border: 1px solid #94a3b8;
+    box-shadow: none;
+  }
+
+  .print-diagram-stack .surgery-layer-row {
+    min-height: 0;
+  }
+
+  .print-diagram-stack .atlas-template-panel {
+    break-inside: avoid;
+    gap: 0.04in;
+  }
+
+  .print-diagram-stack .atlas-template-svg {
+    display: block !important;
+    max-height: 3.05in;
+    border: 1px solid #94a3b8;
+  }
+
+  .print-diagram-stack .atlas-mobile-diagram {
+    display: none !important;
+  }
+
+  .print-diagram-stack .atlas-inline-attribution {
+    margin: 0;
+    font-size: 6.8pt;
+  }
+
+  .print-diagram-stack .procedure-atlas-panel {
+    break-inside: avoid;
+    gap: 0.04in;
+    border: 1px solid #94a3b8;
+  }
+
+  .print-diagram-stack .procedure-atlas-layout {
+    grid-template-columns: minmax(0, 1.6fr) minmax(1.65in, 0.55fr);
+    gap: 0.07in;
+    padding: 0 0.08in;
+  }
+
+  .print-diagram-stack .procedure-atlas-callouts {
+    grid-template-columns: 1fr;
+    gap: 0.04in;
+  }
+
+  .print-diagram-stack .procedure-atlas-callouts button,
+  .print-diagram-stack .procedure-atlas-callouts li > div {
+    padding: 0.05in;
+  }
+
+  .print-diagram-stack .procedure-atlas-footer {
+    padding: 0.06in 0.08in 0;
+  }
+
+  .print-diagram-grid .diagram-frame {
+    border: 1px solid #94a3b8;
+  }
+
+  .print-diagram-grid .diagram-svg {
+    max-height: 3.25in;
+  }
+
+  .print-explanation {
+    margin-top: 0.14in;
+    font-size: 9.5pt;
+    line-height: 1.35;
+  }
+
+  .print-explanation p {
+    margin: 0 0 0.07in;
+  }
+
+  .print-export-only .preop-guide {
+    margin-top: 0.12in;
+    gap: 0.08in;
+  }
+
+  .print-export-only .preop-guide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.07in;
+  }
+
+  .print-export-only .preop-guide-card {
+    padding: 0.08in;
+    break-inside: avoid;
+  }
+
+  .print-export-only .preop-guide-card h4 {
+    font-size: 8.5pt;
+  }
+  .print-export-only .preop-guide-card ul {
+    margin-top: 0.04in;
+    font-size: 7.4pt;
+    line-height: 1.3;
+  }
+  .print-export-only .preop-change-notice {
+    padding: 0.07in;
+    font-size: 7.4pt;
+    line-height: 1.3;
+  }
+
+  .print-disclaimer {
+    margin-top: 0.12in;
+    border: 1px solid #94a3b8;
+    padding: 0.08in;
+    font-size: 8.5pt;
+    line-height: 1.3;
+  }
+
+  .legend-swatch {
+    print-color-adjust: exact;
+  }
+}
+
+/* High-fidelity deterministic otology illustration system */
+.surgery-scene-canvas {
+  background: #fffdfb;
+}
+.surgery-scene-bg {
+  fill: var(--atlas-paper);
+}
+.surgery-field-glow {
+  fill: var(--atlas-field-glow);
+  pointer-events: none;
+}
+.surgery-marker *,
+.surgery-annotation-leader {
+  vector-effect: non-scaling-stroke;
+}
+
+/* Otoscopic camera */
+.surgery-canal-shadow {
+  fill: #6f3542;
+  opacity: 0.34;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-canal-ring {
+  fill: var(--atlas-skin);
+  stroke: #9f5d5d;
+  stroke-width: 3.5;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-canal-lumen {
+  fill: var(--atlas-canal);
+  stroke: #7c4651;
+  stroke-width: 3;
+}
+.surgery-tm-annulus {
+  fill: none;
+  stroke: #ecd4c8;
+  stroke-width: 15;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-tm-base {
+  fill: var(--atlas-tm);
+  stroke: #676b7e;
+  stroke-width: 2.6;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-tm-mucosal-texture {
+  fill: var(--atlas-mucosal-vessels);
+  stroke: none;
+  opacity: 0.34;
+  pointer-events: none;
+}
+.surgery-canal-overhang {
+  fill: var(--atlas-skin);
+  stroke: #9a5959;
+  stroke-width: 2.5;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-pars-flaccida {
+  fill: none;
+  stroke: #c99192;
+  stroke-width: 4.5;
+  opacity: 0.8;
+}
+.surgery-tm-fiber {
+  fill: none;
+  stroke: #747a91;
+  stroke-width: 1.05;
+  opacity: 0.27;
+}
+.surgery-tm-fiber.is-soft {
+  opacity: 0.16;
+}
+.surgery-tm-radials {
+  fill: none;
+  stroke: #747b91;
+  stroke-width: 1.15;
+  opacity: 0.28;
+}
+.surgery-tm-vessels {
+  fill: none;
+  stroke: #a8505a;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  opacity: 0.36;
+}
+.surgery-malleolar-folds {
+  fill: none;
+  stroke: #a16e65;
+  stroke-width: 3;
+  opacity: 0.72;
+}
+.surgery-malleus-handle {
+  fill: var(--atlas-ossicle);
+  stroke: #8a5739;
+  stroke-width: 2.2;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-malleus-highlight {
+  fill: none;
+  stroke: #fff4d7;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  opacity: 0.78;
+}
+.surgery-umbo {
+  fill: #8e6047;
+  stroke: #f5d6a8;
+  stroke-width: 2;
+}
+.surgery-cone-of-light {
+  fill: #fff;
+  opacity: 0.29;
+  filter: var(--atlas-inner-soften);
+}
+.surgery-retraction-pocket {
+  fill: #7b4050;
+  opacity: 0.16;
+  filter: var(--atlas-inner-soften);
+}
+.surgery-finding-dashed {
+  fill: none;
+  stroke: #a54c53;
+  stroke-width: 3;
+  stroke-dasharray: 10 8;
+}
+.surgery-perforation-rim {
+  fill: none;
+  stroke: #d99a95;
+  stroke-width: 10;
+  stroke-linejoin: round;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-perforation-rim.is-repaired {
+  stroke: #ae8177;
+  stroke-width: 4.5;
+  filter: none;
+  opacity: 0.82;
+}
+.surgery-perforation,
+.surgery-perforation-surface {
+  fill: var(--atlas-perforation);
+  stroke: #74333d;
+  stroke-width: 2.8;
+  opacity: 1;
+}
+.surgery-perforation-depth {
+  fill: var(--atlas-perforation);
+  stroke: none;
+  opacity: 0.72;
+  filter: var(--atlas-inner-soften);
+}
+.surgery-perforation-highlight {
+  fill: #f5aaa4;
+  opacity: 0.22;
+  filter: var(--atlas-inner-soften);
+}
+.surgery-repaired-defect-outline,
+.surgery-repaired-defect-surface {
+  fill: none;
+  stroke: #8a6e67;
+  stroke-width: 2.4;
+  stroke-dasharray: 7 7;
+  opacity: 0.62;
+}
+.surgery-graft-overlay,
+.surgery-graft-surface {
+  fill: var(--atlas-fascia);
+  stroke: #7d6e55;
+  stroke-width: 3.2;
+  stroke-linejoin: round;
+  opacity: 0.91;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-graft-overlay.is-cartilage,
+.surgery-graft-surface.is-cartilage {
+  fill: var(--atlas-cartilage);
+  stroke: #76633a;
+  opacity: 0.95;
+}
+.surgery-graft-overlay.is-perichondrium,
+.surgery-graft-surface.is-perichondrium {
+  fill: var(--atlas-fascia);
+  stroke: #8a7664;
+  opacity: 0.78;
+}
+.surgery-graft-overlay.is-fat,
+.surgery-graft-surface.is-fat {
+  fill: var(--atlas-fat);
+  stroke: #a1762d;
+  opacity: 0.93;
+}
+.surgery-graft-overlay.is-butterfly,
+.surgery-graft-surface.is-butterfly {
+  stroke-width: 7;
+}
+.surgery-graft-overlay.is-lateral,
+.surgery-graft-surface.is-lateral {
+  stroke: #786d74;
+  stroke-width: 4.5;
+}
+.surgery-graft-material {
+  fill: var(--atlas-fascia-fibers);
+  stroke: none;
+  opacity: 0.58;
+  pointer-events: none;
+}
+.surgery-graft-material.is-cartilage {
+  fill: var(--atlas-cartilage-hatch);
+  opacity: 0.6;
+}
+.surgery-graft-material.is-fat {
+  fill: none;
+}
+.surgery-graft-fibers {
+  fill: none;
+  stroke: #796a4f;
+  stroke-width: 1.35;
+  opacity: 0.36;
+}
+.surgery-graft-highlight {
+  fill: none;
+  stroke: #fffbed;
+  stroke-width: 4;
+  opacity: 0.55;
+}
+.surgery-graft-window-fill {
+  fill: var(--atlas-fascia);
+  stroke: none;
+  opacity: 0.96;
+}
+.surgery-medial-graft-window.is-cartilage .surgery-graft-window-fill {
+  fill: var(--atlas-cartilage);
+}
+.surgery-medial-graft-window.is-perichondrium .surgery-graft-window-fill {
+  fill: var(--atlas-fascia);
+  opacity: 0.82;
+}
+.surgery-medial-graft-window.is-fat .surgery-graft-window-fill {
+  fill: var(--atlas-fat);
+}
+.surgery-graft-window-texture {
+  fill: var(--atlas-fascia-fibers);
+  stroke: none;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.surgery-medial-graft-window.is-cartilage .surgery-graft-window-texture {
+  fill: var(--atlas-cartilage-hatch);
+  opacity: 0.62;
+}
+.surgery-medial-graft-window.is-fat .surgery-graft-window-texture {
+  fill: none;
+}
+.surgery-graft-underlay-outline {
+  fill: none;
+  stroke: #756c5e;
+  stroke-width: 1.45;
+  stroke-dasharray: 3 5;
+  stroke-linejoin: round;
+  opacity: 0.58;
+}
+.surgery-butterfly-lateral-wing {
+  fill: var(--atlas-cartilage);
+  stroke: #705c35;
+  stroke-width: 2.5;
+  opacity: 0.96;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-butterfly-groove {
+  fill: none;
+  stroke: #4f432e;
+  stroke-width: 5.5;
+  opacity: 0.45;
+}
+.surgery-fat-lobules ellipse {
+  fill: var(--atlas-fat);
+  stroke: #a57b30;
+  stroke-width: 1.4;
+  opacity: 0.58;
+}
+.surgery-geometry-contract {
+  fill: transparent !important;
+  stroke: transparent !important;
+  opacity: 0 !important;
+  filter: none !important;
+  pointer-events: none;
+}
+.surgery-myringotomy {
+  fill: none;
+  stroke: #843640;
+  stroke-width: 5;
+  stroke-linecap: round;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-device-shadow {
+  fill: #3b2630;
+  opacity: 0.28;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-device-fill {
+  fill: var(--atlas-metal);
+  stroke: #366f82;
+  stroke-width: 2.5;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-device-untyped {
+  opacity: 0.82;
+}
+.surgery-device-inner-lip {
+  fill: #9fc2ca;
+  stroke: #3b788c;
+  stroke-width: 2;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-device-opening {
+  fill: #1f3440;
+  stroke: #dff7fa;
+  stroke-width: 1.5;
+}
+.surgery-device-highlight {
+  fill: #fff;
+  opacity: 0.73;
+}
+.surgery-tube-wing {
+  fill: none;
+  stroke: #4f93aa;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+.surgery-t-tube-shadow {
+  fill: none;
+  stroke-width: 15;
+  stroke-linecap: round;
+}
+
+/* Middle-ear cutaway */
+.surgery-middle-ear-bone {
+  fill: var(--atlas-bone);
+  stroke: #b38668;
+  stroke-width: 3;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-middle-ear-cavity {
+  fill: var(--atlas-cavity);
+  stroke: #8b5551;
+  stroke-width: 2.4;
+  opacity: 0.76;
+}
+.surgery-cavity-line {
+  fill: none;
+  stroke: #f1dfcf;
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+.surgery-promontory {
+  fill: var(--atlas-mucosa);
+  stroke: #925d5f;
+  stroke-width: 2;
+  opacity: 0.82;
+}
+.surgery-promontory-vessels {
+  fill: none;
+  stroke: #a84650;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  opacity: 0.42;
+}
+.surgery-pyramidal-eminence {
+  fill: var(--atlas-bone-cut);
+  stroke: #9b6e5d;
+  stroke-width: 1.8;
+}
+.surgery-stapedius-tendon {
+  fill: none;
+  stroke: #f5dfca;
+  stroke-width: 4;
+  stroke-linecap: round;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-sinus-tympani {
+  fill: #5a3742;
+  stroke: #d4a493;
+  stroke-width: 2;
+  opacity: 0.72;
+}
+.surgery-scutum-foreground {
+  fill: var(--atlas-bone);
+  stroke: #aa7a62;
+  stroke-width: 2.2;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-tm-side-shadow {
+  fill: #4d313b;
+  opacity: 0.26;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-tm-side,
+.surgery-tm-side-line {
+  fill: var(--atlas-tm-side);
+  stroke: #737685;
+  stroke-width: 2.8;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-tm-side-highlight {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: 0.62;
+}
+.surgery-vestibule,
+.surgery-vestibule-small {
+  fill: var(--atlas-cochlea);
+  stroke: #8b6658;
+  stroke-width: 2.5;
+  opacity: 0.78;
+}
+.surgery-cochlea-reference {
+  fill: var(--atlas-cochlea);
+  stroke: #8b6658;
+  stroke-width: 2.3;
+  opacity: 0.66;
+}
+.surgery-cochlea-reference-spiral {
+  fill: none;
+  stroke: #76564f;
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.63;
+}
+.surgery-facial-nerve-canal {
+  fill: none;
+  stroke: #c79a47;
+  stroke-width: 22;
+  stroke-linecap: round;
+  opacity: 0.32;
+}
+.surgery-facial-nerve {
+  fill: none;
+  stroke: var(--atlas-nerve);
+  stroke-width: 10;
+  stroke-linecap: round;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-oval-window-niche,
+.surgery-round-window-niche {
+  fill: #5f3945;
+  stroke: #e4b8a9;
+  stroke-width: 3;
+  opacity: 0.83;
+}
+.surgery-eustachian-opening {
+  fill: none;
+  stroke: #bd7d74;
+  stroke-width: 24;
+  stroke-linecap: round;
+  opacity: 0.5;
+}
+.surgery-chorda-tympani {
+  fill: none;
+  stroke: #e1bd73;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  opacity: 0.82;
+}
+.surgery-tensor-tendon {
+  fill: none;
+  stroke: #f6e4cc;
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.surgery-ossicle {
+  fill: var(--atlas-ossicle);
+  stroke: #875735;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-ossicle.small {
+  fill: none;
+  stroke: var(--atlas-ossicle);
+  stroke-width: 10;
+}
+.surgery-ossicle.is-reference,
+.surgery-ossicle-node.is-reference,
+.surgery-footplate.is-reference {
+  opacity: 0.54;
+}
+.surgery-ossicle.is-documented,
+.surgery-ossicle-node.is-documented,
+.surgery-footplate.is-documented {
+  opacity: 1;
+}
+.surgery-ossicle.is-abnormal {
+  stroke: #926340;
+  stroke-width: 2.8;
+  stroke-dasharray: none;
+  opacity: 0.68;
+}
+.surgery-ossicle-node {
+  fill: var(--atlas-ossicle);
+  stroke: #80512f;
+  stroke-width: 2.3;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-ossicle-highlight {
+  fill: none;
+  stroke: #fff5d8;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  opacity: 0.78;
+  pointer-events: none;
+}
+.surgery-ossicle-highlight.is-small {
+  stroke-width: 2;
+}
+.surgery-ossicle-highlight.is-reconstruction {
+  stroke-width: 2.5;
+}
+.surgery-malleoincudal-joint {
+  fill: var(--atlas-ossicle);
+  stroke: #8a5b38;
+  stroke-width: 2.2;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-malleoincudal-joint.is-reference {
+  opacity: 0.46;
+}
+.surgery-malleoincudal-joint.is-documented {
+  opacity: 0.9;
+}
+.surgery-stapes-obturator {
+  fill: none;
+  stroke: #a97949;
+  stroke-width: 2;
+  opacity: 0.65;
+}
+.surgery-absent-gap {
+  fill: none;
+  stroke: none;
+}
+.surgery-absence-cross {
+  fill: none;
+  stroke: #8f3942;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+}
+.surgery-footplate {
+  fill: var(--atlas-ossicle);
+  stroke: #875735;
+  stroke-width: 2.4;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-footplate.is-fixed {
+  fill: #c18d58;
+  stroke: #8d373e;
+  stroke-width: 5;
+}
+.surgery-finding-gap {
+  fill: none;
+  stroke: none;
+}
+.surgery-cement-shadow {
+  fill: none;
+  stroke: #4b2b28;
+  stroke-width: 23;
+  stroke-linecap: round;
+  opacity: 0.25;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-cement-bridge {
+  fill: none;
+  stroke: var(--atlas-cement);
+  stroke-width: 19;
+  stroke-linecap: round;
+}
+.surgery-cement-highlight {
+  fill: none;
+  stroke: #ffe5b2;
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+.surgery-prosthesis-shadow {
+  fill: none;
+  stroke: #243943;
+  stroke-width: 13;
+  stroke-linecap: round;
+  opacity: 0.25;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-prosthesis-line {
+  fill: none;
+  stroke: var(--atlas-metal);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.surgery-prosthesis-body,
+.surgery-prosthesis-cup,
+.surgery-prosthesis-head,
+.surgery-prosthesis-foot {
+  fill: var(--atlas-metal);
+  stroke: #39758b;
+  stroke-width: 2.4;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-prosthesis-cup {
+  fill: #dff3f6;
+}
+.surgery-prosthesis-cup-rim {
+  fill: none;
+  stroke: #396f82;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.surgery-prosthesis-highlight-fill {
+  fill: #fff;
+  opacity: 0.58;
+}
+.surgery-prosthesis-highlight {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+.surgery-cartilage-interposition,
+.surgery-protection-cap {
+  fill: var(--atlas-cartilage);
+  stroke: #7b6738;
+  stroke-width: 2.8;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-cartilage-texture,
+.surgery-protection-cap-texture {
+  fill: var(--atlas-cartilage-hatch);
+  stroke: none;
+  opacity: 0.65;
+}
+.surgery-cartilage-highlight {
+  fill: none;
+  stroke: #fff4ce;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  opacity: 0.62;
+}
+.surgery-autologous-reconstruction {
+  fill: none;
+  stroke: var(--atlas-ossicle);
+  stroke-width: 17;
+  stroke-linecap: round;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-piston-shadow {
+  fill: none;
+  stroke: #263b43;
+  stroke-width: 9;
+  stroke-linecap: round;
+  opacity: 0.24;
+}
+.surgery-piston {
+  fill: none;
+  stroke: var(--atlas-metal);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.surgery-piston-loop {
+  fill: none;
+  stroke: #4a859a;
+  stroke-width: 5;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-piston-tip {
+  fill: #dff7fa;
+  stroke: #356d80;
+  stroke-width: 2;
+}
+.surgery-fenestra {
+  fill: #537080;
+  stroke: #e8f8fa;
+  stroke-width: 2.4;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-fenestra.is-stapedectomy {
+  fill: #896c70;
+  opacity: 0.86;
+}
+.surgery-stapedectomy-seal {
+  fill: var(--atlas-fascia);
+  stroke: #8c7961;
+  stroke-width: 2;
+  opacity: 0.88;
+}
+.surgery-stapes-seal-fibers {
+  fill: none;
+  stroke: #756750;
+  stroke-width: 1.25;
+  opacity: 0.45;
+}
+.surgery-round-window-recess {
+  fill: #583844;
+  stroke: #d6a799;
+  stroke-width: 2;
+}
+.surgery-round-window-membrane {
+  fill: #90aab6;
+  stroke: #e9d2c7;
+  stroke-width: 1.8;
+  opacity: 0.76;
+}
+.surgery-oval-window-niche.is-stapes-closeup {
+  fill: #5a3742;
+  stroke-width: 2.2;
+}
+.surgery-footplate.is-stapes-closeup {
+  stroke-width: 2.2;
+}
+.surgery-footplate.is-stapes-closeup.is-fixed {
+  stroke-width: 3.5;
+}
+.surgery-stapes-reconstruction.is-closeup .surgery-piston {
+  stroke-width: 4;
+}
+.surgery-stapes-reconstruction.is-closeup .surgery-piston-shadow {
+  stroke-width: 7;
+}
+.surgery-tm-side-foreground {
+  fill: var(--atlas-tm-side);
+  stroke: #747886;
+  stroke-width: 2.4;
+  opacity: 0.92;
+  filter: var(--atlas-small-shadow);
+}
+
+/* Mastoid and cholesteatoma camera */
+.surgery-temporal-bone,
+.surgery-canal-bone,
+.surgery-et-skull-base {
+  fill: var(--atlas-bone);
+  stroke: #b68767;
+  stroke-width: 3;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-temporal-bone-texture {
+  fill: var(--atlas-bone-speckle);
+  stroke: none;
+  opacity: 0.58;
+  pointer-events: none;
+}
+.surgery-canal-lumen-side {
+  fill: var(--atlas-cavity);
+  stroke: #8d5554;
+  stroke-width: 2.2;
+  opacity: 0.83;
+}
+.surgery-canal-line {
+  fill: none;
+  stroke: #e2ad98;
+  stroke-width: 16;
+  stroke-linecap: round;
+  opacity: 0.62;
+}
+.surgery-canal-line.is-lower {
+  opacity: 0.46;
+}
+.surgery-mastoid-shell {
+  fill: var(--atlas-bone-cut);
+  stroke: #a87461;
+  stroke-width: 3;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-antrum {
+  fill: var(--atlas-cavity);
+  stroke: #9a665d;
+  stroke-width: 2.4;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-aditus {
+  fill: none;
+  stroke: #71404a;
+  stroke-width: 16;
+  stroke-linecap: round;
+  opacity: 0.72;
+}
+.surgery-tegmen {
+  fill: none;
+  stroke: #f6e9d7;
+  stroke-width: 13;
+  stroke-linecap: round;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-sigmoid-sinus {
+  fill: none;
+  stroke: var(--atlas-sinus);
+  stroke-width: 29;
+  stroke-linecap: round;
+  opacity: 0.8;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-sinodural-angle {
+  fill: none;
+  stroke: #d4e4ed;
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: 0.76;
+}
+.surgery-lateral-canal {
+  fill: #86c1bb;
+  stroke: #487f7f;
+  stroke-width: 2.5;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-mastoid-septa {
+  fill: none;
+  stroke: #d8b99b;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.48;
+}
+.surgery-mastoid-cell {
+  fill: var(--atlas-bone-deep);
+  stroke: #a87566;
+  stroke-width: 1.7;
+}
+.surgery-mastoid-cell.is-deep {
+  opacity: 0.58;
+}
+.surgery-mastoid-cell.is-mid {
+  opacity: 0.72;
+}
+.surgery-mastoid-cell.is-superficial {
+  opacity: 0.84;
+}
+.surgery-mastoid-cell-highlight {
+  fill: #f9d8c1;
+  stroke: none;
+  opacity: 0.09;
+}
+.surgery-facial-recess-boundary {
+  fill: none;
+  stroke: #e4b8a0;
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.64;
+}
+.surgery-digastric-ridge {
+  fill: none;
+  stroke: #ecd7bc;
+  stroke-width: 12;
+  stroke-linecap: round;
+  opacity: 0.72;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-posterior-canal-wall {
+  fill: none;
+  stroke: var(--atlas-bone);
+  stroke-width: 24;
+  stroke-linecap: round;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-mastoid-landmarks-foreground {
+  pointer-events: none;
+}
+.surgery-mastoid-landmarks-foreground .surgery-tegmen,
+.surgery-mastoid-landmarks-foreground .surgery-sigmoid-sinus,
+.surgery-mastoid-landmarks-foreground .surgery-facial-nerve,
+.surgery-mastoid-landmarks-foreground .surgery-lateral-canal {
+  opacity: 0.55;
+  filter: none;
+}
+.surgery-disease-mass {
+  fill: var(--atlas-cholesteatoma);
+  stroke: #8f7b72;
+  stroke-width: 2.3;
+  filter: var(--atlas-pearl-glow);
+}
+.surgery-disease-core {
+  fill: #fffaf0;
+  opacity: 0.8;
+}
+.surgery-disease-whorl {
+  fill: none;
+  stroke: #a39486;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+.surgery-disease-corridor {
+  fill: none;
+  stroke: var(--atlas-cholesteatoma);
+  stroke-width: 19;
+  stroke-linecap: round;
+  opacity: 0.78;
+  filter: var(--atlas-pearl-glow);
+}
+.surgery-mastoid-action-shadow {
+  fill: #3e2832;
+  stroke: none;
+  opacity: 0.34;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-mastoid-action {
+  fill: var(--atlas-cavity);
+  stroke: #8f5b56;
+  stroke-width: 5;
+  opacity: 0.98;
+}
+.surgery-mastoid-action.is-canal-wall-down {
+  fill: var(--atlas-cavity);
+  stroke: #75404a;
+}
+.surgery-mastoid-action.is-subtotal-petrosectomy {
+  fill: #68424b;
+  stroke: #56313b;
+}
+.surgery-drilled-cavity-highlight {
+  fill: none;
+  stroke: #e3b8a6;
+  stroke-width: 7;
+  stroke-linecap: round;
+  opacity: 0.46;
+}
+.surgery-mastoid-action.is-obliteration {
+  fill: #b9a488;
+  stroke: #7e6958;
+  opacity: 0.82;
+}
+.surgery-obliteration-neutral {
+  fill: var(--atlas-bone-speckle);
+  stroke: #9d7960;
+  stroke-width: 2;
+  opacity: 0.72;
+}
+.surgery-canal-wall-reconstruction-shadow {
+  fill: none;
+  stroke: #4b2d31;
+  stroke-width: 19;
+  opacity: 0.3;
+}
+.surgery-mastoid-action {
+  stroke-dasharray: none;
+}
+.surgery-canal-wall-reconstruction {
+  fill: none;
+  stroke: var(--atlas-bone);
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-dasharray: none;
+}
+.surgery-canal-wall-highlight {
+  fill: none;
+  stroke: #fff4dc;
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.72;
+}
+.surgery-blind-sac-closure {
+  fill: none;
+  stroke: var(--atlas-skin);
+  stroke-width: 17;
+  stroke-linecap: round;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-et-closure {
+  fill: none;
+  stroke: #d9ad8f;
+  stroke-width: 11;
+  stroke-linecap: round;
+  opacity: 0.82;
+}
+
+/* Cochlear implant camera */
+.surgery-skull-outline,
+.surgery-skull-profile {
+  fill: var(--atlas-bone);
+  stroke: #ad7e65;
+  stroke-width: 3;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-scalp-layer {
+  fill: none;
+  stroke: #d98e87;
+  stroke-width: 20;
+  stroke-linecap: round;
+  opacity: 0.5;
+}
+.surgery-scalp-overlay {
+  fill: none;
+  stroke: #d98e87;
+  stroke-width: 18;
+  stroke-linecap: round;
+  opacity: 0.58;
+}
+.surgery-mastoid-window {
+  fill: var(--atlas-cavity);
+  stroke: #a46e61;
+  stroke-width: 3;
+  opacity: 0.7;
+}
+.atlas-cochlear-view .surgery-mastoid-window,
+.atlas-cochlear-view .surgery-canal-lumen-side {
+  fill: none;
+}
+.surgery-facial-recess {
+  fill: none;
+  stroke: #83505a;
+  stroke-width: 17;
+  stroke-linecap: round;
+  opacity: 0.65;
+}
+.surgery-ci-inset {
+  fill: #fffaf5;
+  stroke: #cdb9ad;
+  stroke-width: 2;
+}
+.surgery-ci-inset-bone {
+  fill: var(--atlas-bone-cut);
+  stroke: #ad7c65;
+  stroke-width: 2.5;
+}
+.surgery-facial-recess-window {
+  fill: #5a3843;
+  stroke: #e1b6a1;
+  stroke-width: 2;
+  opacity: 0.78;
+}
+.surgery-semicircular-canal {
+  fill: none;
+  stroke: #73b1ae;
+  stroke-width: 17;
+  stroke-linecap: round;
+  opacity: 0.78;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-semicircular-canal.is-superior {
+  stroke-width: 14;
+  opacity: 0.64;
+}
+.surgery-cochlea-basal-bridge {
+  fill: none;
+  stroke: #c09470;
+  stroke-width: 26;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+.surgery-cochlea-shell {
+  fill: var(--atlas-cochlea);
+  stroke: #926658;
+  stroke-width: 3.2;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-cochlea-lumen {
+  fill: #603c48;
+  stroke: #ddb194;
+  stroke-width: 3;
+  opacity: 0.66;
+}
+.atlas-cochlear-view .surgery-cochlea-lumen {
+  fill: none;
+  stroke: #6b424b;
+  stroke-width: 29;
+  stroke-linecap: round;
+  opacity: 0.72;
+}
+.surgery-cochlea-spiral {
+  fill: none;
+  stroke: #e3b990;
+  stroke-width: 22;
+  stroke-linecap: round;
+  opacity: 0.88;
+}
+.surgery-cochlea-scala {
+  fill: none;
+  stroke: #8a5960;
+  stroke-width: 10;
+  stroke-linecap: round;
+  opacity: 0.84;
+}
+.surgery-round-window-path {
+  fill: none;
+  stroke: #f5d7ba;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+.surgery-receiver-shadow {
+  fill: #26353e;
+  opacity: 0.27;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-receiver-base,
+.surgery-implant-body {
+  fill: var(--atlas-metal);
+  stroke: #447d91;
+  stroke-width: 3;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-receiver-coil {
+  fill: none;
+  stroke: #d8f1f4;
+  stroke-width: 8;
+  opacity: 0.78;
+}
+.surgery-receiver-magnet {
+  fill: #718e9a;
+  stroke: #e8f6f7;
+  stroke-width: 3;
+}
+.surgery-receiver-electronics {
+  fill: #42758a;
+  stroke: #d9eef1;
+  stroke-width: 2.5;
+}
+.surgery-receiver-highlight {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0.62;
+}
+.surgery-electrode-shadow {
+  fill: none;
+  stroke: #293b42;
+  stroke-width: 15;
+  stroke-linecap: round;
+  opacity: 0.25;
+}
+.surgery-electrode-shadow.is-split-array {
+  stroke-width: 11;
+}
+.surgery-electrode-path {
+  fill: none;
+  stroke: var(--atlas-metal);
+  stroke-width: 9;
+  stroke-linecap: round;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-electrode-lead {
+  fill: none;
+  stroke: var(--atlas-metal);
+  stroke-width: 7;
+  stroke-linecap: round;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-electrode-lead.is-split-array {
+  stroke-width: 5.5;
+}
+.surgery-electrode-overview-lead,
+.surgery-electrode-split-trunk {
+  fill: none;
+  stroke: var(--atlas-metal);
+  stroke-width: 6;
+  stroke-linecap: round;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-scale-transition {
+  fill: none;
+  stroke: #7f6d68;
+  stroke-width: 1.4;
+  stroke-dasharray: 4 5;
+  opacity: 0.56;
+}
+.surgery-electrode-path.is-partial {
+  stroke-dasharray: 13 7;
+}
+.surgery-electrode-path.is-split-array {
+  stroke-width: 7;
+  stroke-dasharray: none;
+}
+.surgery-electrode-path.is-split-array.is-partial {
+  stroke-dasharray: 11 6;
+}
+.surgery-electrode-contact {
+  fill: #eaf8f8;
+  stroke: #426f7e;
+  stroke-width: 1.6;
+}
+.surgery-electrode-contact-highlight {
+  fill: #fff;
+  opacity: 0.85;
+}
+.surgery-partial-endpoint {
+  fill: #fff8ee;
+  stroke: #95434a;
+  stroke-width: 2.5;
+}
+.surgery-partial-marker {
+  fill: none;
+  stroke: #765a58;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+.surgery-round-window-overhang-removed {
+  fill: none;
+  stroke: #f2d4ba;
+  stroke-width: 8;
+  stroke-linecap: round;
+  opacity: 0.78;
+}
+.surgery-cochleostomy-opening {
+  fill: #4c3540;
+  stroke: #f1cfb7;
+  stroke-width: 2.3;
+  filter: var(--atlas-small-shadow);
+}
+
+/* Bone-conduction implant cutaway */
+.surgery-head-soft-tissue {
+  fill: var(--atlas-skin);
+  stroke: #a76263;
+  stroke-width: 2.5;
+  opacity: 0.6;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-scalp-outer {
+  fill: none;
+  stroke: #c86f72;
+  stroke-width: 12;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+.surgery-subcutaneous-layer {
+  fill: none;
+  stroke: #efb5a7;
+  stroke-width: 16;
+  stroke-linecap: round;
+  opacity: 0.58;
+}
+.surgery-skin-veil {
+  fill: var(--atlas-skin);
+  stroke: none;
+  opacity: 0.88;
+}
+.surgery-subcutaneous-veil {
+  fill: var(--atlas-skin);
+  stroke: #b86867;
+  stroke-width: 1.4;
+  opacity: 0.24;
+}
+.surgery-pinna {
+  fill: var(--atlas-skin);
+  stroke: #a25e5d;
+  stroke-width: 3;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-pinna-relief {
+  fill: none;
+  stroke: #a75f61;
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: 0.58;
+}
+.surgery-postauricular-sulcus {
+  fill: none;
+  stroke: #914f57;
+  stroke-width: 4;
+  opacity: 0.45;
+}
+.surgery-implant-pocket-guide {
+  fill: none;
+  stroke: #b47370;
+  stroke-width: 2;
+  stroke-dasharray: 8 7;
+  opacity: 0.44;
+}
+.surgery-bone-bed {
+  fill: #9b6a59;
+  stroke: #f0d8bc;
+  stroke-width: 3;
+}
+.surgery-implant-fixture,
+.surgery-implant-magnet,
+.surgery-implant-coil {
+  fill: var(--atlas-metal);
+  stroke: #417689;
+  stroke-width: 2.8;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-stage-one-interface {
+  fill: var(--atlas-metal);
+  stroke: #557985;
+  stroke-width: 2.2;
+  opacity: 0.82;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-stage-one-highlight {
+  fill: none;
+  stroke: #f4fbfb;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  opacity: 0.66;
+}
+.surgery-implant-thread {
+  fill: none;
+  stroke: #e8f5f7;
+  stroke-width: 2.2;
+  opacity: 0.75;
+}
+.surgery-intact-skin-line {
+  fill: none;
+  stroke: #b76163;
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.surgery-skin-breach {
+  fill: none;
+  stroke: #b76163;
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.surgery-abutment {
+  fill: var(--atlas-metal);
+  stroke: #3d7388;
+  stroke-width: 3;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-actuator-lead-shadow {
+  fill: none;
+  stroke: #263940;
+  stroke-width: 12;
+  opacity: 0.25;
+}
+.surgery-actuator-lead {
+  fill: none;
+  stroke: var(--atlas-metal);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.surgery-active-actuator {
+  fill: var(--atlas-metal);
+  stroke: #3d7388;
+  stroke-width: 3;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-active-actuator-core {
+  fill: #5a8492;
+  stroke: #d9eef0;
+  stroke-width: 2.5;
+}
+.surgery-fixation-screw {
+  fill: #dff0f2;
+  stroke: #486f7c;
+  stroke-width: 2;
+}
+.surgery-external-processor {
+  fill: var(--atlas-metal);
+  stroke: #3d7388;
+  stroke-width: 3;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-magnetic-coupling {
+  fill: none;
+  stroke: #6b8290;
+  stroke-width: 3;
+  stroke-dasharray: 4 4;
+}
+
+/* Canalplasty cutaway */
+.surgery-canal-bone {
+  fill: var(--atlas-bone);
+  stroke: #af7f64;
+  stroke-width: 3;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-canal-wall {
+  fill: none;
+  stroke: #c18f70;
+  stroke-width: 22;
+  stroke-linecap: round;
+  opacity: 0.84;
+}
+.surgery-canal-skin {
+  fill: none;
+  stroke: #e7a59a;
+  stroke-width: 5.5;
+  stroke-linecap: round;
+}
+.surgery-canal-expanded-lumen {
+  fill: var(--atlas-cavity);
+  stroke: #7d4a50;
+  stroke-width: 2.5;
+  opacity: 0.96;
+}
+.surgery-canal-expanded-sheen {
+  fill: var(--atlas-mucosal-vessels);
+  stroke: none;
+  opacity: 0.28;
+}
+.surgery-tmj-reference {
+  fill: none;
+  stroke: #b4866b;
+  stroke-width: 16;
+  opacity: 0.42;
+}
+.surgery-tmj-condyle {
+  fill: var(--atlas-bone-cut);
+  stroke: #a77760;
+  stroke-width: 2.5;
+  opacity: 0.72;
+}
+.surgery-mastoid-cell-cluster {
+  fill: none;
+  stroke: #b9876e;
+  stroke-width: 2;
+  opacity: 0.5;
+}
+.surgery-canal-cut-shadow {
+  fill: none;
+  stroke: #4e3035;
+  stroke-width: 24;
+  stroke-linecap: round;
+  opacity: 0.28;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-canal-repaired {
+  fill: none;
+  stroke: var(--atlas-bone);
+  stroke-width: 17;
+  stroke-linecap: round;
+}
+.surgery-canal-repaired.is-partial {
+  stroke-dasharray: none;
+}
+.surgery-canal-redraped-skin {
+  fill: none;
+  stroke: #e4a098;
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0.88;
+}
+.surgery-canal-residual-contour {
+  fill: none;
+  stroke: #b77d65;
+  stroke-width: 12;
+  stroke-linecap: round;
+  opacity: 0.82;
+}
+
+/* Eustachian-tube cutaway */
+.surgery-middle-ear-space {
+  fill: var(--atlas-cavity);
+  stroke: #9b625d;
+  stroke-width: 3;
+  opacity: 0.78;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-et-bony-segment {
+  fill: none;
+  stroke: #d6b38e;
+  stroke-width: 43;
+  stroke-linecap: round;
+}
+.surgery-et-cartilaginous-segment {
+  fill: none;
+  stroke: #b47c78;
+  stroke-width: 51;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+.surgery-et-cartilage-plate {
+  fill: var(--atlas-cartilage);
+  stroke: #8d6f55;
+  stroke-width: 2;
+  opacity: 0.7;
+}
+.surgery-et-lumen {
+  fill: none;
+  stroke: #5f3948;
+  stroke-width: 13;
+  stroke-linecap: round;
+  opacity: 0.84;
+}
+.surgery-et-isthmus {
+  fill: #6f4550;
+  stroke: #f1c9b3;
+  stroke-width: 2;
+}
+.surgery-nasopharynx {
+  fill: none;
+  stroke: #c98683;
+  stroke-width: 36;
+  stroke-linecap: round;
+  opacity: 0.72;
+}
+.surgery-torus-tubarius {
+  fill: none;
+  stroke: #e2a49b;
+  stroke-width: 17;
+  stroke-linecap: round;
+}
+.surgery-tensor-veli {
+  fill: none;
+  stroke: #c98683;
+  stroke-width: 15;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+.surgery-levator-veli {
+  fill: none;
+  stroke: #db9f94;
+  stroke-width: 13;
+  stroke-linecap: round;
+  opacity: 0.52;
+}
+.surgery-nasal-floor {
+  fill: none;
+  stroke: #bc7d78;
+  stroke-width: 7;
+  stroke-linecap: round;
+  opacity: 0.6;
+}
+.surgery-et-treated-wall {
+  fill: none;
+  stroke: #6b9b96;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-dasharray: 5 5;
+  opacity: 0.78;
+}
+.surgery-et-treated-lumen {
+  fill: none;
+  stroke: none;
+}
+.surgery-inset-paper {
+  fill: #fffdf8;
+  stroke: #d9c7bb;
+  stroke-width: 2;
+  filter: var(--atlas-soft-shadow);
+}
+.surgery-inset-label {
+  fill: #574d49;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.surgery-inset-tube {
+  fill: none;
+  stroke: #b17b76;
+  stroke-width: 27;
+  stroke-linecap: round;
+  opacity: 0.58;
+}
+.surgery-balloon-catheter {
+  fill: none;
+  stroke: var(--atlas-metal);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.surgery-balloon {
+  fill: var(--atlas-balloon);
+  stroke: #3d8d8d;
+  stroke-width: 2.5;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-balloon.is-partial {
+  stroke-dasharray: 6 4;
+}
+.surgery-inset-isthmus {
+  fill: none;
+  stroke: #7b544f;
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
+/* Annotation polish */
+.surgery-annotation-leader {
+  fill: none;
+  stroke: #684b4f;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  opacity: 0.68;
+}
+.surgery-marker .surgery-annotation-target {
+  fill: #fff;
+  stroke: #9d3d45;
+  stroke-width: 2;
+  filter: none;
+}
+.surgery-marker .surgery-annotation-badge {
+  fill: #9d3d45;
+  stroke: #fff;
+  stroke-width: 2.5;
+  filter: var(--atlas-small-shadow);
+}
+.surgery-marker.is-status .surgery-annotation-badge {
+  fill: #9a6a26;
+}
+.surgery-marker.is-selected .surgery-annotation-target {
+  stroke: #9d3d45;
+  stroke-width: 2;
+}
+.surgery-marker.is-selected .surgery-annotation-badge {
+  stroke: #21343a;
+  stroke-width: 4;
+}
+.surgery-marker text {
+  fill: #fff;
+  font-size: 15px;
+  font-weight: 850;
+  text-anchor: middle;
+}
+
+/* Keep this final marker after the atlas rules so development rebuilds include the full system. */
+
+/* Studio shell — informed by focused scientific canvases and stepwise surgical training tools. */
+:root {
+  --studio-navy: #0d2030;
+  --studio-navy-soft: #142d40;
+  --studio-teal: #4fc0b5;
+  --studio-teal-dark: #167e78;
+  --studio-paper: #f5f1eb;
+  --studio-line: #d8e1e6;
+  --studio-text: #132c3b;
+  --studio-muted: #58707e;
+}
+
+body {
+  background: radial-gradient(circle at 10% 0%, rgb(79 192 181 / 0.08), transparent 26rem), #edf2f4;
+  color: var(--studio-text);
+}
+
+.app-workspace {
+  width: min(100%, 1780px);
+  padding: 24px clamp(14px, 2.4vw, 42px) 64px;
+}
+
+.product-header {
+  min-height: 82px;
+  border: 0;
+  border-radius: 20px 20px 0 0;
+  background: var(--studio-navy);
+  padding: 20px clamp(18px, 2.5vw, 34px);
+}
+
+.product-identity {
+  gap: 14px;
+}
+
+.product-mark {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 12px;
+  background: var(--studio-navy-soft);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+.product-mark span {
+  background: #d7f1ed;
+}
+
+.product-mark span:nth-child(2) {
+  background: var(--studio-teal);
+}
+
+.product-kicker {
+  color: #82d7cf;
+  font-size: 0.64rem;
+  letter-spacing: 0.13em;
+}
+
+.product-header h1 {
+  margin-top: 4px;
+  color: #fff;
+  font-size: 1.32rem;
+  letter-spacing: -0.02em;
+}
+
+.product-status {
+  border-color: rgb(131 215 207 / 0.25);
+  background: rgb(79 192 181 / 0.11);
+  color: #d8f5f1;
+}
+
+.education-mode-switcher {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.78fr) minmax(34rem, 1.22fr);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: end;
+  margin: 0 0 26px;
+  border: 0;
+  border-radius: 0 0 20px 20px;
+  background:
+    radial-gradient(circle at 82% 18%, rgb(79 192 181 / 0.13), transparent 23rem),
+    var(--studio-navy);
+  padding: 10px clamp(18px, 2.5vw, 34px) 30px;
+}
+
+.education-mode-switcher > div:first-child {
+  min-width: 0;
+}
+
+.education-mode-switcher .eyebrow {
+  color: #82d7cf;
+}
+
+.education-mode-switcher h2 {
+  margin: 8px 0 0;
+  color: #fff;
+  font-size: clamp(1.5rem, 2.1vw, 2.35rem);
+  font-weight: 720;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+
+.education-mode-summary {
+  max-width: 38rem;
+  margin: 12px 0 0;
+  color: #aec1cc;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.education-mode-switcher .purpose-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 14px;
+  background: rgb(3 17 27 / 0.32);
+  padding: 6px;
+}
+
+.education-mode-switcher .purpose-tabs button {
+  display: grid;
+  min-width: 0;
+  min-height: 76px;
+  align-content: center;
+  gap: 5px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 11px 12px;
+  color: #c2d0d8;
+  text-align: left;
+}
+
+.education-mode-switcher .purpose-tabs button:hover {
+  border-color: rgb(255 255 255 / 0.12);
+  color: #fff;
+}
+
+.education-mode-switcher .purpose-tabs button.is-active {
+  border-color: rgb(112 216 205 / 0.32);
+  background: #f8fbfb;
+  color: var(--studio-text);
+  box-shadow: 0 10px 28px rgb(1 14 23 / 0.24);
+}
+
+.purpose-tabs button strong,
+.purpose-tabs button span {
+  display: block;
+  min-width: 0;
+}
+
+.purpose-tabs button strong {
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.purpose-tabs button span {
+  color: #8ea6b3;
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.purpose-tabs button.is-active span {
+  color: #526b78;
+}
+
+.workspace-shell-grid {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.workspace-rail {
+  position: sticky;
+  top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.stage-nav {
+  width: 100%;
+  gap: 5px;
+  margin: 0;
+  border-radius: 16px;
+  background: var(--studio-navy);
+  padding: 18px 14px;
+  box-shadow: 0 16px 34px rgb(13 32 48 / 0.12);
+}
+
+.stage-nav > p {
+  margin: 0 8px 8px;
+  color: #75909f;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.stage-nav a {
+  min-height: 48px;
+  border-radius: 10px;
+  padding: 8px 9px;
+  color: #c0d0d9;
+  font-size: 0.78rem;
+}
+
+.stage-nav a:hover {
+  background: rgb(255 255 255 / 0.06);
+  color: #fff;
+}
+
+.stage-nav span {
+  background: #294454;
+  color: #d7e5eb;
+}
+
+.stage-nav a:first-of-type span {
+  background: var(--studio-teal);
+  color: #08201f;
+}
+
+.engine-card,
+.privacy-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  border: 1px solid var(--studio-line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px;
+  color: var(--studio-muted);
+}
+
+.engine-card > svg,
+.privacy-card > svg {
+  margin-top: 2px;
+  color: var(--studio-teal-dark);
+}
+
+.engine-card strong,
+.privacy-card strong {
+  display: block;
+  color: var(--studio-text);
+  font-size: 0.76rem;
+}
+
+.engine-card p,
+.privacy-card p {
+  margin: 4px 0 0;
+  font-size: 0.69rem;
+  line-height: 1.45;
+}
+
+.stage-stack {
+  min-width: 0;
+  gap: 24px;
+}
+
+.stage-shell {
+  border-color: var(--studio-line);
+  border-radius: 18px;
+  box-shadow: 0 18px 42px rgb(30 60 75 / 0.055);
+}
+
+.stage-number {
+  background: var(--studio-navy);
+}
+
+.stage-header h2,
+.section-heading {
+  color: var(--studio-text);
+}
+
+.input-mode-tabs,
+.education-mode-switcher > div[role="group"] {
+  max-width: 100%;
+}
+
+.diagram-workbench-header {
+  border-bottom: 1px solid var(--studio-line);
+  padding-bottom: 16px;
+}
+
+.diagram-workbench-header h2 {
+  font-size: 1.3rem;
+  letter-spacing: -0.025em;
+}
+
+.diagram-status-row span {
+  border-color: #d2e5e2;
+  background: #f1f8f7;
+  color: #335f5b;
+}
+
+.diagram-experience {
+  display: grid;
+  min-width: 0;
+  gap: 24px;
+}
+
+.medical-art-overview {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #d7e0e2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgb(20 47 60 / 0.07);
+}
+
+.medical-art-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid #dfe6e8;
+  background: #f8faf9;
+  padding: 18px 20px;
+}
+
+.medical-art-header > div:first-child {
+  min-width: 0;
+}
+
+.medical-art-header h3 {
+  margin: 4px 0 0;
+  color: var(--studio-text);
+  font-size: 1.13rem;
+  letter-spacing: -0.015em;
+}
+
+.medical-art-header p:not(.eyebrow) {
+  margin: 5px 0 0;
+  color: var(--studio-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.medical-art-meta {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.medical-art-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #d3e4e1;
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px 9px;
+  color: #365f5b;
+  font-size: 0.67rem;
+  font-weight: 760;
+}
+
+.medical-art-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.38fr);
+  min-width: 0;
+}
+
+.medical-art-figure {
+  min-width: 0;
+  margin: 0;
+  border-right: 1px solid #dfe6e8;
+  background: radial-gradient(circle at 54% 42%, #fff 0, #fcfaf7 48%, #f2ebe5 100%);
+  padding: clamp(14px, 2vw, 24px);
+}
+
+.medical-art-image-stage {
+  position: relative;
+  width: min(100%, 780px);
+  margin: 0 auto;
+}
+
+.medical-art-image-stage img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  filter: saturate(0.94) contrast(1.02);
+}
+
+.medical-art-marker-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.medical-art-marker {
+  position: absolute;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  transform: translate(-50%, -50%);
+  place-items: center;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #b5474b;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 850;
+  line-height: 1;
+  box-shadow: 0 3px 12px rgb(65 31 31 / 0.3);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.medical-art-marker.is-procedure {
+  background: #087d79;
+}
+
+.medical-art-marker.is-deviation {
+  background: #c17b20;
+}
+
+.medical-art-marker:hover,
+.medical-art-marker:focus-visible,
+.medical-art-marker.is-active {
+  outline: 3px solid rgb(13 32 48 / 0.45);
+  outline-offset: 2px;
+}
+
+.medical-art-figure figcaption {
+  margin-top: 12px;
+  color: #6b7e87;
+  font-size: 0.69rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.medical-art-legend {
+  display: flex;
+  min-width: 0;
+  max-height: 640px;
+  flex-direction: column;
+  background: #f8faf9;
+  padding: 14px;
+}
+
+.medical-art-legend-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 6px 10px;
+  color: #60737e;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.medical-art-legend-heading strong {
+  display: grid;
+  min-width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 7px;
+  background: #e1edeb;
+  color: #2e5c58;
+}
+
+.medical-art-legend ol {
+  display: grid;
+  min-height: 0;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.medical-art-legend-row {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  padding: 9px;
+  color: var(--studio-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.medical-art-legend-row:hover,
+.medical-art-legend-row:focus-visible,
+.medical-art-legend-row.is-active {
+  border-color: #c9dcda;
+  background: #fff;
+  outline: 0;
+}
+
+.medical-art-legend-number {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 50%;
+  background: #b5474b;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.medical-art-legend-number.is-procedure {
+  background: #087d79;
+}
+
+.medical-art-legend-number.is-deviation {
+  background: #c17b20;
+}
+
+.medical-art-legend-row strong,
+.medical-art-legend-row small {
+  display: block;
+}
+
+.medical-art-legend-row strong {
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.medical-art-legend-row small {
+  margin-top: 2px;
+  color: #526a75;
+  font-size: 0.65rem;
+  line-height: 1.35;
+}
+
+.medical-art-legend > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: auto 6px 2px;
+  border-top: 1px solid #dde5e6;
+  padding-top: 12px;
+  color: #40645f;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.medical-art-empty {
+  margin: 8px 6px;
+  color: #687b84;
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.surgical-detail-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--studio-line);
+  padding: 2px 2px 14px;
+}
+
+.surgical-detail-heading h3 {
+  margin: 4px 0 0;
+  color: var(--studio-text);
+  font-size: 1rem;
+}
+
+.surgical-detail-heading > span {
+  color: #647a85;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.teaching-guide {
+  overflow: hidden;
+  border: 1px solid var(--studio-line);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.teaching-guide > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid #dfe6e8;
+  background: #f7faf9;
+  padding: 18px 20px;
+}
+
+.teaching-guide header h3 {
+  margin: 4px 0 0;
+  color: var(--studio-text);
+  font-size: 1.05rem;
+}
+
+.teaching-guide header p:not(.eyebrow) {
+  max-width: 46rem;
+  margin: 5px 0 0;
+  color: var(--studio-muted);
+  font-size: 0.77rem;
+  line-height: 1.45;
+}
+
+.teaching-guide header > span {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: #e7f3f1;
+  padding: 7px 10px;
+  color: #2e625d;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.teaching-guide > ol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 20px;
+  list-style: none;
+}
+
+.teaching-guide > ol > li {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  border-right: 1px solid #dfe6e8;
+  padding: 2px 18px;
+}
+
+.teaching-guide > ol > li:first-child {
+  padding-left: 0;
+}
+
+.teaching-guide > ol > li:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+
+.teaching-guide > ol > li > span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--studio-navy);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.teaching-guide h4 {
+  margin: 2px 0 8px;
+  color: var(--studio-text);
+  font-size: 0.82rem;
+}
+
+.teaching-guide li ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 16px;
+  color: #5d727d;
+  font-size: 0.71rem;
+  line-height: 1.42;
+}
+
+@media (max-width: 1120px) {
+  .education-mode-switcher {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-shell-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-rail {
+    position: static;
+    grid-template-columns: minmax(0, 1fr) repeat(2, minmax(12rem, 0.4fr));
+  }
+
+  .stage-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .stage-nav > p {
+    grid-column: 1 / -1;
+  }
+
+  .medical-art-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.45fr);
+  }
+}
+
+@media (max-width: 840px) {
+  .product-header {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .workspace-rail {
+    grid-template-columns: 1fr;
+  }
+
+  .engine-card,
+  .privacy-card {
+    display: none;
+  }
+
+  .medical-art-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .medical-art-figure {
+    border-right: 0;
+    border-bottom: 1px solid #dfe6e8;
+  }
+
+  .medical-art-legend {
+    max-height: none;
+  }
+
+  .teaching-guide > ol {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .teaching-guide > ol > li,
+  .teaching-guide > ol > li:first-child,
+  .teaching-guide > ol > li:last-child {
+    border-right: 0;
+    border-bottom: 1px solid #dfe6e8;
+    padding: 0 0 16px;
+  }
+
+  .teaching-guide > ol > li:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-workspace {
+    padding: 12px 10px 40px;
+  }
+
+  .product-header {
+    align-items: flex-start;
+    flex-direction: column;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .education-mode-switcher {
+    border-radius: 0 0 16px 16px;
+    padding-bottom: 20px;
+  }
+
+  .education-mode-switcher .purpose-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .education-mode-switcher .purpose-tabs button {
+    min-height: 58px;
+  }
+
+  .stage-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-shell {
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .medical-art-header,
+  .surgical-detail-heading,
+  .teaching-guide > header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .medical-art-meta {
+    justify-content: flex-start;
+  }
+
+  .medical-art-marker {
+    width: 26px;
+    height: 26px;
+    border-width: 2px;
+  }
+}

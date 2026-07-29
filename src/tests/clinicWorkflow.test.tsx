@@ -1,0 +1,131 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it } from "vitest";
+import { AppShell } from "@/components/app/AppShell";
+import { DiagramPanel } from "@/components/diagram/DiagramPanel";
+import { createPresetPlan } from "@/components/app/SurgeryBuilder";
+import { getSyntheticCase } from "@/fixtures/syntheticCases";
+
+describe("clinic procedure workflow", () => {
+  it("uses the exact atlas compositor for an internal postoperative preview when rights are configured", () => {
+    const { container } = render(
+      <DiagramPanel
+        operativeCase={getSyntheticCase("porp-reconstruction").expected}
+        atlasUsageRights="clinic_permission"
+        selectedFeatureId={null}
+        onFeatureSelect={() => undefined}
+      />,
+    );
+
+    expect(container.querySelector('[data-diagram-source="stanford-atlas"]')).toBeInTheDocument();
+    expect(container.querySelectorAll(".atlas-template-svg")).toHaveLength(2);
+    expect(container.querySelector(".composed-surgery-svg")).not.toBeInTheDocument();
+    expect(screen.getAllByText(/Used with permission/i).length).toBeGreaterThan(0);
+  });
+
+  it("keeps an unsigned procedure atlas out of the patient-facing clinic preview", () => {
+    const { container } = render(
+      <DiagramPanel
+        surgeryPlan={createPresetPlan("tympanoplasty", "preoperative_education")}
+        mode="preoperative_education"
+        atlasUsageRights="clinic_permission"
+        selectedFeatureId={null}
+        onFeatureSelect={() => undefined}
+      />,
+    );
+
+    expect(container.querySelector('[data-diagram-source="stanford-atlas"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-diagram-source="original-deterministic"]')).toBeInTheDocument();
+    expect(screen.getByText(/template-level otologist sign-off/i)).toBeInTheDocument();
+  });
+
+  it("falls back atomically when an authorized atlas source fails to load", () => {
+    const { container } = render(
+      <DiagramPanel
+        operativeCase={getSyntheticCase("porp-reconstruction").expected}
+        atlasUsageRights="clinic_permission"
+        selectedFeatureId={null}
+        onFeatureSelect={() => undefined}
+      />,
+    );
+
+    const image = container.querySelector(".atlas-template-svg image");
+    expect(image).not.toBeNull();
+    fireEvent.error(image!);
+
+    expect(container.querySelector('[data-diagram-source="stanford-atlas"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-diagram-source="original-deterministic"]')).toBeInTheDocument();
+    expect(screen.getByText("Atlas source unavailable")).toBeInTheDocument();
+  });
+
+  it("opens the diagram dialog with focus and closes it with Escape", async () => {
+    const user = userEvent.setup();
+    render(
+      <DiagramPanel
+        surgeryPlan={createPresetPlan("tympanoplasty", "preoperative_education")}
+        mode="preoperative_education"
+        selectedFeatureId={null}
+        onFeatureSelect={() => undefined}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "Full screen" });
+    await user.click(trigger);
+    const dialog = screen.getByRole("dialog", { name: "Full-screen diagram preview" });
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close" })).toHaveFocus();
+    await user.keyboard("{Escape}");
+    expect(dialog).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("builds and approves an upcoming tympanoplasty discussion without a note", async () => {
+    const user = userEvent.setup();
+    render(<AppShell />);
+
+    await user.click(screen.getByRole("button", { name: "Upcoming procedure" }));
+    expect(screen.queryByRole("tab", { name: "Example" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Operative note")).not.toBeInTheDocument();
+    expect(screen.getByText("No patient note is needed")).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText("Common planned procedure"), "tympanoplasty");
+    expect(screen.getByRole("heading", { name: /Your planned Tympanoplasty/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /Anatomy being discussed: Eardrum view/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /Planned procedure: Eardrum view/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/Plan may change during surgery/i).length).toBeGreaterThan(0);
+
+    await user.type(screen.getByLabelText("Reviewer name"), "Synthetic Clinician");
+    await user.click(screen.getByLabelText("Planned procedure and side checked"));
+    await user.click(screen.getByLabelText("Planned steps match the surgeon discussion"));
+    await user.click(screen.getByLabelText("Reference image, overlays, and limitations checked"));
+    await user.click(screen.getByLabelText("Clinic handout language reviewed"));
+
+    const approve = screen.getByRole("button", { name: "Approve for patient discussion" });
+    expect(approve).toBeEnabled();
+    await user.click(approve);
+    expect(screen.getAllByText("Approved for patient discussion").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Print / save PDF" })).toBeEnabled();
+  });
+
+  it("resets the load-preset control with the clinic plan", async () => {
+    const user = userEvent.setup();
+    render(<AppShell />);
+
+    await user.click(screen.getByRole("button", { name: "Upcoming procedure" }));
+    const preset = screen.getByLabelText("Common planned procedure");
+    await user.selectOptions(preset, "tympanoplasty");
+    expect(preset).toHaveValue("");
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    expect(preset).toHaveValue("");
+    expect(screen.getByRole("heading", { name: "Your planned ear procedure" })).toBeInTheDocument();
+  });
+
+  it("does not expose completed-procedure outcomes in the upcoming workflow", async () => {
+    const user = userEvent.setup();
+    render(<AppShell />);
+
+    await user.click(screen.getByRole("button", { name: "Upcoming procedure" }));
+    await user.selectOptions(screen.getByLabelText("Common planned procedure"), "cochlear_implant");
+    expect(screen.queryByLabelText("Completion")).not.toBeInTheDocument();
+  });
+});

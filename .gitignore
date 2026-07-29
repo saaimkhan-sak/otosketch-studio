@@ -1,0 +1,17 @@
+.DS_Store
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+.env*
+!.env.example
+.dev.vars
+.vercel/
+.wrangler/
+dist/
+*.tsbuildinfo
+
+# Stanford atlas source assets can be regenerated with `pnpm scrape:atlas`.
+public/atlas-assets/stanford/files/

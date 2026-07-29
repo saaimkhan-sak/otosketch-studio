@@ -1,0 +1,289 @@
+{
+  "generatedAt": "2026-07-16T14:39:27.292Z",
+  "fixtureCount": 6,
+  "fieldCount": 10,
+  "fields": [
+    "procedure.family",
+    "procedure.laterality",
+    "anatomy.tympanicMembrane",
+    "anatomy.malleus",
+    "anatomy.incus",
+    "anatomy.incudostapedialJoint",
+    "anatomy.stapes",
+    "repair.reconstructionType",
+    "repair.reconstructionMaterial",
+    "repair.graftType"
+  ],
+  "providers": [
+    {
+      "provider": "mock",
+      "fieldAccuracy": 1,
+      "matchedFields": 60,
+      "totalFields": 60,
+      "cases": [
+        {
+          "id": "normal-ossicular-chain",
+          "title": "Tympanoplasty with intact ossicular chain",
+          "matchedFields": 10,
+          "totalFields": 10,
+          "mismatches": [],
+          "warnings": []
+        },
+        {
+          "id": "incus-long-process-erosion",
+          "title": "Incus long-process erosion without reconstruction",
+          "matchedFields": 10,
+          "totalFields": 10,
+          "mismatches": [],
+          "warnings": []
+        },
+        {
+          "id": "is-joint-discontinuity",
+          "title": "Incus-stapes discontinuity without repair",
+          "matchedFields": 10,
+          "totalFields": 10,
+          "mismatches": [],
+          "warnings": []
+        },
+        {
+          "id": "hero-otomimix-is-joint",
+          "title": "Incus-stapes erosion repaired with OtoMimix",
+          "matchedFields": 10,
+          "totalFields": 10,
+          "mismatches": [],
+          "warnings": []
+        },
+        {
+          "id": "porp-reconstruction",
+          "title": "PORP reconstruction",
+          "matchedFields": 10,
+          "totalFields": 10,
+          "mismatches": [],
+          "warnings": []
+        },
+        {
+          "id": "torp-reconstruction",
+          "title": "TORP reconstruction",
+          "matchedFields": 10,
+          "totalFields": 10,
+          "mismatches": [],
+          "warnings": []
+        }
+      ]
+    },
+    {
+      "provider": "rules",
+      "fieldAccuracy": 1,
+      "matchedFields": 60,
+      "totalFields": 60,
+      "cases": [
+        {
+          "id": "normal-ossicular-chain",
+          "title": "Tympanoplasty with intact ossicular chain",
+          "matchedFields": 10,
+          "totalFields": 10,
+          "mismatches": [],
+          "warnings": [
+            "This result was generated using a simple rules-based extractor. It may miss findings not written in supported phrases."
+          ]
+        },
+        {
+          "id": "incus-long-process-erosion",
+          "title": "Incus long-process erosion without reconstruction",
+          "matchedFields": 10,
+          "totalFields": 10,
+          "mismatches": [],
+          "warnings": [
+            "This result was generated using a simple rules-based extractor. It may miss findings not written in supported phrases."
+          ]
+        },
+        {
+          "id": "is-joint-discontinuity",
+          "title": "Incus-stapes discontinuity without repair",
+          "matchedFields": 10,
+          "totalFields": 10,
+          "mismatches": [],
+          "warnings": [
+            "This result was generated using a simple rules-based extractor. It may miss findings not written in supported phrases."
+          ]
+        },
+        {
+          "id": "hero-otomimix-is-joint",
+          "title": "Incus-stapes erosion repaired with OtoMimix",
+          "matchedFields": 10,
+          "totalFields": 10,
+          "mismatches": [],
+          "warnings": [
+            "This result was generated using a simple rules-based extractor. It may miss findings not written in supported phrases."
+          ]
+        },
+        {
+          "id": "porp-reconstruction",
+          "title": "PORP reconstruction",
+          "matchedFields": 10,
+          "totalFields": 10,
+          "mismatches": [],
+          "warnings": [
+            "This result was generated using a simple rules-based extractor. It may miss findings not written in supported phrases."
+          ]
+        },
+        {
+          "id": "torp-reconstruction",
+          "title": "TORP reconstruction",
+          "matchedFields": 10,
+          "totalFields": 10,
+          "mismatches": [],
+          "warnings": [
+            "This result was generated using a simple rules-based extractor. It may miss findings not written in supported phrases."
+          ]
+        }
+      ]
+    }
+  ],
+  "adversarialRulesChecks": [
+    {
+      "id": "negated-incus-erosion",
+      "title": "Negated incus erosion",
+      "passed": true,
+      "teachingPoint": "Negated erosion must not render incus erosion.",
+      "extracted": {
+        "laterality": "right",
+        "family": "tympanoplasty",
+        "incus": "not_documented",
+        "stapes": "not_documented",
+        "incudostapedialJoint": "not_documented",
+        "reconstructionType": "not_documented",
+        "reconstructionMaterial": "not_documented",
+        "ambiguityCount": 0,
+        "containsPossiblePhi": false,
+        "suitableForRendering": true
+      }
+    },
+    {
+      "id": "uncertain-incus-erosion",
+      "title": "Uncertain possible incus erosion",
+      "passed": true,
+      "teachingPoint": "Uncertain erosion should create a warning rather than a high-confidence rendered finding.",
+      "extracted": {
+        "laterality": "left",
+        "family": "tympanoplasty",
+        "incus": "not_documented",
+        "stapes": "not_documented",
+        "incudostapedialJoint": "not_documented",
+        "reconstructionType": "not_documented",
+        "reconstructionMaterial": "not_documented",
+        "ambiguityCount": 1,
+        "containsPossiblePhi": false,
+        "suitableForRendering": true
+      }
+    },
+    {
+      "id": "contradictory-stapes-porp",
+      "title": "Contradictory stapes/PORP note",
+      "passed": true,
+      "teachingPoint": "Contradictory anatomy and repair text should require review.",
+      "extracted": {
+        "laterality": "left",
+        "family": "tympanoplasty_with_ossiculoplasty",
+        "incus": "not_documented",
+        "stapes": "superstructure_absent",
+        "incudostapedialJoint": "not_documented",
+        "reconstructionType": "porp",
+        "reconstructionMaterial": "not_documented",
+        "ambiguityCount": 2,
+        "containsPossiblePhi": false,
+        "suitableForRendering": true
+      }
+    },
+    {
+      "id": "missing-laterality",
+      "title": "Missing laterality",
+      "passed": true,
+      "teachingPoint": "Missing side must remain not_documented until reviewed.",
+      "extracted": {
+        "laterality": "not_documented",
+        "family": "tympanoplasty_with_ossiculoplasty",
+        "incus": "not_documented",
+        "stapes": "not_documented",
+        "incudostapedialJoint": "discontinuous",
+        "reconstructionType": "bone_cement_bridge",
+        "reconstructionMaterial": "hydroxyapatite_bone_cement",
+        "ambiguityCount": 1,
+        "containsPossiblePhi": false,
+        "suitableForRendering": true
+      }
+    },
+    {
+      "id": "unsupported-ossiculoplasty-inference",
+      "title": "Unsupported ossiculoplasty inference",
+      "passed": true,
+      "teachingPoint": "Ossiculoplasty alone must not invent a reconstruction type.",
+      "extracted": {
+        "laterality": "left",
+        "family": "ossiculoplasty",
+        "incus": "not_documented",
+        "stapes": "not_documented",
+        "incudostapedialJoint": "not_documented",
+        "reconstructionType": "not_documented",
+        "reconstructionMaterial": "not_documented",
+        "ambiguityCount": 0,
+        "containsPossiblePhi": false,
+        "suitableForRendering": true
+      }
+    },
+    {
+      "id": "abbreviation-heavy",
+      "title": "Abbreviation-heavy otology note",
+      "passed": true,
+      "teachingPoint": "Supported abbreviations can be extracted with reviewable evidence.",
+      "extracted": {
+        "laterality": "right",
+        "family": "tympanoplasty",
+        "incus": "not_documented",
+        "stapes": "not_documented",
+        "incudostapedialJoint": "discontinuous",
+        "reconstructionType": "bone_cement_bridge",
+        "reconstructionMaterial": "hydroxyapatite_bone_cement",
+        "ambiguityCount": 0,
+        "containsPossiblePhi": false,
+        "suitableForRendering": true
+      }
+    },
+    {
+      "id": "unsupported-procedure",
+      "title": "Unsupported non-otology note",
+      "passed": true,
+      "teachingPoint": "Unsupported procedures should not render an otology diagram.",
+      "extracted": {
+        "laterality": "not_documented",
+        "family": "unsupported",
+        "incus": "not_documented",
+        "stapes": "not_documented",
+        "incudostapedialJoint": "not_documented",
+        "reconstructionType": "not_documented",
+        "reconstructionMaterial": "not_documented",
+        "ambiguityCount": 1,
+        "containsPossiblePhi": false,
+        "suitableForRendering": false
+      }
+    },
+    {
+      "id": "phi-like-input",
+      "title": "PHI-like input",
+      "passed": true,
+      "teachingPoint": "Obvious patient identifier patterns must trigger blocking warnings.",
+      "extracted": {
+        "laterality": "left",
+        "family": "tympanoplasty",
+        "incus": "not_documented",
+        "stapes": "not_documented",
+        "incudostapedialJoint": "not_documented",
+        "reconstructionType": "not_documented",
+        "reconstructionMaterial": "not_documented",
+        "ambiguityCount": 0,
+        "containsPossiblePhi": true,
+        "suitableForRendering": false
+      }
+    }
+  ]
+}
