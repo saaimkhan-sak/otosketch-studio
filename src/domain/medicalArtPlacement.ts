@@ -29,15 +29,30 @@ export interface ServierProsthesisPlacement {
   shaft: SourceSegment;
   distalContact: SourceEllipse;
   distalTarget: "stapes_capitulum" | "stapes_footplate";
-  rendering:
-    | "neutral-headplate-shaft-capitulum-seat"
-    | "neutral-headplate-shaft-footplate-contact";
+  rendering: "neutral-headplate-shaft-capitulum-seat" | "neutral-headplate-shaft-footplate-contact";
 }
 
 export interface TympanicPolygonInput {
   basis: "generic_template" | "clinician_authored";
   points: SourcePoint[];
 }
+
+export type TympanostomyQuadrant =
+  | "anteroinferior"
+  | "inferior"
+  | "posteroinferior"
+  | "posterosuperior"
+  | "not_documented";
+
+const tympanostomyQuadrantPoint: Record<
+  Exclude<TympanostomyQuadrant, "not_documented">,
+  SourcePoint
+> = {
+  anteroinferior: { x: 0.68, y: 0.7 },
+  inferior: { x: 0.5, y: 0.8 },
+  posteroinferior: { x: 0.31, y: 0.7 },
+  posterosuperior: { x: 0.32, y: 0.31 },
+};
 
 const servierGeometry = medicalArtSourceGeometry["servier-inner-ear"];
 const servierTympanicMembrane = servierGeometry?.tympanicMembrane;
@@ -111,24 +126,14 @@ export function deriveServierProsthesisPlacement(
 ): ServierProsthesisPlacement {
   const { calibrationId, surfaceContact, medialNormal, planeAngle } =
     requiredServierTympanicCalibration();
-  const headPlateCenter = addScaled(
-    surfaceContact,
-    medialNormal,
-    headPlate.normalOffset,
-  );
-  const cartilageCenter = addScaled(
-    surfaceContact,
-    medialNormal,
-    protectionCartilage.normalOffset,
-  );
-  const distalCenter =
-    method === "porp" ? { x: 181, y: 211 } : { x: 236, y: 180 };
+  const headPlateCenter = addScaled(surfaceContact, medialNormal, headPlate.normalOffset);
+  const cartilageCenter = addScaled(surfaceContact, medialNormal, protectionCartilage.normalOffset);
+  const distalCenter = method === "porp" ? { x: 181, y: 211 } : { x: 236, y: 180 };
   const direction = normalize({
     x: distalCenter.x - headPlateCenter.x,
     y: distalCenter.y - headPlateCenter.y,
   });
-  const shaftAngle =
-    (Math.atan2(direction.y, direction.x) * 180) / Math.PI;
+  const shaftAngle = (Math.atan2(direction.y, direction.x) * 180) / Math.PI;
   const plate: SourceEllipse = {
     center: headPlateCenter,
     radiusX: headPlate.radiusX,
@@ -177,9 +182,7 @@ export function deriveServierProsthesisPlacement(
   };
 }
 
-export function mapTympanicPolygonToServierSource(
-  polygon: TympanicPolygonInput,
-): SourcePoint[] {
+export function mapTympanicPolygonToServierSource(polygon: TympanicPolygonInput): SourcePoint[] {
   return mapTympanicPolygonToMedicalArtSource("servier-inner-ear", polygon);
 }
 
@@ -199,23 +202,15 @@ function pointOnCubic(segment: MedicalArtSourceCubic, t: number) {
   };
 }
 
-function pointOnBoundary(
-  boundary: MedicalArtSourceCubic[],
-  normalizedPosition: number,
-) {
+function pointOnBoundary(boundary: MedicalArtSourceCubic[], normalizedPosition: number) {
   if (boundary.length === 0) {
     throw new Error("Tympanic surface boundary is empty.");
   }
   const clamped = Math.max(0, Math.min(1, normalizedPosition));
   const scaled = clamped * boundary.length;
-  const segmentIndex = Math.min(
-    boundary.length - 1,
-    Math.floor(scaled),
-  );
+  const segmentIndex = Math.min(boundary.length - 1, Math.floor(scaled));
   const localPosition =
-    segmentIndex === boundary.length - 1 && clamped === 1
-      ? 1
-      : scaled - segmentIndex;
+    segmentIndex === boundary.length - 1 && clamped === 1 ? 1 : scaled - segmentIndex;
   return pointOnCubic(boundary[segmentIndex], localPosition);
 }
 
@@ -223,30 +218,49 @@ export function mapTympanicPolygonToMedicalArtSource(
   assetId: MedicalArtAssetId,
   polygon: TympanicPolygonInput,
 ): SourcePoint[] {
-  const tympanicMembrane =
-    medicalArtSourceGeometry[assetId]?.tympanicMembrane;
-  const frame = tympanicMembrane?.normalizedFrame;
-  if (frame) {
-    return polygon.points.map((point) => ({
-      x: round(frame.x + point.x * frame.width),
-      y: round(frame.y + point.y * frame.height),
-    }));
-  }
+  return polygon.points.map((point) => mapTympanicPointToMedicalArtSource(assetId, point));
+}
 
+export function mapTympanicPointToMedicalArtSource(
+  assetId: MedicalArtAssetId,
+  point: SourcePoint,
+): SourcePoint {
+  const tympanicMembrane = medicalArtSourceGeometry[assetId]?.tympanicMembrane;
   const surface = tympanicMembrane?.normalizedSurface;
-  if (!surface) {
-    throw new Error(
-      `${assetId} tympanic normalized surface is not calibrated.`,
-    );
-  }
-  return polygon.points.map((point) => {
-    const left = pointOnBoundary(surface.leftBoundary, point.y);
-    const right = pointOnBoundary(surface.rightBoundary, point.y);
+  if (surface) {
+    const firstBoundary = pointOnBoundary(surface.leftBoundary, point.y);
+    const secondBoundary = pointOnBoundary(surface.rightBoundary, point.y);
+    const [left, right] =
+      firstBoundary.x <= secondBoundary.x
+        ? [firstBoundary, secondBoundary]
+        : [secondBoundary, firstBoundary];
     return {
       x: round(left.x + (right.x - left.x) * point.x),
       y: round(left.y + (right.y - left.y) * point.x),
     };
-  });
+  }
+
+  const frame = tympanicMembrane?.normalizedFrame;
+  if (frame) {
+    return {
+      x: round(frame.x + point.x * frame.width),
+      y: round(frame.y + point.y * frame.height),
+    };
+  }
+
+  throw new Error(`${assetId} tympanic normalized surface is not calibrated.`);
+}
+
+export function deriveMedicalArtTympanostomyPoint(
+  assetId: MedicalArtAssetId,
+  quadrant: TympanostomyQuadrant,
+) {
+  if (quadrant === "not_documented") return null;
+  const tympanicMembrane = medicalArtSourceGeometry[assetId]?.tympanicMembrane;
+  if (!tympanicMembrane?.normalizedFrame && !tympanicMembrane?.normalizedSurface) {
+    return null;
+  }
+  return mapTympanicPointToMedicalArtSource(assetId, tympanostomyQuadrantPoint[quadrant]);
 }
 
 export function deriveMedicalArtTympanicPolygon(
@@ -255,46 +269,72 @@ export function deriveMedicalArtTympanicPolygon(
   documentedGeometry?: TympanicPolygonInput,
 ) {
   const geometry = documentedGeometry ?? templatePerforationGeometry(region);
-  return geometry
-    ? mapTympanicPolygonToMedicalArtSource(assetId, geometry)
-    : null;
+  return geometry ? mapTympanicPolygonToMedicalArtSource(assetId, geometry) : null;
 }
 
 export function deriveServierTympanicPolygon(
   region: string,
   documentedGeometry?: TympanicPolygonInput,
 ) {
-  return deriveMedicalArtTympanicPolygon(
-    "servier-inner-ear",
-    region,
-    documentedGeometry,
-  );
+  return deriveMedicalArtTympanicPolygon("servier-inner-ear", region, documentedGeometry);
+}
+
+function smoothClosedSourceCubics(points: SourcePoint[]) {
+  if (points.length < 3) return [];
+  const pointAt = (index: number) => points[(index + points.length) % points.length];
+  return points.map((current, index) => {
+    const previous = pointAt(index - 1);
+    const next = pointAt(index + 1);
+    const following = pointAt(index + 2);
+    return {
+      start: current,
+      controlOne: {
+        x: current.x + (next.x - previous.x) / 6,
+        y: current.y + (next.y - previous.y) / 6,
+      },
+      controlTwo: {
+        x: next.x - (following.x - current.x) / 6,
+        y: next.y - (following.y - current.y) / 6,
+      },
+      end: next,
+    };
+  });
 }
 
 export function smoothClosedSourcePath(points: SourcePoint[]) {
-  if (points.length < 3) return "";
-  const pointAt = (index: number) =>
-    points[(index + points.length) % points.length];
+  const segments = smoothClosedSourceCubics(points);
+  if (segments.length === 0) return "";
   let path = `M ${round(points[0].x)} ${round(points[0].y)}`;
 
-  for (let index = 0; index < points.length; index += 1) {
-    const previous = pointAt(index - 1);
-    const current = pointAt(index);
-    const next = pointAt(index + 1);
-    const following = pointAt(index + 2);
-    const controlOne = {
-      x: current.x + (next.x - previous.x) / 6,
-      y: current.y + (next.y - previous.y) / 6,
-    };
-    const controlTwo = {
-      x: next.x - (following.x - current.x) / 6,
-      y: next.y - (following.y - current.y) / 6,
-    };
-    path += ` C ${round(controlOne.x)} ${round(controlOne.y)} ${round(
-      controlTwo.x,
-    )} ${round(controlTwo.y)} ${round(next.x)} ${round(next.y)}`;
+  for (const segment of segments) {
+    path += ` C ${round(segment.controlOne.x)} ${round(segment.controlOne.y)} ${round(
+      segment.controlTwo.x,
+    )} ${round(segment.controlTwo.y)} ${round(segment.end.x)} ${round(segment.end.y)}`;
   }
   return `${path} Z`;
+}
+
+/**
+ * Conservative source-pixel bounds for the exact Catmull–Rom-derived cubic
+ * path returned by smoothClosedSourcePath. A cubic Bézier is contained by the
+ * convex hull of its endpoints and controls, so these bounds also contain all
+ * curve extrema, including overshoot beyond clinician-authored vertices.
+ */
+export function smoothClosedSourceBounds(points: SourcePoint[]) {
+  const segments = smoothClosedSourceCubics(points);
+  if (segments.length === 0) return null;
+  const hull = segments.flatMap((segment) => [
+    segment.start,
+    segment.controlOne,
+    segment.controlTwo,
+    segment.end,
+  ]);
+  return {
+    left: round(Math.min(...hull.map((point) => point.x))),
+    top: round(Math.min(...hull.map((point) => point.y))),
+    right: round(Math.max(...hull.map((point) => point.x))),
+    bottom: round(Math.max(...hull.map((point) => point.y))),
+  };
 }
 
 export function sourcePolygonArea(points: SourcePoint[]) {
@@ -308,10 +348,10 @@ export function sourcePolygonArea(points: SourcePoint[]) {
 }
 
 export function sourcePolygonCentroid(points: SourcePoint[]) {
-  const totals = points.reduce(
-    (sum, point) => ({ x: sum.x + point.x, y: sum.y + point.y }),
-    { x: 0, y: 0 },
-  );
+  const totals = points.reduce((sum, point) => ({ x: sum.x + point.x, y: sum.y + point.y }), {
+    x: 0,
+    y: 0,
+  });
   return {
     x: round(totals.x / points.length),
     y: round(totals.y / points.length),

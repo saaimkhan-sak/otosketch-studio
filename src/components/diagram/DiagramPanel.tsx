@@ -66,12 +66,13 @@ export function DiagramPanel({
       : plan.procedureFamilies.map(labelSurgeryProcedure).join(" + ");
   const medicalArt = selectMedicalArtAsset(plan);
   const activeLayers = getActiveSurgeryLayers(plan).filter(
-    (layer) => layer.documentation === "documented",
+    (layer) =>
+      layer.documentation === "documented" &&
+      layer.kind !== "verification_status" &&
+      layer.kind !== "intraoperative_deviation",
   );
-  const hasFindingPhase = activeLayers.some(
-    (layer) => layer.role === "finding" || layer.role === "deviation",
-  );
-  const hasProcedurePhase = activeLayers.some((layer) => layer.role !== "finding");
+  const hasFindingPhase = activeLayers.some((layer) => layer.role === "finding");
+  const hasProcedurePhase = activeLayers.some((layer) => layer.role === "action");
 
   useEffect(() => {
     if (!expanded) return;
@@ -190,8 +191,8 @@ export function DiagramPanel({
       <details className="template-summary" aria-label="Sources and limitations">
         <summary>Source &amp; limitations</summary>
         <p className="mt-3 text-xs leading-5 text-slate-600">
-          {medicalArt.attribution} · {medicalArt.license}. Calibrated structured overlays on generic,
-          non-patient-specific anatomy. Clinician review required.
+          {medicalArt.attribution} · {medicalArt.license}. Calibrated structured overlays on
+          generic, non-patient-specific anatomy. Clinician review required.
         </p>
       </details>
 

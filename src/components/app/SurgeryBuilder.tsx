@@ -12,10 +12,7 @@ import {
   type SurgeryPlan,
   type SurgeryProcedureFamily,
 } from "@/domain/surgeryPlan";
-import {
-  coveringGraftGeometry,
-  templatePerforationGeometry,
-} from "@/domain/tmGeometry";
+import { coveringGraftGeometry, templatePerforationGeometry } from "@/domain/tmGeometry";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Select, Textarea } from "@/components/ui/Field";
 
@@ -388,14 +385,10 @@ export function createPresetPlan(
       ];
       break;
     case "canalplasty":
-      layers = [
-        documentedLayer("canalplasty", side, { region: "multiple", result: "widened" }),
-      ];
+      layers = [documentedLayer("canalplasty", side, { region: "multiple", result: "widened" })];
       break;
     case "eustachian_tube_dilation":
-      layers = [
-        documentedLayer("eustachian_tube_dilation", side, { result: "completed" }),
-      ];
+      layers = [documentedLayer("eustachian_tube_dilation", side, { result: "completed" })];
       break;
   }
 
@@ -526,11 +519,23 @@ function LayerFields({ layer, plan, mode, update }: LayerFieldsProps) {
   switch (layer.kind) {
     case "tm_state":
       return (
-        <ChoiceField id={id("state")} label="State" value={layer.state} options={tmStateOptions} onChange={(state) => update({ state })} />
+        <ChoiceField
+          id={id("state")}
+          label="State"
+          value={layer.state}
+          options={tmStateOptions}
+          onChange={(state) => update({ state })}
+        />
       );
     case "tm_perforation":
       return (
-        <ChoiceField id={id("region")} label="Region" value={layer.region} options={perforationRegionOptions} onChange={(region) => update({ region, geometry: templatePerforationGeometry(region) })} />
+        <ChoiceField
+          id={id("region")}
+          label="Region"
+          value={layer.region}
+          options={perforationRegionOptions}
+          onChange={(region) => update({ region, geometry: templatePerforationGeometry(region) })}
+        />
       );
     case "tm_graft": {
       const targets = plan.layers.filter(
@@ -546,12 +551,34 @@ function LayerFields({ layer, plan, mode, update }: LayerFieldsProps) {
       );
       return (
         <>
-          <ChoiceField id={id("material")} label="Material" value={layer.material} options={graftMaterialOptions} onChange={(material) => update({ material })} />
-          <ChoiceField id={id("technique")} label="Technique" value={layer.technique} options={graftTechniqueOptions} onChange={(technique) => update({ technique })} />
-          <ChoiceField id={id("purpose")} label="Purpose" value={layer.purpose} options={graftPurposeOptions} onChange={(purpose) => update({ purpose })} />
+          <ChoiceField
+            id={id("material")}
+            label="Material"
+            value={layer.material}
+            options={graftMaterialOptions}
+            onChange={(material) => update({ material })}
+          />
+          <ChoiceField
+            id={id("technique")}
+            label="Technique"
+            value={layer.technique}
+            options={graftTechniqueOptions}
+            onChange={(technique) => update({ technique })}
+          />
+          <ChoiceField
+            id={id("purpose")}
+            label="Purpose"
+            value={layer.purpose}
+            options={graftPurposeOptions}
+            onChange={(purpose) => update({ purpose })}
+          />
           <div className="surgery-builder-field space-y-1.5">
             <FieldLabel htmlFor={id("target")}>Repair target</FieldLabel>
-            <Select id={id("target")} value={layer.targetLayerId ?? ""} onChange={(event) => update({ targetLayerId: event.target.value || undefined })}>
+            <Select
+              id={id("target")}
+              value={layer.targetLayerId ?? ""}
+              onChange={(event) => update({ targetLayerId: event.target.value || undefined })}
+            >
               <option value="">Not documented</option>
               {targets.map((target) => (
                 <option key={target.id} value={target.id}>
@@ -566,30 +593,90 @@ function LayerFields({ layer, plan, mode, update }: LayerFieldsProps) {
     case "ossicle_state":
       return (
         <>
-          <ChoiceField id={id("structure")} label="Structure" value={layer.structure} options={ossicleStructureOptions} onChange={(structure) => update({ structure })} />
-          <ChoiceField id={id("state")} label="State" value={layer.state} options={ossicleStateOptions} onChange={(state) => update({ state })} />
+          <ChoiceField
+            id={id("structure")}
+            label="Structure"
+            value={layer.structure}
+            options={ossicleStructureOptions}
+            onChange={(structure) => update({ structure })}
+          />
+          <ChoiceField
+            id={id("state")}
+            label="State"
+            value={layer.state}
+            options={ossicleStateOptions}
+            onChange={(state) => update({ state })}
+          />
         </>
       );
     case "ossicular_reconstruction":
       return (
         <>
-          <ChoiceField id={id("method")} label="Method" value={layer.method} options={reconstructionMethodOptions} onChange={(method) => update({ method })} />
-          <ChoiceField id={id("material")} label="Material" value={layer.material} options={reconstructionMaterialOptions} onChange={(material) => update({ material })} />
-          <ChoiceField id={id("lateral-endpoint")} label="Lateral endpoint" value={layer.lateralEndpoint} options={endpointOptions} onChange={(lateralEndpoint) => update({ lateralEndpoint })} />
-          <ChoiceField id={id("medial-endpoint")} label="Medial endpoint" value={layer.medialEndpoint} options={endpointOptions} onChange={(medialEndpoint) => update({ medialEndpoint })} />
+          <ChoiceField
+            id={id("method")}
+            label="Method"
+            value={layer.method}
+            options={reconstructionMethodOptions}
+            onChange={(method) => update({ method })}
+          />
+          <ChoiceField
+            id={id("material")}
+            label="Material"
+            value={layer.material}
+            options={reconstructionMaterialOptions}
+            onChange={(material) => update({ material })}
+          />
+          <ChoiceField
+            id={id("lateral-endpoint")}
+            label="Lateral endpoint"
+            value={layer.lateralEndpoint}
+            options={endpointOptions}
+            onChange={(lateralEndpoint) => update({ lateralEndpoint })}
+          />
+          <ChoiceField
+            id={id("medial-endpoint")}
+            label="Medial endpoint"
+            value={layer.medialEndpoint}
+            options={endpointOptions}
+            onChange={(medialEndpoint) => update({ medialEndpoint })}
+          />
         </>
       );
     case "tympanostomy":
       return (
         <>
-          <ChoiceField id={id("action")} label="Action" value={layer.action} options={tympanostomyActionOptions} onChange={(action) => update({ action })} />
-          <ChoiceField id={id("quadrant")} label="Quadrant" value={layer.quadrant} options={tympanostomyQuadrantOptions} onChange={(quadrant) => update({ quadrant })} />
-          <ChoiceField id={id("tube-type")} label="Tube type" value={layer.tubeType} options={tubeTypeOptions} onChange={(tubeType) => update({ tubeType })} />
+          <ChoiceField
+            id={id("action")}
+            label="Action"
+            value={layer.action}
+            options={tympanostomyActionOptions}
+            onChange={(action) => update({ action })}
+          />
+          <ChoiceField
+            id={id("quadrant")}
+            label="Quadrant"
+            value={layer.quadrant}
+            options={tympanostomyQuadrantOptions}
+            onChange={(quadrant) => update({ quadrant })}
+          />
+          <ChoiceField
+            id={id("tube-type")}
+            label="Tube type"
+            value={layer.tubeType}
+            options={tubeTypeOptions}
+            onChange={(tubeType) => update({ tubeType })}
+          />
         </>
       );
     case "mastoid_technique":
       return (
-        <ChoiceField id={id("technique")} label="Technique" value={layer.technique} options={mastoidTechniqueOptions} onChange={(technique) => update({ technique })} />
+        <ChoiceField
+          id={id("technique")}
+          label="Technique"
+          value={layer.technique}
+          options={mastoidTechniqueOptions}
+          onChange={(technique) => update({ technique })}
+        />
       );
     case "cholesteatoma_extent":
       return (
@@ -597,7 +684,10 @@ function LayerFields({ layer, plan, mode, update }: LayerFieldsProps) {
           <legend className="text-sm font-semibold text-[#17302d]">Documented regions</legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {cholesteatomaRegionOptions.map((region) => (
-              <label key={region} className="flex min-h-9 items-center gap-2 text-sm text-slate-700">
+              <label
+                key={region}
+                className="flex min-h-9 items-center gap-2 text-sm text-slate-700"
+              >
                 <input
                   type="checkbox"
                   checked={layer.regions.includes(region)}
@@ -618,55 +708,126 @@ function LayerFields({ layer, plan, mode, update }: LayerFieldsProps) {
     case "stapes_procedure":
       return (
         <>
-          <ChoiceField id={id("technique")} label="Technique" value={layer.technique} options={stapesTechniqueOptions} onChange={(technique) => update({ technique })} />
-          <ChoiceField id={id("fenestra")} label="Fenestra" value={layer.fenestra} options={fenestraOptions} onChange={(fenestra) => update({ fenestra })} />
-          <ChoiceField id={id("piston-attachment")} label="Piston attachment" value={layer.pistonAttachment} options={pistonAttachmentOptions} onChange={(pistonAttachment) => update({ pistonAttachment })} />
+          <ChoiceField
+            id={id("technique")}
+            label="Technique"
+            value={layer.technique}
+            options={stapesTechniqueOptions}
+            onChange={(technique) => update({ technique })}
+          />
+          <ChoiceField
+            id={id("fenestra")}
+            label="Fenestra"
+            value={layer.fenestra}
+            options={fenestraOptions}
+            onChange={(fenestra) => update({ fenestra })}
+          />
+          <ChoiceField
+            id={id("piston-attachment")}
+            label="Piston attachment"
+            value={layer.pistonAttachment}
+            options={pistonAttachmentOptions}
+            onChange={(pistonAttachment) => update({ pistonAttachment })}
+          />
         </>
       );
     case "cochlear_insertion":
       return (
         <>
-          <ChoiceField id={id("route")} label="Insertion route" value={layer.route} options={cochlearRouteOptions} onChange={(route) => update({ route })} />
+          <ChoiceField
+            id={id("route")}
+            label="Insertion route"
+            value={layer.route}
+            options={cochlearRouteOptions}
+            onChange={(route) => update({ route })}
+          />
           {mode === "postoperative_summary" ? (
-            <ChoiceField id={id("completion")} label="Completion" value={layer.completion} options={completionOptions} onChange={(completion) => update({ completion })} />
+            <ChoiceField
+              id={id("completion")}
+              label="Completion"
+              value={layer.completion}
+              options={completionOptions}
+              onChange={(completion) => update({ completion })}
+            />
           ) : null}
-          <ChoiceField id={id("array")} label="Array" value={layer.array} options={cochlearArrayOptions} onChange={(array) => update({ array })} />
+          <ChoiceField
+            id={id("array")}
+            label="Array"
+            value={layer.array}
+            options={cochlearArrayOptions}
+            onChange={(array) => update({ array })}
+          />
         </>
       );
     case "bone_conduction_implant":
       return (
         <>
-          <ChoiceField id={id("coupling")} label="Coupling" value={layer.coupling} options={couplingOptions} onChange={(coupling) => update({ coupling })} />
-          <ChoiceField id={id("stage")} label="Stage" value={layer.stage} options={implantStageOptions} onChange={(stage) => update({ stage })} />
+          <ChoiceField
+            id={id("coupling")}
+            label="Coupling"
+            value={layer.coupling}
+            options={couplingOptions}
+            onChange={(coupling) => update({ coupling })}
+          />
+          <ChoiceField
+            id={id("stage")}
+            label="Stage"
+            value={layer.stage}
+            options={implantStageOptions}
+            onChange={(stage) => update({ stage })}
+          />
         </>
       );
     case "canalplasty":
       return (
         <>
-          <ChoiceField id={id("region")} label="Region" value={layer.region} options={canalRegionOptions} onChange={(region) => update({ region })} />
+          <ChoiceField
+            id={id("region")}
+            label="Region"
+            value={layer.region}
+            options={canalRegionOptions}
+            onChange={(region) => update({ region })}
+          />
           {mode === "postoperative_summary" ? (
-            <ChoiceField id={id("result")} label="Result" value={layer.result} options={procedureResultOptions} onChange={(result) => update({ result })} />
+            <ChoiceField
+              id={id("result")}
+              label="Result"
+              value={layer.result}
+              options={procedureResultOptions}
+              onChange={(result) => update({ result })}
+            />
           ) : null}
         </>
       );
     case "eustachian_tube_dilation":
       return mode === "postoperative_summary" ? (
-        <ChoiceField id={id("result")} label="Result" value={layer.result} options={dilationResultOptions} onChange={(result) => update({ result })} />
+        <ChoiceField
+          id={id("result")}
+          label="Result"
+          value={layer.result}
+          options={dilationResultOptions}
+          onChange={(result) => update({ result })}
+        />
       ) : null;
-    case "intraoperative_deviation":
-      {
-        const actionLayers = plan.layers.filter(
-          (candidate) =>
-            candidate.role === "action" &&
-            candidate.documentation === "documented" &&
-            sameDocumentedSide(candidate.side, layer.side),
-        );
-        const supersedingOptions = actionLayers.filter(
-          (candidate) => !layer.affectedLayerIds.includes(candidate.id),
-        );
+    case "intraoperative_deviation": {
+      const actionLayers = plan.layers.filter(
+        (candidate) =>
+          candidate.role === "action" &&
+          candidate.documentation === "documented" &&
+          sameDocumentedSide(candidate.side, layer.side),
+      );
+      const supersedingOptions = actionLayers.filter(
+        (candidate) => !layer.affectedLayerIds.includes(candidate.id),
+      );
       return (
         <>
-          <ChoiceField id={id("deviation")} label="Change" value={layer.deviation} options={deviationOptions} onChange={(deviation) => update({ deviation })} />
+          <ChoiceField
+            id={id("deviation")}
+            label="Change"
+            value={layer.deviation}
+            options={deviationOptions}
+            onChange={(deviation) => update({ deviation })}
+          />
           <div className="surgery-builder-field space-y-1.5">
             <FieldLabel htmlFor={id("superseding-layer")}>Final action</FieldLabel>
             <Select
@@ -683,11 +844,16 @@ function LayerFields({ layer, plan, mode, update }: LayerFieldsProps) {
             </Select>
           </div>
           <fieldset className="surgery-builder-affected-actions sm:col-span-2">
-            <legend className="text-sm font-semibold text-[#17302d]">Affected earlier actions</legend>
+            <legend className="text-sm font-semibold text-[#17302d]">
+              Affected earlier actions
+            </legend>
             {actionLayers.length > 0 ? (
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 {actionLayers.map((candidate, candidateIndex) => (
-                  <label key={candidate.id} className="flex min-h-9 items-center gap-2 text-sm text-slate-700">
+                  <label
+                    key={candidate.id}
+                    className="flex min-h-9 items-center gap-2 text-sm text-slate-700"
+                  >
                     <input
                       type="checkbox"
                       checked={layer.affectedLayerIds.includes(candidate.id)}
@@ -700,12 +866,16 @@ function LayerFields({ layer, plan, mode, update }: LayerFieldsProps) {
                         })
                       }
                     />
-                    <span>{choiceLabel(candidate.kind)} {candidateIndex + 1}</span>
+                    <span>
+                      {choiceLabel(candidate.kind)} {candidateIndex + 1}
+                    </span>
                   </label>
                 ))}
               </div>
             ) : (
-              <p className="mt-2 text-xs text-slate-600">Add a documented action before linking a change.</p>
+              <p className="mt-2 text-xs text-slate-600">
+                Add a documented action before linking a change.
+              </p>
             )}
           </fieldset>
           <div className="surgery-builder-management-field space-y-1.5 sm:col-span-2">
@@ -722,12 +892,24 @@ function LayerFields({ layer, plan, mode, update }: LayerFieldsProps) {
           </div>
         </>
       );
-      }
+    }
     case "verification_status":
       return (
         <>
-          <ChoiceField id={id("verification")} label="Check" value={layer.verification} options={verificationOptions} onChange={(verification) => update({ verification })} />
-          <ChoiceField id={id("result")} label="Result" value={layer.result} options={verificationResultOptions} onChange={(result) => update({ result })} />
+          <ChoiceField
+            id={id("verification")}
+            label="Check"
+            value={layer.verification}
+            options={verificationOptions}
+            onChange={(verification) => update({ verification })}
+          />
+          <ChoiceField
+            id={id("result")}
+            label="Result"
+            value={layer.result}
+            options={verificationResultOptions}
+            onChange={(result) => update({ result })}
+          />
         </>
       );
   }
@@ -782,7 +964,12 @@ function LayerEditor({ layer, index, plan, mode, onUpdate, onRemove }: LayerEdit
         </label>
       </div>
       <div className="surgery-builder-layer-fields mt-3 grid gap-3 sm:grid-cols-2">
-        <LayerFields layer={layer} plan={plan} mode={mode} update={(fields) => onUpdate(layer.id, fields)} />
+        <LayerFields
+          layer={layer}
+          plan={plan}
+          mode={mode}
+          update={(fields) => onUpdate(layer.id, fields)}
+        />
       </div>
     </article>
   );
@@ -793,12 +980,14 @@ export function SurgeryBuilder({
   onChange,
   mode = "postoperative_summary",
 }: SurgeryBuilderProps) {
-  const [selectedAddKinds, setSelectedAddKinds] = useState<Record<LayerRole, SurgeryLayer["kind"]>>({
-    finding: "tm_state",
-    action: "tm_graft",
-    deviation: "intraoperative_deviation",
-    verification: "verification_status",
-  });
+  const [selectedAddKinds, setSelectedAddKinds] = useState<Record<LayerRole, SurgeryLayer["kind"]>>(
+    {
+      finding: "tm_state",
+      action: "tm_graft",
+      deviation: "intraoperative_deviation",
+      verification: "verification_status",
+    },
+  );
   const selectedProcedures = new Set(
     plan.procedureFamilies === "not_documented" ? [] : plan.procedureFamilies,
   );
@@ -872,8 +1061,10 @@ export function SurgeryBuilder({
     if (changedLayer?.kind === "tm_graft") {
       const target = layers.find((layer) => layer.id === changedLayer.targetLayerId);
       const targetMatchesPurpose =
-        (changedLayer.purpose === "tympanic_membrane_repair" && target?.kind === "tm_perforation") ||
-        (changedLayer.purpose === "prosthesis_protection" && target?.kind === "ossicular_reconstruction");
+        (changedLayer.purpose === "tympanic_membrane_repair" &&
+          target?.kind === "tm_perforation") ||
+        (changedLayer.purpose === "prosthesis_protection" &&
+          target?.kind === "ossicular_reconstruction");
       const targetMatchesSide = target ? sameDocumentedSide(changedLayer.side, target.side) : false;
       layers = layers.map((layer) => {
         if (layer.id !== changedLayer.id || layer.kind !== "tm_graft") return layer;
@@ -928,7 +1119,9 @@ export function SurgeryBuilder({
 
       <div className="surgery-builder-preset rounded-md border border-slate-200 bg-slate-50 p-4">
         <FieldLabel htmlFor="surgery-plan-preset">
-          {mode === "preoperative_education" ? "Common planned procedure" : "Synthetic surgery example"}
+          {mode === "preoperative_education"
+            ? "Common planned procedure"
+            : "Synthetic surgery example"}
         </FieldLabel>
         <Select
           id="surgery-plan-preset"
@@ -954,14 +1147,25 @@ export function SurgeryBuilder({
           label="Laterality"
           value={plan.laterality}
           options={lateralityOptions}
-          onChange={(laterality) => emit({ ...plan, laterality: laterality as SurgeryPlan["laterality"] })}
+          onChange={(laterality) => {
+            const nextLaterality = laterality as SurgeryPlan["laterality"];
+            emit({
+              ...plan,
+              laterality: nextLaterality,
+              layers: plan.layers.map((layer) =>
+                layer.side === plan.laterality ? { ...layer, side: nextLaterality } : layer,
+              ),
+            });
+          }}
         />
         <ChoiceField
           id="surgery-plan-revision"
           label="Case type"
           value={plan.revisionStatus}
           options={revisionOptions}
-          onChange={(revisionStatus) => emit({ ...plan, revisionStatus: revisionStatus as SurgeryPlan["revisionStatus"] })}
+          onChange={(revisionStatus) =>
+            emit({ ...plan, revisionStatus: revisionStatus as SurgeryPlan["revisionStatus"] })
+          }
         />
       </div>
 
@@ -979,20 +1183,28 @@ export function SurgeryBuilder({
               type="checkbox"
               checked={plan.procedureFamilies === "not_documented"}
               onChange={(event) => {
-                if (event.target.checked) emit({ ...plan, procedureFamilies: "not_documented", baseViews: [] });
+                if (event.target.checked)
+                  emit({ ...plan, procedureFamilies: "not_documented", baseViews: [] });
               }}
             />
             <span>Not documented</span>
           </label>
           <div className="surgery-builder-procedure-groups mt-3 grid gap-4 sm:grid-cols-2">
             {procedureGroups.map((group) => (
-              <section key={group.label} className="surgery-builder-procedure-group" aria-label={group.label}>
+              <section
+                key={group.label}
+                className="surgery-builder-procedure-group"
+                aria-label={group.label}
+              >
                 <h3 className="text-sm font-semibold text-slate-950">{group.label}</h3>
                 <div className="mt-2 space-y-2">
                   {group.families.map((family) => {
                     const entry = procedureCatalog.find((item) => item.id === family);
                     return (
-                      <label key={family} className="flex min-h-9 items-start gap-2 text-sm text-slate-700">
+                      <label
+                        key={family}
+                        className="flex min-h-9 items-start gap-2 text-sm text-slate-700"
+                      >
                         <input
                           type="checkbox"
                           className="mt-1"
@@ -1021,7 +1233,10 @@ export function SurgeryBuilder({
             >
               <summary className="surgery-builder-layer-summary">
                 <span>
-                  <strong id={`surgery-builder-${section.role}-heading`} className="font-semibold text-slate-950">
+                  <strong
+                    id={`surgery-builder-${section.role}-heading`}
+                    className="font-semibold text-slate-950"
+                  >
                     {section.title}
                   </strong>
                   <span className="text-xs text-slate-600">{roleLayers.length} added</span>
@@ -1029,49 +1244,55 @@ export function SurgeryBuilder({
               </summary>
               <div className="surgery-builder-layer-body">
                 <div className="surgery-builder-layer-group-header flex flex-wrap items-end justify-end gap-3">
-                <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-2 sm:flex-none">
-                  <label className="sr-only" htmlFor={`add-${section.role}-kind`}>
-                    {section.title} layer type
-                  </label>
-                  <Select
-                    id={`add-${section.role}-kind`}
-                    className="w-auto min-w-48 flex-1 sm:flex-none"
-                    value={selectedAddKinds[section.role]}
-                    onChange={(event) =>
-                      setSelectedAddKinds((current) => ({
-                        ...current,
-                        [section.role]: event.target.value as SurgeryLayer["kind"],
-                      }))
-                    }
-                  >
-                    {roleKinds.map((entry) => (
-                      <option key={entry.kind} value={entry.kind}>
-                        {entry.label}
-                      </option>
-                    ))}
-                  </Select>
-                  <Button type="button" variant="secondary" onClick={() => addLayer(section.role)}>
-                    <Plus className="h-4 w-4" aria-hidden="true" />
-                    {section.addLabel}
-                  </Button>
+                  <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-2 sm:flex-none">
+                    <label className="sr-only" htmlFor={`add-${section.role}-kind`}>
+                      {section.title} layer type
+                    </label>
+                    <Select
+                      id={`add-${section.role}-kind`}
+                      className="w-auto min-w-48 flex-1 sm:flex-none"
+                      value={selectedAddKinds[section.role]}
+                      onChange={(event) =>
+                        setSelectedAddKinds((current) => ({
+                          ...current,
+                          [section.role]: event.target.value as SurgeryLayer["kind"],
+                        }))
+                      }
+                    >
+                      {roleKinds.map((entry) => (
+                        <option key={entry.kind} value={entry.kind}>
+                          {entry.label}
+                        </option>
+                      ))}
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => addLayer(section.role)}
+                    >
+                      <Plus className="h-4 w-4" aria-hidden="true" />
+                      {section.addLabel}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <div className="surgery-builder-layer-list mt-4 space-y-3">
-                {roleLayers.map((layer, index) => (
-                  <LayerEditor
-                    key={layer.id}
-                    layer={layer}
-                    index={index}
-                    plan={plan}
-                    mode={mode}
-                    onUpdate={updateLayer}
-                    onRemove={removeLayer}
-                  />
-                ))}
-                {roleLayers.length === 0 ? (
-                  <p className="text-sm text-slate-600">No {section.title.toLowerCase()} added.</p>
-                ) : null}
-              </div>
+                <div className="surgery-builder-layer-list mt-4 space-y-3">
+                  {roleLayers.map((layer, index) => (
+                    <LayerEditor
+                      key={layer.id}
+                      layer={layer}
+                      index={index}
+                      plan={plan}
+                      mode={mode}
+                      onUpdate={updateLayer}
+                      onRemove={removeLayer}
+                    />
+                  ))}
+                  {roleLayers.length === 0 ? (
+                    <p className="text-sm text-slate-600">
+                      No {section.title.toLowerCase()} added.
+                    </p>
+                  ) : null}
+                </div>
               </div>
             </details>
           );
@@ -1089,7 +1310,10 @@ export function SurgeryBuilder({
           </h3>
           <ul className="mt-3 space-y-2">
             {visibleValidationIssues.map((issue, index) => (
-              <li key={`${issue.code}-${issue.layerIds.join("-")}-${index}`} className="text-sm text-slate-700">
+              <li
+                key={`${issue.code}-${issue.layerIds.join("-")}-${index}`}
+                className="text-sm text-slate-700"
+              >
                 <span
                   className={
                     issue.level === "blocking"

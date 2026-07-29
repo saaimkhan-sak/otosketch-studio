@@ -15,16 +15,19 @@ import {
 } from "@/domain/medicalArt";
 import {
   deriveMedicalArtTympanicPolygon,
+  deriveMedicalArtTympanostomyPoint,
   deriveServierProsthesisPlacement,
   mapTympanicPolygonToMedicalArtSource,
   smoothClosedSourcePath,
   type ServierProsthesisPlacement,
 } from "@/domain/medicalArtPlacement";
 import {
-  getActiveSurgeryLayers,
-  type SurgeryLayer,
-  type SurgeryPlan,
-} from "@/domain/surgeryPlan";
+  layoutNumberedMedicalArtCallouts,
+  medicalArtCalloutPointData,
+  medicalArtCalloutRectData,
+  resolveMedicalArtCalloutDescriptor,
+} from "@/domain/medicalArtCallouts";
+import { getActiveSurgeryLayers, type SurgeryLayer, type SurgeryPlan } from "@/domain/surgeryPlan";
 import { cn } from "@/lib/cn";
 
 export type MedicalIllustrationPhase = "finding" | "procedure";
@@ -53,6 +56,17 @@ function fitMedicalArt(asset: MedicalArtAsset) {
   };
 }
 
+function projectSourcePoint(
+  asset: MedicalArtAsset,
+  fitted: FittedImage,
+  point: { x: number; y: number },
+) {
+  return {
+    x: fitted.x + (point.x / asset.width) * fitted.width,
+    y: fitted.y + (point.y / asset.height) * fitted.height,
+  };
+}
+
 function projectAnchor(fitted: FittedImage, anchor: MedicalArtAnchor) {
   return {
     x: fitted.x + (anchor.x / 100) * fitted.width,
@@ -60,21 +74,14 @@ function projectAnchor(fitted: FittedImage, anchor: MedicalArtAnchor) {
   };
 }
 
-function targetPoint(
-  asset: MedicalArtAsset,
-  fitted: FittedImage,
-  target: MedicalArtAnatomyTarget,
-) {
+function targetPoint(asset: MedicalArtAsset, fitted: FittedImage, target: MedicalArtAnatomyTarget) {
   const anchor = getMedicalArtAnchorForTarget(asset.id, target);
   return anchor ? projectAnchor(fitted, anchor) : null;
 }
 
 function isVisibleInPhase(layer: SurgeryLayer, phase: MedicalIllustrationPhase) {
   if (layer.documentation !== "documented") return false;
-  if (
-    layer.kind === "ossicular_reconstruction" &&
-    layer.method === "none"
-  ) {
+  if (layer.kind === "ossicular_reconstruction" && layer.method === "none") {
     return false;
   }
   if (phase === "finding") {
@@ -88,6 +95,19 @@ function phaseLabel(phase: MedicalIllustrationPhase, mode: EducationMode) {
     return mode === "preoperative_education" ? "Anatomy" : "Findings";
   }
   return mode === "preoperative_education" ? "Plan" : "Procedure";
+}
+
+function shouldReportUnillustratedLayer(layer: SurgeryLayer) {
+  if (layer.kind === "verification_status" || layer.kind === "intraoperative_deviation") {
+    return false;
+  }
+  if (layer.kind === "ossicular_reconstruction" && layer.method === "none") {
+    return false;
+  }
+  if (layer.kind === "tm_graft" && layer.material === "none") {
+    return false;
+  }
+  return true;
 }
 
 function lateralityLabel(plan: SurgeryPlan) {
@@ -130,13 +150,9 @@ function wrapLabel(label: string, max = 30) {
 function isRemovalLayer(layer: SurgeryLayer) {
   if (layer.kind === "tm_perforation") return true;
   if (layer.kind !== "ossicle_state") return false;
-  return [
-    "absent",
-    "eroded",
-    "long_process_eroded",
-    "body_eroded",
-    "discontinuous",
-  ].includes(layer.state);
+  return ["absent", "eroded", "long_process_eroded", "body_eroded", "discontinuous"].includes(
+    layer.state,
+  );
 }
 
 function sourceGeometryTransform(asset: MedicalArtAsset, fitted: FittedImage) {
@@ -149,82 +165,75 @@ function sourcePointData(point: { x: number; y: number }) {
   return `${point.x.toFixed(3)},${point.y.toFixed(3)}`;
 }
 
-function documentedTympanicPerforations(plan: SurgeryPlan) {
-  return plan.layers.filter(
-    (
-      layer,
-    ): layer is Extract<SurgeryLayer, { kind: "tm_perforation" }> =>
-      layer.kind === "tm_perforation" && layer.documentation === "documented",
-  );
+function leaderTerminalTick(
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+  length = 11,
+) {
+  const dx = start.x - end.x;
+  const dy = start.y - end.y;
+  const magnitude = Math.hypot(dx, dy) || 1;
+  return {
+    x: end.x + (dx / magnitude) * length,
+    y: end.y + (dy / magnitude) * length,
+  };
 }
 
-function sourcePerforationPaths(
-  plan: SurgeryPlan,
-  asset: MedicalArtAsset,
-) {
-  const tympanicMembrane =
-    medicalArtSourceGeometry[asset.id]?.tympanicMembrane;
-  if (
-    !tympanicMembrane?.normalizedFrame &&
-    !tympanicMembrane?.normalizedSurface
-  ) {
+function sourcePerforationPaths(layers: readonly SurgeryLayer[], asset: MedicalArtAsset) {
+  const tympanicMembrane = medicalArtSourceGeometry[asset.id]?.tympanicMembrane;
+  if (!tympanicMembrane?.normalizedFrame && !tympanicMembrane?.normalizedSurface) {
     return [];
   }
-  return documentedTympanicPerforations(plan).flatMap((layer) => {
-    const points = deriveMedicalArtTympanicPolygon(
-      asset.id,
-      layer.region,
-      layer.geometry,
-    );
+  return layers.flatMap((layer) => {
+    if (layer.kind !== "tm_perforation") return [];
+    const points = deriveMedicalArtTympanicPolygon(asset.id, layer.region, layer.geometry);
     if (!points) return [];
     return [{ id: layer.id, path: smoothClosedSourcePath(points) }];
   });
 }
 
-function documentedOssicleState(
-  plan: SurgeryPlan,
+function supportedOssicleState(
+  layers: readonly SurgeryLayer[],
   structure: Extract<SurgeryLayer, { kind: "ossicle_state" }>["structure"],
 ) {
-  return getActiveSurgeryLayers(plan).find(
-    (
-      layer,
-    ): layer is Extract<SurgeryLayer, { kind: "ossicle_state" }> =>
-      layer.kind === "ossicle_state" &&
-      layer.documentation === "documented" &&
-      layer.structure === structure,
+  return layers.find(
+    (layer): layer is Extract<SurgeryLayer, { kind: "ossicle_state" }> =>
+      layer.kind === "ossicle_state" && layer.structure === structure,
   );
 }
 
 function shouldRetainOnlyStapesFootplate(
-  plan: SurgeryPlan,
+  layers: readonly SurgeryLayer[],
   phase: MedicalIllustrationPhase,
 ) {
-  const superstructure = documentedOssicleState(plan, "stapes_superstructure");
+  const superstructure = supportedOssicleState(layers, "stapes_superstructure");
   if (superstructure?.state === "absent") return true;
   if (phase !== "procedure") return false;
-  return getActiveSurgeryLayers(plan).some(
-    (layer) =>
-      layer.kind === "stapes_procedure" &&
-      layer.documentation === "documented" &&
-      (layer.technique === "stapedotomy" || layer.technique === "stapedectomy"),
+  return layers.some(
+    (layer) => layer.kind === "stapes_procedure" && layer.technique === "stapedotomy",
   );
 }
 
 function layeredComponentState(
   component: MedicalArtComponent,
-  plan: SurgeryPlan,
+  layers: readonly SurgeryLayer[],
   phase: MedicalIllustrationPhase,
 ) {
+  if (component.id === "malleus") {
+    const malleus = supportedOssicleState(layers, "malleus");
+    if (malleus?.state === "absent") return "omitted";
+  }
   if (component.id === "incus") {
-    const incus = documentedOssicleState(plan, "incus");
+    const incus = supportedOssicleState(layers, "incus");
     if (incus?.state === "absent") return "omitted";
     if (incus?.state === "long_process_eroded") return "long-process-eroded";
   }
-  if (
-    component.id === "stapes" &&
-    shouldRetainOnlyStapesFootplate(plan, phase)
-  ) {
-    return "footplate-only";
+  if (component.id === "stapes") {
+    const footplate = supportedOssicleState(layers, "stapes_footplate");
+    if (footplate?.state === "absent") return "omitted";
+    if (shouldRetainOnlyStapesFootplate(layers, phase)) {
+      return "footplate-only";
+    }
   }
   return "intact";
 }
@@ -244,7 +253,7 @@ function layeredComponentClipPath(
 }
 
 function layeredMedicalArt(
-  plan: SurgeryPlan,
+  layers: readonly SurgeryLayer[],
   phase: MedicalIllustrationPhase,
   asset: MedicalArtAsset,
   fitted: FittedImage,
@@ -255,8 +264,7 @@ function layeredMedicalArt(
   if (!components) return null;
   const selectedComponents = foreground
     ? components.filter(
-        (component) =>
-          component.id === "tympanic_membrane" || component.id === "malleus",
+        (component) => component.id === "tympanic_membrane" || component.id === "malleus",
       )
     : components;
 
@@ -266,12 +274,10 @@ function layeredMedicalArt(
       data-medical-art-composition={foreground ? "tm-foreground" : "official-layers"}
     >
       {selectedComponents.map((component) => {
-        const state = layeredComponentState(component, plan, phase);
+        const state = layeredComponentState(component, layers, phase);
         if (state === "omitted") return null;
         const tympanicMask =
-          component.id === "tympanic_membrane"
-            ? `url(#${id}-tympanic-membrane)`
-            : undefined;
+          component.id === "tympanic_membrane" ? `url(#${id}-tympanic-membrane)` : undefined;
         return (
           <image
             key={`${foreground ? "foreground" : "base"}-${component.id}`}
@@ -283,11 +289,7 @@ function layeredMedicalArt(
             preserveAspectRatio="none"
             mask={tympanicMask}
             clipPath={layeredComponentClipPath(component, state, id)}
-            opacity={
-              foreground && component.id === "tympanic_membrane"
-                ? 0.52
-                : undefined
-            }
+            opacity={foreground && component.id === "tympanic_membrane" ? 0.52 : undefined}
             data-anatomy-component={component.id}
             data-anatomy-component-state={state}
             data-anatomy-component-sha256={component.sha256}
@@ -297,14 +299,10 @@ function layeredMedicalArt(
                 : undefined
             }
             data-medical-art-source={
-              !foreground && component.id === "cochlea"
-                ? asset.sourcePage
-                : undefined
+              !foreground && component.id === "cochlea" ? asset.sourcePage : undefined
             }
             data-medical-art-license={
-              !foreground && component.id === "cochlea"
-                ? asset.license
-                : undefined
+              !foreground && component.id === "cochlea" ? asset.license : undefined
             }
           />
         );
@@ -313,13 +311,8 @@ function layeredMedicalArt(
   );
 }
 
-function sourceTympanicForeground(
-  asset: MedicalArtAsset,
-  fitted: FittedImage,
-  id: string,
-) {
-  const tympanicMembrane =
-    medicalArtSourceGeometry[asset.id]?.tympanicMembrane;
+function sourceTympanicForeground(asset: MedicalArtAsset, fitted: FittedImage, id: string) {
+  const tympanicMembrane = medicalArtSourceGeometry[asset.id]?.tympanicMembrane;
   if (!tympanicMembrane) return null;
   return (
     <g
@@ -352,17 +345,9 @@ function anatomyRemovalShape(
   y: number,
 ): ReactNode {
   if (layer.kind === "tm_perforation") {
-    const tympanicMembrane =
-      medicalArtSourceGeometry[asset.id]?.tympanicMembrane;
-    if (
-      tympanicMembrane?.normalizedFrame ||
-      tympanicMembrane?.normalizedSurface
-    ) {
-      const points = deriveMedicalArtTympanicPolygon(
-        asset.id,
-        layer.region,
-        layer.geometry,
-      );
+    const tympanicMembrane = medicalArtSourceGeometry[asset.id]?.tympanicMembrane;
+    if (tympanicMembrane?.normalizedFrame || tympanicMembrane?.normalizedSurface) {
+      const points = deriveMedicalArtTympanicPolygon(asset.id, layer.region, layer.geometry);
       if (points) {
         return (
           <path
@@ -400,7 +385,9 @@ function anatomyRemovalShape(
     );
   }
   if (layer.state === "discontinuous") {
-    return <ellipse cx={x} cy={y} rx="12" ry="10" fill="black" transform={`rotate(-12 ${x} ${y})`} />;
+    return (
+      <ellipse cx={x} cy={y} rx="12" ry="10" fill="black" transform={`rotate(-12 ${x} ${y})`} />
+    );
   }
   if (layer.state === "body_eroded") {
     return (
@@ -409,9 +396,7 @@ function anatomyRemovalShape(
           y - 17
         }, ${x + 19} ${y - 3} C ${x + 17} ${y + 14}, ${x + 3} ${
           y + 22
-        }, ${x - 13} ${y + 15} C ${x - 22} ${y + 8}, ${x - 23} ${
-          y - 5
-        }, ${x - 17} ${y - 13} Z`}
+        }, ${x - 13} ${y + 15} C ${x - 22} ${y + 8}, ${x - 23} ${y - 5}, ${x - 17} ${y - 13} Z`}
         fill="black"
       />
     );
@@ -423,9 +408,7 @@ function anatomyRemovalShape(
           y - 12
         }, ${x + 15} ${y + 1} C ${x + 10} ${y + 16}, ${x - 7} ${
           y + 18
-        }, ${x - 16} ${y + 6} C ${x - 20} ${y - 1}, ${x - 18} ${
-          y - 7
-        }, ${x - 13} ${y - 12} Z`}
+        }, ${x - 16} ${y + 6} C ${x - 20} ${y - 1}, ${x - 18} ${y - 7}, ${x - 13} ${y - 12} Z`}
         fill="black"
       />
     );
@@ -433,7 +416,11 @@ function anatomyRemovalShape(
   return null;
 }
 
-function lesionOverlay(layer: Extract<SurgeryLayer, { kind: "ossicle_state" }>, x: number, y: number) {
+function lesionOverlay(
+  layer: Extract<SurgeryLayer, { kind: "ossicle_state" }>,
+  x: number,
+  y: number,
+) {
   const color = markerColor(layer);
   const fill = markerFill(layer);
 
@@ -471,14 +458,10 @@ function lesionOverlay(layer: Extract<SurgeryLayer, { kind: "ossicle_state" }>, 
     return (
       <g className="medical-lesion" filter="url(#medical-soft-shadow)">
         <path
-          d={
-            `M ${x - 16} ${y - 12}
+          d={`M ${x - 16} ${y - 12}
                  C ${x - 4} ${y - 21}, ${x + 15} ${y - 15}, ${x + 18} ${y}
-                 C ${x + 13} ${y + 16}, ${x - 5} ${y + 20}, ${x - 17} ${
-                   y + 8
-                 }
-                 C ${x - 22} ${y}, ${x - 21} ${y - 7}, ${x - 16} ${y - 12} Z`
-          }
+                 C ${x + 13} ${y + 16}, ${x - 5} ${y + 20}, ${x - 17} ${y + 8}
+                 C ${x - 22} ${y}, ${x - 21} ${y - 7}, ${x - 16} ${y - 12} Z`}
           fill="rgba(111, 51, 42, 0.24)"
           stroke={color}
           strokeWidth="3"
@@ -494,8 +477,20 @@ function lesionOverlay(layer: Extract<SurgeryLayer, { kind: "ossicle_state" }>, 
   if (layer.state === "absent") {
     return (
       <g fill="none" stroke={color}>
-        <ellipse cx={x} cy={y} rx="34" ry="24" fill={fill} strokeWidth="2.5" strokeDasharray="6 5" />
-        <path d={`M ${x - 24} ${y + 17} C ${x - 6} ${y + 27}, ${x + 17} ${y + 25}, ${x + 29} ${y + 10}`} strokeWidth="2" opacity="0.72" />
+        <ellipse
+          cx={x}
+          cy={y}
+          rx="34"
+          ry="24"
+          fill={fill}
+          strokeWidth="2.5"
+          strokeDasharray="6 5"
+        />
+        <path
+          d={`M ${x - 24} ${y + 17} C ${x - 6} ${y + 27}, ${x + 17} ${y + 25}, ${x + 29} ${y + 10}`}
+          strokeWidth="2"
+          opacity="0.72"
+        />
       </g>
     );
   }
@@ -548,10 +543,9 @@ function endpointPoint(
     | Extract<SurgeryLayer, { kind: "ossicular_reconstruction" }>["lateralEndpoint"]
     | Extract<SurgeryLayer, { kind: "ossicular_reconstruction" }>["medialEndpoint"],
   method?: Extract<SurgeryLayer, { kind: "ossicular_reconstruction" }>["method"],
+  preferIncusErosionStump = false,
 ) {
-  const targetByEndpoint: Partial<
-    Record<typeof endpoint, MedicalArtAnatomyTarget>
-  > = {
+  const targetByEndpoint: Partial<Record<typeof endpoint, MedicalArtAnatomyTarget>> = {
     tympanic_membrane: "tm_prosthesis_contact",
     malleus: "malleus_manubrium",
     incus_long_process: "incus_long_process",
@@ -562,9 +556,11 @@ function endpointPoint(
     stapes_footplate: "stapes_footplate",
   };
   const target =
-    method === "porp" && endpoint === "stapes_superstructure"
-      ? "stapes_capitulum"
-      : targetByEndpoint[endpoint];
+    preferIncusErosionStump && endpoint === "incus_long_process"
+      ? "incus_erosion_stump"
+      : method === "porp" && endpoint === "stapes_superstructure"
+        ? "stapes_capitulum"
+        : targetByEndpoint[endpoint];
   if (!target) return null;
   return (
     targetPoint(asset, fitted, target) ??
@@ -633,9 +629,7 @@ function servierProsthesisOverlay(
         d={`M ${headPlate.center.x - 6} ${headPlate.center.y - 1.4}
             C ${headPlate.center.x - 1} ${headPlate.center.y - 3.1}, ${
               headPlate.center.x + 6
-            } ${headPlate.center.y - 2.5}, ${headPlate.center.x + 8} ${
-              headPlate.center.y - 0.8
-            }`}
+            } ${headPlate.center.y - 2.5}, ${headPlate.center.x + 8} ${headPlate.center.y - 0.8}`}
         transform={`rotate(${headPlate.rotation} ${headPlate.center.x} ${headPlate.center.y})`}
         fill="none"
         stroke="rgba(255,255,255,.78)"
@@ -685,9 +679,7 @@ function servierProsthesisOverlay(
               distalContact.center.y - 1.8
             }, ${distalContact.center.x + 2.8} ${
               distalContact.center.y - 1.6
-            }, ${distalContact.center.x + 4.5} ${
-              distalContact.center.y - 0.5
-            }`}
+            }, ${distalContact.center.x + 4.5} ${distalContact.center.y - 0.5}`}
             fill="none"
             stroke="rgba(255,255,255,.72)"
             strokeWidth="1"
@@ -701,6 +693,7 @@ function servierProsthesisOverlay(
 
 function reconstructionOverlay(
   layer: Extract<SurgeryLayer, { kind: "ossicular_reconstruction" }>,
+  supportedLayers: readonly SurgeryLayer[],
   asset: MedicalArtAsset,
   fitted: FittedImage,
 ) {
@@ -716,8 +709,31 @@ function reconstructionOverlay(
       deriveServierProsthesisPlacement(layer.method),
     );
   }
-  const lateral = endpointPoint(asset, fitted, layer.lateralEndpoint, layer.method);
-  const medial = endpointPoint(asset, fitted, layer.medialEndpoint, layer.method);
+  const preferIncusErosionStump =
+    layer.method === "bone_cement_bridge" &&
+    supportedLayers.some(
+      (candidate) =>
+        candidate.kind === "ossicle_state" &&
+        candidate.structure === "incus" &&
+        candidate.state === "long_process_eroded" &&
+        (candidate.side === layer.side ||
+          candidate.side === "bilateral" ||
+          layer.side === "bilateral"),
+    );
+  const lateral = endpointPoint(
+    asset,
+    fitted,
+    layer.lateralEndpoint,
+    layer.method,
+    preferIncusErosionStump,
+  );
+  const medial = endpointPoint(
+    asset,
+    fitted,
+    layer.medialEndpoint,
+    layer.method,
+    preferIncusErosionStump,
+  );
   if (!lateral || !medial || layer.method === "none" || layer.method === "not_documented") {
     return null;
   }
@@ -727,7 +743,16 @@ function reconstructionOverlay(
 
   if (layer.method === "bone_cement_bridge") {
     return (
-      <g filter="url(#medical-soft-shadow)">
+      <g
+        filter="url(#medical-soft-shadow)"
+        data-reconstruction-rendering="bone-cement-bridge"
+        data-reconstruction-lateral-target={
+          preferIncusErosionStump && layer.lateralEndpoint === "incus_long_process"
+            ? "incus_erosion_stump"
+            : layer.lateralEndpoint
+        }
+        data-reconstruction-lateral-display={sourcePointData(lateral)}
+      >
         <path
           d={`M ${lateral.x - 7} ${lateral.y - 6}
               C ${midpoint.x - 8} ${midpoint.y - 13}, ${midpoint.x + 8} ${
@@ -767,7 +792,13 @@ function reconstructionOverlay(
           stroke={color}
           strokeWidth="2.5"
         />
-        <path d="M -29 -2 C -8 -7, 14 -6, 29 -2" fill="none" stroke="#fff3dc" strokeWidth="2" opacity="0.8" />
+        <path
+          d="M -29 -2 C -8 -7, 14 -6, 29 -2"
+          fill="none"
+          stroke="#fff3dc"
+          strokeWidth="2"
+          opacity="0.8"
+        />
       </g>
     );
   }
@@ -800,9 +831,7 @@ function reconstructionOverlay(
         medicalArtSourceGeometry[asset.id]?.calibrationId ?? "anchor-fallback"
       }
       data-prosthesis-rendering={
-        layer.method === "porp"
-          ? "headplate-shaft-capitulum-cup"
-          : "headplate-shaft-footplate-shoe"
+        layer.method === "porp" ? "headplate-shaft-capitulum-cup" : "headplate-shaft-footplate-shoe"
       }
     >
       <line
@@ -849,17 +878,20 @@ function reconstructionOverlay(
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          <path
-            d="M -8 -8 C 1 -10 8 -6 9 0 C 8 6 1 10 -8 8"
-            stroke="#43535d"
-            strokeWidth="6"
-          />
+          <path d="M -8 -8 C 1 -10 8 -6 9 0 C 8 6 1 10 -8 8" stroke="#43535d" strokeWidth="6" />
           <path
             d="M -8 -8 C 1 -10 8 -6 9 0 C 8 6 1 10 -8 8"
             stroke="url(#medical-metal)"
             strokeWidth="3.2"
           />
-          <circle cx="1" cy="0" r="3.2" fill="rgba(255,255,255,.18)" stroke={color} strokeWidth="1.5" />
+          <circle
+            cx="1"
+            cy="0"
+            r="3.2"
+            fill="rgba(255,255,255,.18)"
+            stroke={color}
+            strokeWidth="1.5"
+          />
         </g>
       ) : (
         <g transform={`rotate(-7 ${medial.x} ${medial.y})`}>
@@ -892,20 +924,28 @@ function stapesOverlay(
   asset: MedicalArtAsset,
   fitted: FittedImage,
 ) {
-  const attachment =
+  if (layer.technique === "not_documented") return null;
+  if (
+    layer.technique !== "exploration_only" &&
+    layer.pistonAttachment !== "malleus" &&
+    layer.pistonAttachment !== "incus_long_process"
+  ) {
+    return null;
+  }
+  const attachmentTarget: MedicalArtAnatomyTarget =
     layer.pistonAttachment === "malleus"
-      ? targetPoint(asset, fitted, "malleus")
-      : targetPoint(
-          asset,
-          fitted,
-          asset.id === "servier-inner-ear"
-            ? "incus_piston_attachment"
-            : "incus_long_process",
-        );
+      ? getMedicalArtAnchorForTarget(asset.id, "malleus_manubrium")
+        ? "malleus_manubrium"
+        : "malleus"
+      : asset.id === "servier-inner-ear"
+        ? "incus_piston_attachment"
+        : "incus_long_process";
+  const attachment = targetPoint(asset, fitted, attachmentTarget);
   const footplate = targetPoint(asset, fitted, "stapes_footplate");
   if (!attachment || !footplate) return null;
   const color = markerColor(layer);
-  const angle = (Math.atan2(footplate.y - attachment.y, footplate.x - attachment.x) * 180) / Math.PI;
+  const angle =
+    (Math.atan2(footplate.y - attachment.y, footplate.x - attachment.x) * 180) / Math.PI;
 
   if (layer.technique === "exploration_only") {
     return (
@@ -924,7 +964,7 @@ function stapesOverlay(
   }
 
   return (
-    <g filter="url(#medical-soft-shadow)">
+    <g filter="url(#medical-soft-shadow)" data-stapes-piston-attachment-target={attachmentTarget}>
       <ellipse
         cx={attachment.x}
         cy={attachment.y}
@@ -975,6 +1015,9 @@ function graftOverlay(
   x: number,
   y: number,
 ) {
+  if (layer.material === "none" || layer.purpose === "not_documented") {
+    return null;
+  }
   const color = markerColor(layer);
   const geometry = medicalArtSourceGeometry[asset.id];
 
@@ -1023,15 +1066,9 @@ function graftOverlay(
         </g>
       );
     }
-    const contact =
-      (targetLayer
-        ? endpointPoint(
-            asset,
-            fitted,
-            targetLayer.lateralEndpoint,
-            targetLayer.method,
-          )
-        : null) ??
+    const contact = (targetLayer
+      ? endpointPoint(asset, fitted, targetLayer.lateralEndpoint, targetLayer.method)
+      : null) ??
       targetPoint(asset, fitted, "tm_prosthesis_contact") ??
       targetPoint(asset, fitted, "tympanic_membrane_medial") ?? { x, y };
     const rotation = geometry?.tympanicMembrane?.planeAngle ?? -18;
@@ -1066,21 +1103,21 @@ function graftOverlay(
   if (geometry?.tympanicMembrane) {
     const documentedPoints =
       layer.geometry &&
-      (geometry.tympanicMembrane.normalizedFrame ||
-        geometry.tympanicMembrane.normalizedSurface)
+      (geometry.tympanicMembrane.normalizedFrame || geometry.tympanicMembrane.normalizedSurface)
         ? mapTympanicPolygonToMedicalArtSource(asset.id, layer.geometry)
         : null;
     const repairPath = documentedPoints
       ? smoothClosedSourcePath(documentedPoints)
       : geometry.tympanicMembrane.repairGraftPath;
-    const materialFill =
-      layer.material === "cartilage"
-        ? "rgba(204, 167, 126, .82)"
-        : layer.material === "perichondrium"
-          ? "rgba(224, 195, 171, .8)"
-          : layer.material === "fat"
-            ? "rgba(231, 195, 126, .82)"
-            : "url(#medical-fascia)";
+    const materialFill = {
+      temporalis_fascia: "url(#medical-fascia)",
+      cartilage: "rgba(204, 167, 126, .82)",
+      perichondrium: "rgba(224, 195, 171, .8)",
+      fat: "rgba(231, 195, 126, .82)",
+      other: "rgba(211, 199, 181, .8)",
+      not_documented: "rgba(211, 199, 181, .72)",
+      none: "transparent",
+    }[layer.material];
     const fillOpacity =
       layer.technique === "lateral" ? 0.9 : layer.technique === "butterfly" ? 0.84 : 0.74;
     return (
@@ -1089,9 +1126,7 @@ function graftOverlay(
         filter="url(#medical-soft-shadow)"
         data-medical-graft="tympanic-membrane-repair"
         data-graft-calibration={geometry.calibrationId}
-        data-graft-geometry={
-          documentedPoints ? "documented-polygon" : "source-full-template"
-        }
+        data-graft-geometry={documentedPoints ? "documented-polygon" : "source-full-template"}
         data-graft-technique={layer.technique}
         data-graft-material={layer.material}
       >
@@ -1105,18 +1140,12 @@ function graftOverlay(
           vectorEffect="non-scaling-stroke"
         />
         <path
-          d={
-            documentedPoints
-              ? repairPath
-              : geometry.tympanicMembrane.repairHighlightPath
-          }
+          d={documentedPoints ? repairPath : geometry.tympanicMembrane.repairHighlightPath}
           fill="none"
           stroke="#f8eee5"
           strokeWidth={documentedPoints ? "1.2" : "2"}
           strokeLinecap="round"
-          strokeDasharray={
-            layer.technique === "butterfly" ? "5 3" : undefined
-          }
+          strokeDasharray={layer.technique === "butterfly" ? "5 3" : undefined}
           opacity={documentedPoints ? "0.72" : "0.9"}
           vectorEffect="non-scaling-stroke"
         />
@@ -1154,11 +1183,7 @@ function sourceTympanicPerforationOverlay(
   asset: MedicalArtAsset,
   fitted: FittedImage,
 ) {
-  const points = deriveMedicalArtTympanicPolygon(
-    asset.id,
-    layer.region,
-    layer.geometry,
-  );
+  const points = deriveMedicalArtTympanicPolygon(asset.id, layer.region, layer.geometry);
   if (!points) return null;
   const path = smoothClosedSourcePath(points);
   return (
@@ -1166,9 +1191,7 @@ function sourceTympanicPerforationOverlay(
       transform={sourceGeometryTransform(asset, fitted)}
       filter="url(#medical-soft-shadow)"
       data-medical-perforation={layer.region}
-      data-perforation-geometry={
-        layer.geometry ? "documented-polygon" : "reviewed-region-template"
-      }
+      data-perforation-geometry={layer.geometry ? "documented-polygon" : "reviewed-region-template"}
     >
       <path
         d={path}
@@ -1194,6 +1217,7 @@ function sourceTympanicPerforationOverlay(
 function procedureOverlay(
   layer: SurgeryLayer,
   plan: SurgeryPlan,
+  supportedLayers: readonly SurgeryLayer[],
   asset: MedicalArtAsset,
   fitted: FittedImage,
   x: number,
@@ -1204,10 +1228,8 @@ function procedureOverlay(
   switch (layer.kind) {
     case "tm_perforation":
       if (
-        medicalArtSourceGeometry[asset.id]?.tympanicMembrane
-          ?.normalizedFrame ||
-        medicalArtSourceGeometry[asset.id]?.tympanicMembrane
-          ?.normalizedSurface
+        medicalArtSourceGeometry[asset.id]?.tympanicMembrane?.normalizedFrame ||
+        medicalArtSourceGeometry[asset.id]?.tympanicMembrane?.normalizedSurface
       ) {
         return sourceTympanicPerforationOverlay(layer, asset, fitted);
       }
@@ -1224,9 +1246,7 @@ function procedureOverlay(
             strokeLinejoin="round"
           />
           <path
-            d={`M ${x - 9} ${y - 19} C ${x + 2} ${y - 22}, ${x + 12} ${
-              y - 10
-            }, ${x + 10} ${y + 2}`}
+            d={`M ${x - 9} ${y - 19} C ${x + 2} ${y - 22}, ${x + 12} ${y - 10}, ${x + 10} ${y + 2}`}
             fill="none"
             stroke="#f2b39a"
             strokeWidth="2"
@@ -1237,21 +1257,101 @@ function procedureOverlay(
       );
     case "tm_graft":
       return graftOverlay(layer, plan, asset, fitted, x, y);
-    case "ossicle_state":
-      if (asset.components && layer.state === "absent") return null;
+    case "ossicle_state": {
+      const absenceHandledByOfficialComponent =
+        Boolean(asset.components) &&
+        layer.state === "absent" &&
+        ["malleus", "incus", "stapes_superstructure", "stapes_footplate"].includes(layer.structure);
+      if (absenceHandledByOfficialComponent) return null;
       return lesionOverlay(layer, x, y);
+    }
     case "ossicular_reconstruction":
-      return reconstructionOverlay(layer, asset, fitted);
+      return reconstructionOverlay(layer, supportedLayers, asset, fitted);
     case "stapes_procedure":
       return stapesOverlay(layer, asset, fitted);
     case "tympanostomy": {
+      if (layer.action === "not_documented" || layer.quadrant === "not_documented") {
+        return null;
+      }
+      if (layer.action === "tube_placed" && layer.tubeType !== "short_term") {
+        return null;
+      }
+      const sourcePoint = deriveMedicalArtTympanostomyPoint(asset.id, layer.quadrant);
+      const position = sourcePoint ? projectSourcePoint(asset, fitted, sourcePoint) : { x, y };
+      const tubeX = position.x;
+      const tubeY = position.y;
       const rotation = -15;
+      if (layer.action === "myringotomy_only" || layer.action === "tube_not_placed") {
+        return (
+          <g
+            transform={`rotate(${rotation} ${tubeX} ${tubeY})`}
+            filter="url(#medical-soft-shadow)"
+            data-tympanostomy-rendering={
+              layer.action === "myringotomy_only"
+                ? "radial-myringotomy"
+                : "myringotomy-without-tube"
+            }
+            data-tympanostomy-quadrant={layer.quadrant}
+          >
+            <path
+              d={`M ${tubeX - 16} ${tubeY} C ${tubeX - 7} ${
+                tubeY - 4
+              }, ${tubeX + 7} ${tubeY - 4}, ${tubeX + 16} ${tubeY}`}
+              fill="none"
+              stroke="#f8fbfa"
+              strokeWidth="6"
+              strokeLinecap="round"
+            />
+            <path
+              d={`M ${tubeX - 16} ${tubeY} C ${tubeX - 7} ${
+                tubeY - 4
+              }, ${tubeX + 7} ${tubeY - 4}, ${tubeX + 16} ${tubeY}`}
+              fill="none"
+              stroke={color}
+              strokeWidth="2.8"
+              strokeLinecap="round"
+              strokeDasharray={layer.action === "tube_not_placed" ? "4 2" : undefined}
+            />
+          </g>
+        );
+      }
       return (
-        <g transform={`rotate(${rotation} ${x} ${y})`} filter="url(#medical-soft-shadow)">
-          <ellipse cx={x - 9} cy={y} rx="14" ry="18" fill="#e7f2f0" stroke="#40545c" strokeWidth="2.5" />
-          <rect x={x - 10} y={y - 8} width="22" height="16" rx="5" fill="url(#medical-tube)" stroke="#40545c" strokeWidth="2" />
-          <ellipse cx={x + 11} cy={y} rx="9" ry="13" fill="#f8fbfa" stroke={color} strokeWidth="2.5" />
-          <ellipse cx={x + 11} cy={y} rx="4" ry="7" fill="#35525a" opacity="0.82" />
+        <g
+          transform={`rotate(${rotation} ${tubeX} ${tubeY})`}
+          filter="url(#medical-soft-shadow)"
+          data-tympanostomy-rendering="tube-placed"
+          data-tympanostomy-quadrant={layer.quadrant}
+          data-tympanostomy-type={layer.tubeType}
+        >
+          <ellipse
+            cx={tubeX - 9}
+            cy={tubeY}
+            rx="14"
+            ry="18"
+            fill="#e7f2f0"
+            stroke="#40545c"
+            strokeWidth="2.5"
+          />
+          <rect
+            x={tubeX - 10}
+            y={tubeY - 8}
+            width="22"
+            height="16"
+            rx="5"
+            fill="url(#medical-tube)"
+            stroke="#40545c"
+            strokeWidth="2"
+          />
+          <ellipse
+            cx={tubeX + 11}
+            cy={tubeY}
+            rx="9"
+            ry="13"
+            fill="#f8fbfa"
+            stroke={color}
+            strokeWidth="2.5"
+          />
+          <ellipse cx={tubeX + 11} cy={tubeY} rx="4" ry="7" fill="#35525a" opacity="0.82" />
         </g>
       );
     }
@@ -1278,9 +1378,7 @@ function procedureOverlay(
           <path
             d={`M ${mastoid.x - 37} ${mastoid.y + 23} C ${mastoid.x - 15} ${
               mastoid.y - 16
-            }, ${mastoid.x + 20} ${mastoid.y - 25}, ${mastoid.x + 43} ${
-              mastoid.y + 2
-            }`}
+            }, ${mastoid.x + 20} ${mastoid.y - 25}, ${mastoid.x + 43} ${mastoid.y + 2}`}
             fill="none"
             stroke={color}
             strokeWidth="3"
@@ -1338,7 +1436,7 @@ function procedureOverlay(
           strokeWidth="2.5"
           filter="url(#medical-soft-shadow)"
         >
-          {regions.length > 0 ? regions : <ellipse cx={x} cy={y} rx="35" ry="27" />}
+          {regions}
         </g>
       );
     }
@@ -1348,7 +1446,12 @@ function procedureOverlay(
       const centerX = cochlea.x + 1;
       const centerY = cochlea.y + 2;
       return (
-        <g fill="none" strokeLinecap="round" strokeLinejoin="round" filter="url(#medical-soft-shadow)">
+        <g
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          filter="url(#medical-soft-shadow)"
+        >
           <path
             d={`M ${roundWindow.x - 34} ${roundWindow.y + 18}
                 C ${roundWindow.x - 18} ${roundWindow.y + 5}, ${
@@ -1389,7 +1492,14 @@ function procedureOverlay(
             stroke="#d9eeeb"
             strokeWidth="4"
           />
-          <circle cx={roundWindow.x} cy={roundWindow.y} r="8" fill="#f8fbfa" stroke={color} strokeWidth="3" />
+          <circle
+            cx={roundWindow.x}
+            cy={roundWindow.y}
+            r="8"
+            fill="#f8fbfa"
+            stroke={color}
+            strokeWidth="3"
+          />
           {[0, 1, 2, 3].map((index) => (
             <circle
               key={index}
@@ -1406,9 +1516,23 @@ function procedureOverlay(
     case "bone_conduction_implant":
       return (
         <g filter="url(#medical-soft-shadow)">
-          <circle cx={x} cy={y} r="37" fill="rgba(223,235,231,.88)" stroke="#40545c" strokeWidth="3" />
+          <circle
+            cx={x}
+            cy={y}
+            r="37"
+            fill="rgba(223,235,231,.88)"
+            stroke="#40545c"
+            strokeWidth="3"
+          />
           <circle cx={x} cy={y} r="29" fill="none" stroke={color} strokeWidth="4" />
-          <circle cx={x} cy={y} r="11" fill="url(#medical-metal)" stroke="#40545c" strokeWidth="2.5" />
+          <circle
+            cx={x}
+            cy={y}
+            r="11"
+            fill="url(#medical-metal)"
+            stroke="#40545c"
+            strokeWidth="2.5"
+          />
           {[0, 120, 240].map((angle) => {
             const radians = (angle * Math.PI) / 180;
             return (
@@ -1452,14 +1576,34 @@ function procedureOverlay(
             stroke={color}
             strokeWidth="3.5"
           />
-          <path d={`M ${x - 8} ${y - 31} L ${x + 2} ${y - 21} M ${x - 10} ${y + 31} L ${x + 1} ${y + 21}`} stroke="#fff8df" strokeWidth="4" />
+          <path
+            d={`M ${x - 8} ${y - 31} L ${x + 2} ${y - 21} M ${x - 10} ${y + 31} L ${x + 1} ${y + 21}`}
+            stroke="#fff8df"
+            strokeWidth="4"
+          />
         </g>
       );
     case "eustachian_tube_dilation":
       return (
         <g transform={`rotate(31 ${x} ${y})`} filter="url(#medical-soft-shadow)">
-          <line x1={x - 83} y1={y} x2={x + 84} y2={y} stroke="#3f535c" strokeWidth="6" strokeLinecap="round" />
-          <line x1={x - 83} y1={y} x2={x + 84} y2={y} stroke="#d8ece9" strokeWidth="3" strokeLinecap="round" />
+          <line
+            x1={x - 83}
+            y1={y}
+            x2={x + 84}
+            y2={y}
+            stroke="#3f535c"
+            strokeWidth="6"
+            strokeLinecap="round"
+          />
+          <line
+            x1={x - 83}
+            y1={y}
+            x2={x + 84}
+            y2={y}
+            stroke="#d8ece9"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
           <path
             d={`M ${x - 36} ${y}
                 C ${x - 29} ${y - 16}, ${x + 27} ${y - 16}, ${x + 36} ${y}
@@ -1468,11 +1612,19 @@ function procedureOverlay(
             stroke={color}
             strokeWidth="3"
           />
-          <line x1={x - 28} y1={y - 9} x2={x + 28} y2={y - 9} stroke="#f7ffff" strokeWidth="2" opacity="0.8" />
+          <line
+            x1={x - 28}
+            y1={y - 9}
+            x2={x + 28}
+            y2={y - 9}
+            stroke="#f7ffff"
+            strokeWidth="2"
+            opacity="0.8"
+          />
         </g>
       );
     case "tm_state":
-      if (layer.state === "intact") return null;
+      if (layer.state !== "retraction") return null;
       return (
         <path
           d={`M ${x - 18} ${y - 42}
@@ -1502,42 +1654,64 @@ export function MedicalIllustrationDiagram({
   const asset = selectMedicalArtAsset(plan);
   const fittedImage = fitMedicalArt(asset);
   const activeLayers = getActiveSurgeryLayers(plan);
-  const visibleLayers = activeLayers.filter((layer) =>
+  const phaseLayers = activeLayers.filter((layer) => isVisibleInPhase(layer, phase));
+  const supportedProjectedLayers = activeLayers.flatMap((layer) => {
+    if (layer.documentation !== "documented") return [];
+    const anchor = getMedicalArtAnchor(asset.id, layer);
+    if (!anchor) return [];
+    const descriptor = resolveMedicalArtCalloutDescriptor(
+      layer,
+      plan,
+      asset,
+      fittedImage,
+      presentationMode,
+    );
+    if (!descriptor) return [];
+    const position = projectAnchor(fittedImage, anchor);
+    return [{ layer, descriptor, ...position }];
+  });
+  const supportedLayers = supportedProjectedLayers.map(({ layer }) => layer);
+  const projectedLayers = supportedProjectedLayers.filter(({ layer }) =>
     isVisibleInPhase(layer, phase),
+  );
+  const visibleLayers = projectedLayers.map(({ layer }) => layer);
+  const visibleLayerIds = new Set(visibleLayers.map((layer) => layer.id));
+  const unillustratedLayers = phaseLayers.filter(
+    (layer) => !visibleLayerIds.has(layer.id) && shouldReportUnillustratedLayer(layer),
   );
   const legendRowStartY = 154;
   const legendRowSpacing = 51;
+  const legendRowCount = visibleLayers.length + unillustratedLayers.length;
   const legendBottom = Math.max(
     532,
-    visibleLayers.length > 0
-      ? legendRowStartY +
-          (visibleLayers.length - 1) * legendRowSpacing +
-          19
-      : 532,
+    legendRowCount > 0 ? legendRowStartY + (legendRowCount - 1) * legendRowSpacing + 19 : 532,
   );
   const provenanceY = legendBottom + 47;
   const panelHeight = provenanceY + 41;
   const heading = phaseLabel(phase, presentationMode);
   const mirrorAnatomy = plan.laterality === "left";
-  const mirrorTransform = mirrorAnatomy
-    ? `translate(${fittedImage.x * 2 + fittedImage.width} 0) scale(-1 1)`
-    : undefined;
-
-  const projectedLayers = visibleLayers.flatMap((layer) => {
-    const anchor = getMedicalArtAnchor(asset.id, layer);
-    if (!anchor) return [];
-    const position = projectAnchor(fittedImage, anchor);
-    return [{ layer, ...position }];
-  });
-  const maskProjectedLayers = activeLayers.flatMap((layer) => {
-    if (layer.documentation !== "documented" || !isRemovalLayer(layer)) return [];
-    const anchor = getMedicalArtAnchor(asset.id, layer);
-    if (!anchor) return [];
-    const position = projectAnchor(fittedImage, anchor);
-    return [{ layer, ...position }];
-  });
+  const mirrorConstant = fittedImage.x * 2 + fittedImage.width;
+  const mirrorTransform = mirrorAnatomy ? `translate(${mirrorConstant} 0) scale(-1 1)` : undefined;
+  const callouts = layoutNumberedMedicalArtCallouts(
+    projectedLayers.map(({ descriptor }, index) => ({
+      descriptor,
+      legendNumber: index + 1,
+    })),
+    {
+      railX: 631,
+      top: imageFrame.y,
+      bottom: legendBottom,
+      badgeRadius: 10.5,
+      badgeStrokeWidth: 1.5,
+      badgeClearance: 1,
+      minCenterSpacing: 26,
+      endpointClearance: 4,
+      mirrorConstant: mirrorAnatomy ? mirrorConstant : undefined,
+    },
+  );
+  const maskProjectedLayers = supportedProjectedLayers.filter(({ layer }) => isRemovalLayer(layer));
   const hasRemoval = !asset.components && maskProjectedLayers.length > 0;
-  const perforationPaths = sourcePerforationPaths(plan, asset);
+  const perforationPaths = sourcePerforationPaths(supportedLayers, asset);
   const overlayZIndex = (layer: SurgeryLayer) => {
     if (layer.kind === "tm_graft" && layer.purpose === "prosthesis_protection") return 30;
     if (layer.kind === "ossicular_reconstruction") return 20;
@@ -1548,18 +1722,11 @@ export function MedicalIllustrationDiagram({
   const renderLayers = [...projectedLayers].sort(
     (first, second) => overlayZIndex(first.layer) - overlayZIndex(second.layer),
   );
-  const deepRenderLayers = renderLayers.filter(
-    ({ layer }) => overlayZIndex(layer) < 50,
-  );
-  const superficialRenderLayers = renderLayers.filter(
-    ({ layer }) => overlayZIndex(layer) >= 50,
-  );
+  const deepRenderLayers = renderLayers.filter(({ layer }) => overlayZIndex(layer) < 50);
+  const superficialRenderLayers = renderLayers.filter(({ layer }) => overlayZIndex(layer) >= 50);
   const supportsTympanicForeground =
     Boolean(asset.components) ||
-    Boolean(
-      medicalArtSourceGeometry[asset.id]?.tympanicMembrane
-        ?.normalizedSurface,
-    );
+    Boolean(medicalArtSourceGeometry[asset.id]?.tympanicMembrane?.normalizedSurface);
   const needsTympanicForeground =
     supportsTympanicForeground &&
     phase === "procedure" &&
@@ -1578,6 +1745,7 @@ export function MedicalIllustrationDiagram({
       );
     });
 
+  const legendNumberByLayerId = new Map(visibleLayers.map((layer, index) => [layer.id, index + 1]));
   const activate = (layerId: string) => onLayerSelect?.(layerId);
   const layerSelectionEnabled = Boolean(onLayerSelect);
   const handleKeyboard = (event: KeyboardEvent<SVGGElement>, layerId: string) => {
@@ -1585,32 +1753,28 @@ export function MedicalIllustrationDiagram({
     event.preventDefault();
     activate(layerId);
   };
-  const renderInteractiveLayer = ({
-    layer,
-    x,
-    y,
-  }: (typeof renderLayers)[number]) => {
+  const renderInteractiveLayer = ({ layer, x, y }: (typeof renderLayers)[number]) => {
     const selected = selectedLayerId === layer.id;
+    const legendNumber = legendNumberByLayerId.get(layer.id);
+    const accessibleLabel = legendNumber
+      ? `Callout ${legendNumber}: ${labelSurgeryLayer(layer)}`
+      : labelSurgeryLayer(layer);
     return (
       <g
         key={`${phase}-${layer.id}`}
         role={layerSelectionEnabled ? "button" : undefined}
         tabIndex={layerSelectionEnabled ? 0 : undefined}
-        aria-label={layerSelectionEnabled ? labelSurgeryLayer(layer) : undefined}
+        aria-label={layerSelectionEnabled ? accessibleLabel : undefined}
         aria-pressed={layerSelectionEnabled ? selected : undefined}
         className={cn("medical-panel-hotspot", selected && "is-selected")}
-        onClick={
-          layerSelectionEnabled ? () => activate(layer.id) : undefined
-        }
-        onKeyDown={
-          layerSelectionEnabled
-            ? (event) => handleKeyboard(event, layer.id)
-            : undefined
-        }
+        onClick={layerSelectionEnabled ? () => activate(layer.id) : undefined}
+        onKeyDown={layerSelectionEnabled ? (event) => handleKeyboard(event, layer.id) : undefined}
         data-layer-selectable={layerSelectionEnabled}
         data-anatomy-layer={layer.kind}
+        data-layer-id={layer.id}
+        data-legend-number={legendNumber}
       >
-        {procedureOverlay(layer, plan, asset, fittedImage, x, y)}
+        {procedureOverlay(layer, plan, supportedLayers, asset, fittedImage, x, y)}
       </g>
     );
   };
@@ -1628,10 +1792,14 @@ export function MedicalIllustrationDiagram({
         role="group"
         aria-labelledby={`${id}-title ${id}-description`}
         data-visible-layer-count={visibleLayers.length}
+        data-spatial-callout-count={callouts.length}
+        data-nonspatial-layer-count={phaseLayers.length - visibleLayers.length}
+        data-unillustrated-layer-count={unillustratedLayers.length}
       >
         <title id={`${id}-title`}>{heading}</title>
         <desc id={`${id}-description`}>
-          Licensed medical illustration with calibrated deterministic surgical overlays. Generic
+          Licensed medical illustration with calibrated deterministic surgical overlays. Numbered
+          pointers match the layer list and stop outside the protected annotation geometry. Generic
           anatomy; not patient-specific and not to scale.
         </desc>
 
@@ -1647,11 +1815,23 @@ export function MedicalIllustrationDiagram({
             <stop offset="0.5" stopColor="#9ed7d1" />
             <stop offset="1" stopColor="#f7fbfa" />
           </linearGradient>
-          <pattern id="medical-fascia" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)">
+          <pattern
+            id="medical-fascia"
+            width="8"
+            height="8"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(-18)"
+          >
             <rect width="8" height="8" fill="rgba(207,185,158,.72)" />
             <path d="M 0 2 H 8 M 0 6 H 8" stroke="#f5e9d9" strokeWidth="1.2" opacity="0.72" />
           </pattern>
-          <pattern id="medical-fixation-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(28)">
+          <pattern
+            id="medical-fixation-hatch"
+            width="7"
+            height="7"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(28)"
+          >
             <rect width="7" height="7" fill="rgba(185,87,58,.12)" />
             <path d="M 0 0 V 7" stroke="#b9573a" strokeWidth="2" opacity="0.65" />
           </pattern>
@@ -1661,40 +1841,32 @@ export function MedicalIllustrationDiagram({
             <circle cx="9" cy="8" r="1.8" fill="#fffdf2" />
           </pattern>
           <filter id="medical-soft-shadow" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="0" dy="1.5" stdDeviation="1.8" floodColor="#17302d" floodOpacity="0.24" />
+            <feDropShadow
+              dx="0"
+              dy="1.5"
+              stdDeviation="1.8"
+              floodColor="#17302d"
+              floodOpacity="0.24"
+            />
           </filter>
           {asset.components ? (
             <>
               <clipPath id={`${id}-incus-retained`} clipPathUnits="userSpaceOnUse">
                 <path
-                  d={
-                    medicalArtSourceGeometry[asset.id]?.ossicles
-                      ?.incusLongProcessRetainedClipPath
-                  }
+                  d={medicalArtSourceGeometry[asset.id]?.ossicles?.incusLongProcessRetainedClipPath}
                 />
               </clipPath>
               <clipPath id={`${id}-stapes-footplate`} clipPathUnits="userSpaceOnUse">
                 <path
-                  d={
-                    medicalArtSourceGeometry[asset.id]?.ossicles
-                      ?.stapesFootplateRetainedClipPath
-                  }
+                  d={medicalArtSourceGeometry[asset.id]?.ossicles?.stapesFootplateRetainedClipPath}
                 />
               </clipPath>
             </>
           ) : null}
           {medicalArtSourceGeometry[asset.id]?.tympanicMembrane ? (
             <>
-              <clipPath
-                id={`${id}-tympanic-surface`}
-                clipPathUnits="userSpaceOnUse"
-              >
-                <path
-                  d={
-                    medicalArtSourceGeometry[asset.id]?.tympanicMembrane
-                      ?.repairGraftPath
-                  }
-                />
+              <clipPath id={`${id}-tympanic-surface`} clipPathUnits="userSpaceOnUse">
+                <path d={medicalArtSourceGeometry[asset.id]?.tympanicMembrane?.repairGraftPath} />
               </clipPath>
               <mask
                 id={`${id}-tympanic-membrane`}
@@ -1704,13 +1876,7 @@ export function MedicalIllustrationDiagram({
                 width={asset.width}
                 height={asset.height}
               >
-                <rect
-                  x="0"
-                  y="0"
-                  width={asset.width}
-                  height={asset.height}
-                  fill="white"
-                />
+                <rect x="0" y="0" width={asset.width} height={asset.height} fill="white" />
                 {perforationPaths.map((perforation) => (
                   <path key={perforation.id} d={perforation.path} fill="black" />
                 ))}
@@ -1726,9 +1892,7 @@ export function MedicalIllustrationDiagram({
               fill="white"
             />
             {maskProjectedLayers.map(({ layer, x, y }) => (
-              <g key={`mask-${layer.id}`}>
-                {anatomyRemovalShape(layer, asset, fittedImage, x, y)}
-              </g>
+              <g key={`mask-${layer.id}`}>{anatomyRemovalShape(layer, asset, fittedImage, x, y)}</g>
             ))}
           </mask>
         </defs>
@@ -1760,11 +1924,51 @@ export function MedicalIllustrationDiagram({
           className="medical-panel-image-bg"
         />
         <g
+          className="medical-panel-callout-leaders"
+          aria-hidden="true"
+          pointerEvents="none"
+          data-callout-render-order="beneath-anatomy-and-overlays"
+        >
+          {callouts.flatMap((callout) =>
+            callout.leaders.map((leader, leaderIndex) => (
+              <g
+                key={`leader-${phase}-${callout.layer.id}-${leaderIndex}`}
+                data-medical-callout-leader={callout.layer.id}
+                data-callout-legend-number={callout.legendNumber}
+                data-callout-target={medicalArtCalloutPointData(leader.target)}
+                data-callout-target-source={
+                  leader.sourcePoint ? medicalArtCalloutPointData(leader.sourcePoint) : undefined
+                }
+                data-callout-protected-bounds={medicalArtCalloutRectData(leader.protectedBounds)}
+                data-callout-start={medicalArtCalloutPointData(leader.start)}
+                data-callout-end={medicalArtCalloutPointData(leader.end)}
+                data-callout-basis={leader.basis}
+              >
+                <line
+                  x1={leader.start.x}
+                  y1={leader.start.y}
+                  x2={leader.end.x}
+                  y2={leader.end.y}
+                  className="medical-panel-callout-halo"
+                />
+                <line
+                  x1={leader.start.x}
+                  y1={leader.start.y}
+                  x2={leader.end.x}
+                  y2={leader.end.y}
+                  stroke={markerColor(callout.layer)}
+                  className="medical-panel-callout-line"
+                />
+              </g>
+            )),
+          )}
+        </g>
+        <g
           transform={mirrorTransform}
           data-anatomy-source-transform={mirrorTransform ?? "identity"}
         >
           {asset.components ? (
-            layeredMedicalArt(plan, phase, asset, fittedImage, id)
+            layeredMedicalArt(supportedLayers, phase, asset, fittedImage, id)
           ) : (
             <image
               href={asset.localPath}
@@ -1778,20 +1982,107 @@ export function MedicalIllustrationDiagram({
               data-medical-art-license={asset.license}
             />
           )}
+        </g>
 
+        <g
+          className="medical-panel-callout-terminals"
+          aria-hidden="true"
+          pointerEvents="none"
+          data-callout-terminal-render-order="above-anatomy-beneath-overlays"
+        >
+          {callouts.flatMap((callout) =>
+            callout.leaders.map((leader, leaderIndex) => {
+              const tick = leaderTerminalTick(leader.start, leader.end);
+              return (
+                <g
+                  key={`terminal-${phase}-${callout.layer.id}-${leaderIndex}`}
+                  data-medical-callout-visible-terminal={callout.layer.id}
+                  data-callout-legend-number={callout.legendNumber}
+                  data-callout-terminal-center={medicalArtCalloutPointData(leader.end)}
+                >
+                  <line
+                    x1={leader.end.x}
+                    y1={leader.end.y}
+                    x2={tick.x}
+                    y2={tick.y}
+                    className="medical-panel-callout-halo"
+                  />
+                  <line
+                    x1={leader.end.x}
+                    y1={leader.end.y}
+                    x2={tick.x}
+                    y2={tick.y}
+                    stroke={markerColor(callout.layer)}
+                    className="medical-panel-callout-line"
+                  />
+                  <circle
+                    cx={leader.end.x}
+                    cy={leader.end.y}
+                    r="2.4"
+                    fill="#ffffff"
+                    stroke={markerColor(callout.layer)}
+                    className="medical-panel-callout-terminal"
+                  />
+                </g>
+              );
+            }),
+          )}
+        </g>
+
+        <g
+          transform={mirrorTransform}
+          data-overlay-source-transform={mirrorTransform ?? "identity"}
+        >
           {deepRenderLayers.map(renderInteractiveLayer)}
           {needsTympanicForeground
             ? asset.components
-              ? layeredMedicalArt(plan, phase, asset, fittedImage, id, true)
+              ? layeredMedicalArt(supportedLayers, phase, asset, fittedImage, id, true)
               : sourceTympanicForeground(asset, fittedImage, id)
             : null}
           {superficialRenderLayers.map(renderInteractiveLayer)}
         </g>
 
+        <g
+          className="medical-panel-callout-badges"
+          aria-hidden="true"
+          pointerEvents="none"
+          data-callout-rail-x="631"
+        >
+          {callouts.map((callout) => (
+            <g
+              key={`badge-${phase}-${callout.layer.id}`}
+              className={cn(
+                "medical-panel-callout-badge",
+                selectedLayerId === callout.layer.id && "is-selected",
+              )}
+              data-medical-callout={callout.layer.id}
+              data-layer-id={callout.layer.id}
+              data-callout-legend-number={callout.legendNumber}
+              data-callout-badge-center={medicalArtCalloutPointData(callout.badgeCenter)}
+            >
+              <circle
+                cx={callout.badgeCenter.x}
+                cy={callout.badgeCenter.y}
+                r="10.5"
+                fill={markerColor(callout.layer)}
+              />
+              <text
+                x={callout.badgeCenter.x}
+                y={callout.badgeCenter.y}
+                dy="0.34em"
+                textAnchor="middle"
+                className="medical-panel-callout-number"
+              >
+                {callout.legendNumber}
+              </text>
+            </g>
+          ))}
+        </g>
+
         <rect
-          x="638"
+          x="646"
           y="78"
-          width="334"
+          width="326"
           height={legendBottom - 78}
           rx="18"
           className="medical-panel-legend-bg"
@@ -1800,49 +2091,93 @@ export function MedicalIllustrationDiagram({
           Layers
         </text>
         <text x="946" y="112" textAnchor="end" className="medical-panel-count">
-          {visibleLayers.length}
+          {legendRowCount}
         </text>
 
-        {visibleLayers.length > 0 ? (
-          visibleLayers.map((layer, index) => {
-            const y = legendRowStartY + index * legendRowSpacing;
-            const lines = wrapLabel(labelSurgeryLayer(layer));
-            const selected = selectedLayerId === layer.id;
-            return (
-              <g
-                key={`legend-${phase}-${layer.id}`}
-                role={layerSelectionEnabled ? "button" : undefined}
-                tabIndex={layerSelectionEnabled ? 0 : undefined}
-                aria-label={
-                  layerSelectionEnabled ? labelSurgeryLayer(layer) : undefined
-                }
-                aria-pressed={layerSelectionEnabled ? selected : undefined}
-                className={cn("medical-panel-legend-row", selected && "is-selected")}
-                onClick={
-                  layerSelectionEnabled ? () => activate(layer.id) : undefined
-                }
-                onKeyDown={
-                  layerSelectionEnabled
-                    ? (event) => handleKeyboard(event, layer.id)
-                    : undefined
-                }
-                data-layer-selectable={layerSelectionEnabled}
-              >
-                <rect x="654" y={y - 25} width="302" height="44" rx="11" />
-                <circle cx="678" cy={y - 3} r="14" fill={markerColor(layer)} />
-                <text x="678" y={y + 2} textAnchor="middle" className="medical-panel-number">
-                  {index + 1}
-                </text>
-                <text x="704" y={y - (lines.length > 1 ? 8 : 0)} className="medical-panel-label">
-                  {lines.map((line, lineIndex) => (
-                    <tspan key={line} x="704" dy={lineIndex === 0 ? 0 : 15}>
-                      {line}
-                    </tspan>
-                  ))}
-                </text>
-              </g>
-            );
-          })
+        {legendRowCount > 0 ? (
+          <>
+            {visibleLayers.map((layer, index) => {
+              const y = legendRowStartY + index * legendRowSpacing;
+              const lines = wrapLabel(labelSurgeryLayer(layer));
+              const selected = selectedLayerId === layer.id;
+              const accessibleLabel = `Callout ${index + 1}: ${labelSurgeryLayer(layer)}`;
+              return (
+                <g
+                  key={`legend-${phase}-${layer.id}`}
+                  role={layerSelectionEnabled ? "button" : undefined}
+                  tabIndex={layerSelectionEnabled ? 0 : undefined}
+                  aria-label={layerSelectionEnabled ? accessibleLabel : undefined}
+                  aria-pressed={layerSelectionEnabled ? selected : undefined}
+                  className={cn("medical-panel-legend-row", selected && "is-selected")}
+                  onClick={layerSelectionEnabled ? () => activate(layer.id) : undefined}
+                  onKeyDown={
+                    layerSelectionEnabled ? (event) => handleKeyboard(event, layer.id) : undefined
+                  }
+                  data-layer-selectable={layerSelectionEnabled}
+                  data-medical-legend-layer={layer.id}
+                  data-layer-id={layer.id}
+                  data-legend-number={index + 1}
+                >
+                  <rect x="654" y={y - 25} width="302" height="44" rx="11" />
+                  <circle cx="678" cy={y - 3} r="14" fill={markerColor(layer)} />
+                  <text x="678" y={y + 2} textAnchor="middle" className="medical-panel-number">
+                    {index + 1}
+                  </text>
+                  <text x="704" y={y - (lines.length > 1 ? 8 : 0)} className="medical-panel-label">
+                    {lines.map((line, lineIndex) => (
+                      <tspan key={line} x="704" dy={lineIndex === 0 ? 0 : 15}>
+                        {line}
+                      </tspan>
+                    ))}
+                  </text>
+                </g>
+              );
+            })}
+            {unillustratedLayers.map((layer, index) => {
+              const y = legendRowStartY + (visibleLayers.length + index) * legendRowSpacing;
+              const fullLabel = labelSurgeryLayer(layer);
+              const compactLabel =
+                fullLabel.length > 32 ? `${fullLabel.slice(0, 29).trimEnd()}…` : fullLabel;
+              return (
+                <g
+                  key={`unillustrated-${phase}-${layer.id}`}
+                  role="note"
+                  aria-label={`${fullLabel}. Not illustrated because no reviewed spatial rendering is available.`}
+                  data-medical-unillustrated-layer={layer.id}
+                  data-layer-id={layer.id}
+                >
+                  <rect
+                    x="654"
+                    y={y - 25}
+                    width="302"
+                    height="44"
+                    rx="11"
+                    className="medical-panel-unillustrated-row"
+                  />
+                  <circle
+                    cx="678"
+                    cy={y - 3}
+                    r="14"
+                    className="medical-panel-unillustrated-marker"
+                  />
+                  <text
+                    x="678"
+                    y={y + 2}
+                    textAnchor="middle"
+                    className="medical-panel-unillustrated-symbol"
+                  >
+                    —
+                  </text>
+                  <text x="704" y={y - 5} className="medical-panel-label">
+                    {compactLabel}
+                  </text>
+                  <text x="704" y={y + 11} className="medical-panel-unillustrated-label">
+                    Not illustrated
+                  </text>
+                </g>
+              );
+            })}
+          </>
         ) : (
           <text x="664" y="164" className="medical-panel-empty-title">
             No layers
@@ -1852,15 +2187,44 @@ export function MedicalIllustrationDiagram({
         <text x="32" y={provenanceY} className="medical-panel-provenance">
           {asset.attribution} · {asset.license}
         </text>
-        <text
-          x="966"
-          y={provenanceY}
-          textAnchor="end"
-          className="medical-panel-provenance"
-        >
+        <text x="966" y={provenanceY} textAnchor="end" className="medical-panel-provenance">
           Generic anatomy · not to scale
         </text>
       </svg>
+      {legendRowCount > 0 ? (
+        <ol className="medical-mobile-callout-key" aria-hidden="true">
+          {visibleLayers.map((layer, index) => (
+            <li
+              key={`mobile-callout-${phase}-${layer.id}`}
+              data-mobile-callout-layer={layer.id}
+              data-layer-id={layer.id}
+              data-legend-number={index + 1}
+            >
+              <span
+                className="medical-mobile-callout-number"
+                style={{ backgroundColor: markerColor(layer) }}
+              >
+                {index + 1}
+              </span>
+              <span className="medical-mobile-callout-label">{labelSurgeryLayer(layer)}</span>
+            </li>
+          ))}
+          {unillustratedLayers.map((layer) => (
+            <li
+              key={`mobile-unillustrated-${phase}-${layer.id}`}
+              className="is-unillustrated"
+              data-mobile-unillustrated-layer={layer.id}
+              data-layer-id={layer.id}
+            >
+              <span className="medical-mobile-callout-number">—</span>
+              <span className="medical-mobile-callout-label">
+                {labelSurgeryLayer(layer)}
+                <small>Not illustrated</small>
+              </span>
+            </li>
+          ))}
+        </ol>
+      ) : null}
     </section>
   );
 }

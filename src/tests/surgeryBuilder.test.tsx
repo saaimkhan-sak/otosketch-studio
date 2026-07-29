@@ -35,9 +35,7 @@ describe("SurgeryBuilder", () => {
   it("groups common procedures and supports a documented multi-selection", async () => {
     const user = userEvent.setup();
     const onPlanChange = vi.fn();
-    render(
-      <BuilderHarness initialPlan={createEmptySurgeryPlan()} onPlanChange={onPlanChange} />,
-    );
+    render(<BuilderHarness initialPlan={createEmptySurgeryPlan()} onPlanChange={onPlanChange} />);
 
     const procedureSummary = screen.getByText("Procedures").closest("summary");
     expect(procedureSummary).not.toBeNull();
@@ -49,10 +47,7 @@ describe("SurgeryBuilder", () => {
     await user.click(screen.getByRole("checkbox", { name: "Bone-conduction hearing implant" }));
     const changed = onPlanChange.mock.lastCall?.[0] as SurgeryPlan;
     expect(changed.procedureFamilies).toEqual(["cochlear_implant", "bone_conduction_implant"]);
-    expect(changed.baseViews).toEqual([
-      "cochlea_implant_path",
-      "postauricular_implant",
-    ]);
+    expect(changed.baseViews).toEqual(["cochlea_implant_path", "postauricular_implant"]);
     expect(changed.review).toEqual({ status: "draft_unreviewed" });
   });
 
@@ -88,13 +83,23 @@ describe("SurgeryBuilder", () => {
 
   it("keeps the chosen common procedure visible in the controlled select", async () => {
     const user = userEvent.setup();
-    render(
-      <BuilderHarness initialPlan={createEmptySurgeryPlan()} onPlanChange={vi.fn()} />,
-    );
+    render(<BuilderHarness initialPlan={createEmptySurgeryPlan()} onPlanChange={vi.fn()} />);
 
     const preset = screen.getByLabelText("Synthetic surgery example");
     await user.selectOptions(preset, "ossiculoplasty");
     expect(preset).toHaveValue("ossiculoplasty");
+  });
+
+  it("keeps spatial layer sides synchronized when a preset laterality changes", async () => {
+    const user = userEvent.setup();
+    const onPlanChange = vi.fn();
+    render(<BuilderHarness initialPlan={createEmptySurgeryPlan()} onPlanChange={onPlanChange} />);
+
+    await user.selectOptions(screen.getByLabelText("Synthetic surgery example"), "ossiculoplasty");
+    await user.selectOptions(screen.getByLabelText("Laterality"), "left");
+    const changed = onPlanChange.mock.lastCall?.[0] as SurgeryPlan;
+    expect(changed.laterality).toBe("left");
+    expect(changed.layers.every((layer) => layer.side === "left")).toBe(true);
   });
 
   it("builds the tympanoplasty preset with an organic perforation and a larger contour-matched graft", async () => {
@@ -104,9 +109,7 @@ describe("SurgeryBuilder", () => {
 
     await user.selectOptions(screen.getByLabelText("Synthetic surgery example"), "tympanoplasty");
     const selectedPlan = onChange.mock.lastCall?.[0] as SurgeryPlan;
-    const perforation = selectedPlan.layers.find(
-      (layer) => layer.kind === "tm_perforation",
-    );
+    const perforation = selectedPlan.layers.find((layer) => layer.kind === "tm_perforation");
     const graft = selectedPlan.layers.find((layer) => layer.kind === "tm_graft");
 
     expect(perforation?.geometry?.basis).toBe("generic_template");
@@ -138,9 +141,7 @@ describe("SurgeryBuilder", () => {
   it("adds a not-documented layer, records manual choices, and removes it", async () => {
     const user = userEvent.setup();
     const onPlanChange = vi.fn();
-    render(
-      <BuilderHarness initialPlan={createEmptySurgeryPlan()} onPlanChange={onPlanChange} />,
-    );
+    render(<BuilderHarness initialPlan={createEmptySurgeryPlan()} onPlanChange={onPlanChange} />);
 
     await user.selectOptions(screen.getByLabelText("Findings layer type"), "tm_perforation");
     await user.click(screen.getByRole("button", { name: "Add finding" }));
@@ -167,9 +168,7 @@ describe("SurgeryBuilder", () => {
   it("keeps intraoperative management text separate from generated anatomy", async () => {
     const user = userEvent.setup();
     const onPlanChange = vi.fn();
-    render(
-      <BuilderHarness initialPlan={createEmptySurgeryPlan()} onPlanChange={onPlanChange} />,
-    );
+    render(<BuilderHarness initialPlan={createEmptySurgeryPlan()} onPlanChange={onPlanChange} />);
 
     await user.click(screen.getByRole("button", { name: "Add change" }));
     await user.selectOptions(screen.getByLabelText("Change"), "procedure_changed");
@@ -198,7 +197,9 @@ describe("SurgeryBuilder", () => {
 
     expect(cards).toHaveLength(layerCatalog.length);
     for (const card of cards) {
-      expect(card.querySelectorAll("select, textarea, input[type='checkbox']").length).toBeGreaterThan(2);
+      expect(
+        card.querySelectorAll("select, textarea, input[type='checkbox']").length,
+      ).toBeGreaterThan(2);
     }
   });
 
@@ -229,6 +230,8 @@ describe("SurgeryBuilder", () => {
     expect(
       screen.getByText(/cannot be both intact and perforated in the same finding state/i),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/requires clinician review before patient-facing export/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/requires clinician review before patient-facing export/i),
+    ).not.toBeInTheDocument();
   });
 });

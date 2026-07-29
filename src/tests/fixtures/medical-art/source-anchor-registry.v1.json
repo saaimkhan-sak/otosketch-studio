@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "1.0",
+  "coordinateSystem": {
+    "origin": "top-left",
+    "unit": "source-pixel"
+  },
+  "review": {
+    "status": "reference-calibrated-pending-ent-signoff",
+    "reviewedAt": "2026-07-29",
+    "limitation": "Generic education landmarks; deterministic source registration does not constitute patient-specific anatomy or clinical signoff."
+  },
+  "assets": {
+    "nih-inner-ear": {
+      "width": 1386,
+      "height": 1385,
+      "sha256": "3109bfb06a28d5ac9622a05332f2ef9738977c19f4556bbc173707d37e3f9c51",
+      "anchors": {
+        "tympanic_membrane": { "x": 422.73, "y": 907.175 },
+        "tympanic_membrane_medial": { "x": 472.626, "y": 778.37 },
+        "tm_anteroinferior": { "x": 451.836, "y": 957.035 },
+        "malleus": { "x": 444.906, "y": 631.56 },
+        "incus_body": { "x": 532.224, "y": 655.105 },
+        "incus_long_process": { "x": 571.032, "y": 703.58 },
+        "incudostapedial_joint": { "x": 612.612, "y": 693.885 },
+        "stapes_superstructure": { "x": 638.946, "y": 671.725 },
+        "stapes_footplate": { "x": 666.666, "y": 685.575 },
+        "middle_ear": { "x": 533.61, "y": 666.185 },
+        "cochlea": { "x": 971.586, "y": 688.345 },
+        "round_window": { "x": 856.548, "y": 794.99 },
+        "mastoid": { "x": 296.604, "y": 404.42 },
+        "postauricular": { "x": 205.128, "y": 340.71 },
+        "ear_canal": { "x": 218.988, "y": 933.49 },
+        "eustachian_tube": { "x": 809.424, "y": 1142.625 }
+      }
+    },
+    "servier-ear-cutaway": {
+      "width": 1256,
+      "height": 1083,
+      "sha256": "41b8a21a64945eadabb0a40ceb666c6e880d1790cff116e8bfe8afce7711c8f0",
+      "anchors": {
+        "tympanic_membrane": { "x": 791.28, "y": 586.986 },
+        "tympanic_membrane_medial": { "x": 813.888, "y": 565.326 },
+        "tm_anteroinferior": { "x": 803.84, "y": 622.725 },
+        "middle_ear": { "x": 872.92, "y": 525.255 },
+        "mastoid": { "x": 972.144, "y": 384.465 },
+        "epitympanum": { "x": 900.552, "y": 427.785 },
+        "cochlea": { "x": 1018.616, "y": 490.599 },
+        "postauricular": { "x": 362.984, "y": 220.932 },
+        "ear_canal": { "x": 562.688, "y": 563.16 },
+        "eustachian_tube": { "x": 1055.04, "y": 801.42 }
+      }
+    },
+    "servier-inner-ear": {
+      "width": 584,
+      "height": 370,
+      "sha256": "ec09e4aeb77652aade1e848e4f108d025597416717e15f840d64a72270e6a591",
+      "anchors": {
+        "tympanic_membrane": { "x": 51, "y": 267 },
+        "tympanic_membrane_medial": { "x": 49, "y": 255 },
+        "tm_prosthesis_contact": { "x": 53, "y": 254 },
+        "tm_anteroinferior": { "x": 72, "y": 302 },
+        "malleus": { "x": 53, "y": 124 },
+        "malleus_manubrium": { "x": 61, "y": 198 },
+        "incus_body": { "x": 78, "y": 105 },
+        "incus_long_process": { "x": 149, "y": 193 },
+        "incus_erosion_stump": { "x": 116, "y": 157 },
+        "incus_piston_attachment": { "x": 167, "y": 209 },
+        "incudostapedial_joint": { "x": 177, "y": 211 },
+        "stapes_capitulum": { "x": 181, "y": 211 },
+        "stapes_superstructure": { "x": 207, "y": 191 },
+        "stapes_footplate": { "x": 236, "y": 180 },
+        "middle_ear": { "x": 132, "y": 195 },
+        "round_window": { "x": 286, "y": 211 },
+        "cochlea": { "x": 353, "y": 224 },
+        "mastoid": { "x": 112.128, "y": 137.27 },
+        "postauricular": { "x": 53.728, "y": 115.44 },
+        "ear_canal": { "x": 45.552, "y": 249.01 },
+        "eustachian_tube": { "x": 108.04, "y": 289.34 }
+      }
+    }
+  }
+}

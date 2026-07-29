@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  coveringGraftGeometry,
-  templatePerforationGeometry,
-} from "@/domain/tmGeometry";
+import { coveringGraftGeometry, templatePerforationGeometry } from "@/domain/tmGeometry";
 import { EvidenceSchema, type OperativeCase, type WithEvidenceValue } from "./schema";
 
 export const surgeryProcedureFamilyValues = [
@@ -1204,6 +1201,33 @@ function validatePairedConflicts(plan: SurgeryPlan, issues: SurgeryPlanIssue[]) 
           "blocking",
           "A tube cannot be both placed and not placed in the same ear.",
           [placed.id, notPlaced.id],
+        ),
+      );
+    }
+  }
+  for (const tube of tubeLayers) {
+    if (tube.action === "tube_placed" && tube.tubeType === "none") {
+      pushUniqueIssue(
+        issues,
+        issue(
+          "tympanostomy_placed_without_tube",
+          "blocking",
+          "A placed tympanostomy tube cannot have a no-tube device type.",
+          [tube.id],
+        ),
+      );
+    }
+    if (
+      (tube.action === "myringotomy_only" || tube.action === "tube_not_placed") &&
+      ["short_term", "t_tube", "other"].includes(tube.tubeType)
+    ) {
+      pushUniqueIssue(
+        issues,
+        issue(
+          "tympanostomy_nonplacement_with_tube_type",
+          "blocking",
+          "A myringotomy without a placed tube cannot claim a concrete tube type.",
+          [tube.id],
         ),
       );
     }
