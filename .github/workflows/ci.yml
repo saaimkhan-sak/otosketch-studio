@@ -30,4 +30,4 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm verify:static:runtime
       - run: pnpm exec wrangler deploy --dry-run --config worker/wrangler.toml
-      - run: pnpm e2e
+      - run: pnpm e2e:ci

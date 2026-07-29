@@ -15,6 +15,7 @@
     "test:sites": "pnpm build:sites && node --test tests/sites-rendered-html.node.mjs",
     "test:watch": "vitest",
     "e2e": "playwright test",
+    "e2e:ci": "playwright test --ignore-snapshots",
     "evaluate:synthetic": "tsx scripts/evaluate-synthetic-corpus.ts",
     "verify:artifacts": "node scripts/verify-artifacts.mjs",
     "verify:static": "node scripts/verify-static-export.mjs",
