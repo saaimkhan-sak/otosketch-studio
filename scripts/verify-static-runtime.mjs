@@ -119,9 +119,7 @@ try {
 
   await page.getByLabel("Example case").selectOption("porp-reconstruction");
   await page.getByRole("button", { name: /Build diagram/i }).click();
-  const porpPreview = page
-    .locator("section.no-print", { has: page.getByRole("heading", { name: "Diagram preview" }) })
-    .first();
+  const porpPreview = page.getByRole("region", { name: "Diagram preview" });
   await expect(page.getByRole("button", { name: /^Incus: Absent$/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /^Reconstruction: PORP$/i })).toBeVisible();
   await expect(porpPreview.locator(".medical-illustration-svg")).toHaveCount(2);
@@ -146,9 +144,7 @@ try {
 
   await page.getByLabel("Example case").selectOption("hero-otomimix-is-joint");
   await page.getByRole("button", { name: /Build diagram/i }).click();
-  const diagramPreview = page
-    .locator("section.no-print", { has: page.getByRole("heading", { name: "Diagram preview" }) })
-    .first();
+  const diagramPreview = page.getByRole("region", { name: "Diagram preview" });
   await expect(
     page.getByRole("button", { name: /^Reconstruction: Bone cement bridge$/i }),
   ).toBeVisible();

@@ -5,6 +5,25 @@ export type MedicalArtAssetId =
   | "servier-ear-cutaway"
   | "servier-inner-ear";
 
+export type MedicalArtComponentId =
+  | "auditory_nerve"
+  | "cochlea"
+  | "stapes"
+  | "incus"
+  | "malleus"
+  | "tympanic_membrane";
+
+export interface MedicalArtComponent {
+  id: MedicalArtComponentId;
+  localPath: string;
+  sourceImage: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  sha256: string;
+}
+
 export interface MedicalArtAsset {
   id: MedicalArtAssetId;
   title: string;
@@ -18,6 +37,7 @@ export interface MedicalArtAsset {
   licenseUrl: string;
   attribution: string;
   illustrationSoftware: string;
+  components?: MedicalArtComponent[];
 }
 
 export const medicalArtAssets: Record<MedicalArtAssetId, MedicalArtAsset> = {
@@ -66,6 +86,74 @@ export const medicalArtAssets: Record<MedicalArtAssetId, MedicalArtAsset> = {
     licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
     attribution: "Servier Medical Art by Servier",
     illustrationSoftware: "Servier Medical Art",
+    components: [
+      {
+        id: "cochlea",
+        localPath: "/medical-art/servier/inner-ear-components/cochlea.png",
+        sourceImage:
+          "https://smart.servier.com/wp-content/uploads/2016/10/Oreille_interne_5.png",
+        x: 116,
+        y: 0,
+        width: 259,
+        height: 265,
+        sha256: "9c2ca8282901f284677808d559450fe3cd772f2f0ddfb4507d8c3338b4a9d71b",
+      },
+      {
+        id: "auditory_nerve",
+        localPath: "/medical-art/servier/inner-ear-components/auditory-nerve.png",
+        sourceImage:
+          "https://smart.servier.com/wp-content/uploads/2016/10/Oreille_interne_6.png",
+        x: 227,
+        y: 55,
+        width: 356,
+        height: 131,
+        sha256: "1197eeb2e2d9b739c6424812c1c9fb4efb579e971e36c758aaa9417ca96d9b15",
+      },
+      {
+        id: "tympanic_membrane",
+        localPath: "/medical-art/servier/inner-ear-components/eardrum.png",
+        sourceImage:
+          "https://smart.servier.com/wp-content/uploads/2016/10/Oreille_interne_1.png",
+        x: 0,
+        y: 170,
+        width: 133,
+        height: 200,
+        sha256: "609ee45cfae7d450263e32112cf4965b900265c23c2b7cdb0fb4afb4908dc64b",
+      },
+      {
+        id: "stapes",
+        localPath: "/medical-art/servier/inner-ear-components/stapes.png",
+        sourceImage:
+          "https://smart.servier.com/wp-content/uploads/2016/10/Oreille_interne_4.png",
+        x: 168,
+        y: 160,
+        width: 93,
+        height: 64,
+        sha256: "5cf310a74f5ea95607d320083c98061f25de67530b41eee6f8a8695ef993e8bb",
+      },
+      {
+        id: "incus",
+        localPath: "/medical-art/servier/inner-ear-components/incus.png",
+        sourceImage:
+          "https://smart.servier.com/wp-content/uploads/2016/10/Oreille_interne_3.png",
+        x: 47,
+        y: 74,
+        width: 131,
+        height: 147,
+        sha256: "70fe5b944dd167bb87141fccbe6f94bf2c92a06b8f1c67c172c42d2aa7d985a8",
+      },
+      {
+        id: "malleus",
+        localPath: "/medical-art/servier/inner-ear-components/malleus.png",
+        sourceImage:
+          "https://smart.servier.com/wp-content/uploads/2016/10/Oreille_interne_2.png",
+        x: 28,
+        y: 84,
+        width: 59,
+        height: 147,
+        sha256: "36adabac939fc8c024c58e995a9e949342c3626514b0ce02e93e9a6ed252445a",
+      },
+    ],
   },
 };
 
@@ -103,6 +191,8 @@ export type MedicalArtAnatomyTarget =
   | "malleus_manubrium"
   | "incus_body"
   | "incus_long_process"
+  | "incus_erosion_stump"
+  | "incus_piston_attachment"
   | "incudostapedial_joint"
   | "stapes_capitulum"
   | "stapes_superstructure"
@@ -119,17 +209,35 @@ export type MedicalArtAnatomyTarget =
 export type MedicalArtAnchor = { x: number; y: number };
 export type MedicalArtSourcePoint = { x: number; y: number };
 
+export interface MedicalArtSourceCubic {
+  start: MedicalArtSourcePoint;
+  controlOne: MedicalArtSourcePoint;
+  controlTwo: MedicalArtSourcePoint;
+  end: MedicalArtSourcePoint;
+}
+
 export interface MedicalArtSourceGeometry {
   calibrationId: string;
   tympanicMembrane?: {
     repairGraftPath: string;
     repairHighlightPath: string;
     planeAngle: number;
+    normalizedFrame?: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+    normalizedSurface?: {
+      leftBoundary: MedicalArtSourceCubic[];
+      rightBoundary: MedicalArtSourceCubic[];
+    };
+    surfaceContact?: MedicalArtSourcePoint;
+    medialNormal?: MedicalArtSourcePoint;
   };
   ossicles?: {
-    incusAbsentMaskPath: string;
-    incusLongProcessMaskPath: string;
-    stapesSuperstructureMaskPaths: string[];
+    incusLongProcessRetainedClipPath: string;
+    stapesFootplateRetainedClipPath: string;
   };
 }
 
@@ -151,10 +259,12 @@ export const medicalArtPixelAnchors: Partial<
     malleus_manubrium: { x: 61, y: 198 },
     incus_body: { x: 78, y: 105 },
     incus_long_process: { x: 149, y: 193 },
+    incus_erosion_stump: { x: 116, y: 157 },
+    incus_piston_attachment: { x: 167, y: 209 },
     incudostapedial_joint: { x: 177, y: 211 },
     stapes_capitulum: { x: 181, y: 211 },
     stapes_superstructure: { x: 207, y: 191 },
-    stapes_footplate: { x: 230, y: 183 },
+    stapes_footplate: { x: 236, y: 180 },
     middle_ear: { x: 132, y: 195 },
     round_window: { x: 286, y: 211 },
     cochlea: { x: 353, y: 224 },
@@ -177,26 +287,55 @@ export const medicalArtSourceGeometry: Partial<
       repairHighlightPath:
         "M 747 520 C 768 540 786 563 801 588 C 814 611 825 641 831 665",
       planeAngle: 61,
+      normalizedSurface: {
+        leftBoundary: [
+          {
+            start: { x: 734, y: 505 },
+            controlOne: { x: 738, y: 551 },
+            controlTwo: { x: 752, y: 591 },
+            end: { x: 771, y: 618 },
+          },
+          {
+            start: { x: 771, y: 618 },
+            controlOne: { x: 792, y: 646 },
+            controlTwo: { x: 817, y: 669 },
+            end: { x: 838, y: 682 },
+          },
+        ],
+        rightBoundary: [
+          {
+            start: { x: 734, y: 505 },
+            controlOne: { x: 756, y: 517 },
+            controlTwo: { x: 780, y: 544 },
+            end: { x: 796, y: 566 },
+          },
+          {
+            start: { x: 796, y: 566 },
+            controlOne: { x: 813, y: 589 },
+            controlTwo: { x: 831, y: 635 },
+            end: { x: 838, y: 682 },
+          },
+        ],
+      },
     },
   },
   "servier-inner-ear": {
-    calibrationId: "servier-inner-ear-ossicles-2026-07",
+    calibrationId: "servier-inner-ear-layered-2026-07",
     tympanicMembrane: {
       repairGraftPath:
         "M 5 179 C 20 188 39 213 52 240 C 68 270 88 322 106 355 C 93 351 74 334 54 307 C 31 276 12 231 5 179 Z",
       repairHighlightPath:
         "M 15 192 C 31 217 47 246 61 276 C 75 306 90 334 99 347",
       planeAngle: 61,
+      normalizedFrame: { x: 0, y: 170, width: 133, height: 200 },
+      surfaceContact: { x: 53, y: 254 },
+      medialNormal: { x: 0.87462, y: -0.48481 },
     },
     ossicles: {
-      incusAbsentMaskPath:
-        "M 58 73 C 78 67 101 84 110 105 C 118 124 119 146 132 166 C 143 184 158 195 174 202 C 183 205 189 213 185 220 C 181 228 171 231 161 225 C 145 216 126 211 111 195 C 96 179 87 158 82 137 C 78 119 72 108 62 99 C 54 91 52 80 58 73 Z",
-      incusLongProcessMaskPath:
-        "M 112 145 C 124 168 140 190 160 200 C 169 204 178 204 182 211 C 184 217 179 224 172 225 C 161 226 152 215 142 211 C 124 202 108 184 99 164 Z",
-      stapesSuperstructureMaskPaths: [
-        "M 179 211 C 183 194 190 177 203 168 C 211 163 220 163 229 168",
-        "M 179 211 C 192 217 210 209 230 196",
-      ],
+      incusLongProcessRetainedClipPath:
+        "M 47 74 H 178 V 97 L 54 221 H 47 Z",
+      stapesFootplateRetainedClipPath:
+        "M 212 164 C 227 159 246 165 258 179 C 263 185 261 192 256 195 C 246 197 232 191 221 185 C 217 180 214 172 212 164 Z",
     },
   },
 };
@@ -263,6 +402,11 @@ export const medicalArtAnchors: Record<
     malleus_manubrium: pixelAnchor("servier-inner-ear", "malleus_manubrium"),
     incus_body: pixelAnchor("servier-inner-ear", "incus_body"),
     incus_long_process: pixelAnchor("servier-inner-ear", "incus_long_process"),
+    incus_erosion_stump: pixelAnchor("servier-inner-ear", "incus_erosion_stump"),
+    incus_piston_attachment: pixelAnchor(
+      "servier-inner-ear",
+      "incus_piston_attachment",
+    ),
     incudostapedial_joint: pixelAnchor("servier-inner-ear", "incudostapedial_joint"),
     stapes_capitulum: pixelAnchor("servier-inner-ear", "stapes_capitulum"),
     stapes_superstructure: pixelAnchor("servier-inner-ear", "stapes_superstructure"),
@@ -301,7 +445,7 @@ export function getMedicalArtAnchor(
     case "ossicle_state":
       if (layer.structure === "malleus") return anchor("malleus");
       if (layer.structure === "incus") {
-        if (layer.state === "long_process_eroded") return anchor("incus_long_process");
+        if (layer.state === "long_process_eroded") return anchor("incus_erosion_stump");
         return anchor("incus_body");
       }
       if (layer.structure === "incudostapedial_joint") {

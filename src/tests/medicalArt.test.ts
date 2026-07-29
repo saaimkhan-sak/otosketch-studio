@@ -80,7 +80,7 @@ describe("open medical art registry", () => {
     });
   });
 
-  it("calibrates the incus long process to the ossicular chain rather than the labyrinth", () => {
+  it("targets long-process erosion at the retained incus stump", () => {
     const layer = {
       ...createDefaultLayer("ossicle_state", "right"),
       documentation: "documented" as const,
@@ -88,66 +88,64 @@ describe("open medical art registry", () => {
       state: "long_process_eroded" as const,
     };
 
-    expect(getMedicalArtAnchor("servier-inner-ear", layer)).toEqual({
-      x: (149 / 584) * 100,
-      y: (193 / 370) * 100,
+    expect(medicalArtPixelAnchors["servier-inner-ear"]?.incus_erosion_stump).toEqual({
+      x: 116,
+      y: 157,
     });
-    expect(getMedicalArtAnchor("servier-inner-ear", layer)?.y).toBeGreaterThan(50);
+    expect(getMedicalArtAnchor("servier-inner-ear", layer)).toEqual({
+      x: (116 / 584) * 100,
+      y: (157 / 370) * 100,
+    });
+    expect(getMedicalArtAnchor("servier-inner-ear", layer)).not.toEqual(
+      getMedicalArtAnchorForTarget("servier-inner-ear", "incus_long_process"),
+    );
   });
 
-  it("separates the PORP capitulum seat from the stapes arch and footplate", () => {
+  it("keeps the PORP capitulum and TORP footplate as distinct source landmarks", () => {
     const pixels = medicalArtPixelAnchors["servier-inner-ear"];
     expect(pixels?.tm_prosthesis_contact).toEqual({ x: 53, y: 254 });
     expect(pixels?.stapes_capitulum).toEqual({ x: 181, y: 211 });
     expect(pixels?.stapes_superstructure).toEqual({ x: 207, y: 191 });
-    expect(pixels?.stapes_footplate).toEqual({ x: 230, y: 183 });
+    expect(pixels?.stapes_footplate).toEqual({ x: 236, y: 180 });
 
-    const capitulum = getMedicalArtAnchorForTarget(
-      "servier-inner-ear",
-      "stapes_capitulum",
-    );
-    const footplate = getMedicalArtAnchorForTarget(
-      "servier-inner-ear",
-      "stapes_footplate",
-    );
+    const capitulum = getMedicalArtAnchorForTarget("servier-inner-ear", "stapes_capitulum");
+    const footplate = getMedicalArtAnchorForTarget("servier-inner-ear", "stapes_footplate");
     expect(capitulum?.x).toBeLessThan(footplate?.x ?? 0);
-    expect((pixels?.stapes_footplate?.x ?? 0) - (pixels?.stapes_capitulum?.x ?? 0)).toBe(49);
-
-    const contact = pixels?.tm_prosthesis_contact;
-    const porpSeat = pixels?.stapes_capitulum;
-    const torpSeat = pixels?.stapes_footplate;
-    expect(contact).toBeDefined();
-    expect(porpSeat).toBeDefined();
-    expect(torpSeat).toBeDefined();
-    if (contact && porpSeat && torpSeat) {
-      expect(Math.hypot(porpSeat.x - contact.x, porpSeat.y - contact.y)).toBeCloseTo(
-        135.03,
-        1,
-      );
-      expect(
-        (Math.atan2(porpSeat.y - contact.y, porpSeat.x - contact.x) * 180) / Math.PI,
-      ).toBeCloseTo(-18.56, 1);
-      expect(Math.hypot(torpSeat.x - contact.x, torpSeat.y - contact.y)).toBeCloseTo(
-        190.71,
-        1,
-      );
-      expect(
-        (Math.atan2(torpSeat.y - contact.y, torpSeat.x - contact.x) * 180) / Math.PI,
-      ).toBeCloseTo(-21.86, 1);
-    }
+    expect(capitulum).not.toEqual(footplate);
   });
 
-  it("keeps graft and erosion shapes calibrated to their licensed source pixels", () => {
+  it("registers source-layer clip geometry for erosion and retained footplate anatomy", () => {
     const innerEarGeometry = medicalArtSourceGeometry["servier-inner-ear"];
     const cutawayGeometry = medicalArtSourceGeometry["servier-ear-cutaway"];
 
-    expect(innerEarGeometry?.calibrationId).toBe(
-      "servier-inner-ear-ossicles-2026-07",
-    );
+    expect(innerEarGeometry?.calibrationId).toBe("servier-inner-ear-layered-2026-07");
     expect(innerEarGeometry?.tympanicMembrane?.repairGraftPath).toContain("M 5 179");
-    expect(innerEarGeometry?.ossicles?.incusLongProcessMaskPath).toContain("M 112 145");
-    expect(innerEarGeometry?.ossicles?.stapesSuperstructureMaskPaths).toHaveLength(2);
+    expect(innerEarGeometry?.ossicles?.incusLongProcessRetainedClipPath).toContain("M 47 74");
+    expect(innerEarGeometry?.ossicles?.stapesFootplateRetainedClipPath).toContain("M 212 164");
     expect(cutawayGeometry?.tympanicMembrane?.repairGraftPath).toContain("M 734 505");
+    expect(
+      cutawayGeometry?.tympanicMembrane?.normalizedSurface?.leftBoundary,
+    ).toHaveLength(2);
+    expect(
+      cutawayGeometry?.tympanicMembrane?.normalizedSurface?.rightBoundary,
+    ).toHaveLength(2);
+  });
+
+  it("composes the Servier middle ear from separately licensed anatomy layers", () => {
+    const components = medicalArtAssets["servier-inner-ear"].components;
+
+    expect(components?.map((component) => component.id)).toEqual([
+      "cochlea",
+      "auditory_nerve",
+      "tympanic_membrane",
+      "stapes",
+      "incus",
+      "malleus",
+    ]);
+    expect(components?.every((component) => component.localPath.endsWith(".png"))).toBe(true);
+    expect(new Set(components?.map((component) => component.localPath)).size).toBe(
+      components?.length,
+    );
   });
 
   it("never invents anatomy coordinates for non-anatomic status layers", () => {

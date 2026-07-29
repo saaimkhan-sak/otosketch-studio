@@ -11,9 +11,11 @@ import { ReviewIssuesPanel } from "@/components/app/ReviewIssuesPanel";
 import { SafetyBanner } from "@/components/app/SafetyBanner";
 import { createPresetPlan } from "@/components/app/SurgeryBuilder";
 import { DiagramPanel } from "@/components/diagram/DiagramPanel";
+import { MedicalIllustrationDiagram } from "@/components/diagram/MedicalIllustrationDiagram";
 import { buildFeatureMap } from "@/domain/diagramMapping";
 import { markReviewed, updateCaseField } from "@/domain/editCase";
 import { getApprovalBlockers, getExportBlockers } from "@/domain/review";
+import type { SurgeryLayer } from "@/domain/surgeryPlan";
 import { getSyntheticCase, syntheticCases } from "@/fixtures/syntheticCases";
 
 const reviewChecklist = [
@@ -245,6 +247,59 @@ describe("core UI components", () => {
     expect(screen.getAllByText(/Servier Medical Art/i).length).toBeGreaterThan(0);
   });
 
+  it("omits documented no-op reconstruction text from the visual layer legend", () => {
+    const { container } = render(
+      <DiagramPanel
+        operativeCase={getSyntheticCase("normal-ossicular-chain").expected}
+        selectedFeatureId={null}
+        onFeatureSelect={() => undefined}
+      />,
+    );
+
+    expect(
+      screen.queryByText("No ossicular reconstruction performed"),
+    ).not.toBeInTheDocument();
+    expect(
+      container.querySelector('[data-prosthesis-method="none"]'),
+    ).not.toBeInTheDocument();
+  });
+
+  it("maps a tympanoplasty perforation and covering graft onto the curved source TM", () => {
+    const { container } = render(
+      <DiagramPanel
+        surgeryPlan={createPresetPlan("tympanoplasty")}
+        selectedFeatureId={null}
+        onFeatureSelect={() => undefined}
+      />,
+    );
+
+    expect(
+      container.querySelector('[data-medical-perforation="central"]'),
+    ).toHaveAttribute("data-perforation-geometry", "documented-polygon");
+    const graft = container.querySelector(
+      '[data-medical-graft="tympanic-membrane-repair"]',
+    );
+    expect(graft).toHaveAttribute(
+      "data-graft-calibration",
+      "servier-ear-cutaway-tm-2026-07",
+    );
+    expect(graft).toHaveAttribute(
+      "data-graft-geometry",
+      "documented-polygon",
+    );
+    expect(graft).toHaveAttribute("data-graft-technique", "medial");
+    expect(
+      container.querySelector(
+        '[data-medical-art-composition="tm-foreground"]',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector(
+        '[data-anatomy-education-treatment="translucent-foreground"]',
+      ),
+    ).toHaveAttribute("opacity", "0.52");
+  });
+
   it("shows medical-art diagrams with compact source and limitation details", () => {
     const { container } = render(
       <DiagramPanel
@@ -322,7 +377,7 @@ describe("core UI components", () => {
     expect(container.querySelector('.medical-panel-hotspot[aria-pressed="true"]')).toBeInTheDocument();
   });
 
-  it("renders incus erosion as an anatomy-removing lesion without fallback status marks", () => {
+  it("renders incus erosion by clipping the official incus layer at the retained stump", () => {
     const { container } = render(
       <DiagramPanel
         surgeryPlan={createPresetPlan("ossiculoplasty")}
@@ -331,15 +386,137 @@ describe("core UI components", () => {
       />,
     );
 
-    expect(container.querySelector("image[mask]")).toBeInTheDocument();
-    expect(container.querySelector(".medical-lesion")).toBeInTheDocument();
+    const erodedIncusLayers = container.querySelectorAll(
+      '[data-anatomy-component="incus"][data-anatomy-component-state="long-process-eroded"]',
+    );
+    expect(erodedIncusLayers).toHaveLength(2);
+    for (const incus of erodedIncusLayers) {
+      expect(incus.getAttribute("clip-path")).toMatch(/incus-retained/);
+      expect(incus).not.toHaveAttribute("mask");
+    }
+    expect(
+      container.querySelector('.medical-lesion[data-erosion-rendering="source-clipped-stump"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('image[href="/medical-art/servier/inner-ear.png"]'),
+    ).not.toBeInTheDocument();
+    expect(container.querySelector('image[mask*="anatomy-mask"]')).not.toBeInTheDocument();
     expect(container.querySelector('[data-anatomy-layer="ossicle_state"]')).toBeInTheDocument();
     expect(
       container.querySelector('[data-anatomy-layer="verification_status"]'),
     ).not.toBeInTheDocument();
   });
 
-  it("keeps PORP placement on the calibrated TM-to-capitulum path in both phases", () => {
+  it("renders every documented layer without silently truncating complex cases", () => {
+    const preset = createPresetPlan("ossiculoplasty");
+    const finding = preset.layers.find(
+      (layer) => layer.kind === "ossicle_state",
+    );
+    expect(finding).toBeDefined();
+    if (!finding) return;
+    const plan = {
+      ...preset,
+      layers: Array.from({ length: 9 }, (_, index) => ({
+        ...finding,
+        id: `audited-finding-${index + 1}`,
+      })),
+    };
+
+    const { container } = render(
+      <MedicalIllustrationDiagram plan={plan} phase="finding" />,
+    );
+
+    expect(
+      container.querySelectorAll('[data-anatomy-layer="ossicle_state"]'),
+    ).toHaveLength(9);
+    expect(container.querySelectorAll('g[role="button"]')).toHaveLength(0);
+
+    const svg = container.querySelector(".medical-illustration-svg");
+    const legend = container.querySelector(".medical-panel-legend-bg");
+    const legendRows = container.querySelectorAll(
+      ".medical-panel-legend-row > rect",
+    );
+    const lastRow = legendRows.item(legendRows.length - 1);
+    const viewBoxHeight = Number(svg?.getAttribute("viewBox")?.split(" ")[3]);
+    const legendBottom =
+      Number(legend?.getAttribute("y")) + Number(legend?.getAttribute("height"));
+    const lastRowBottom =
+      Number(lastRow.getAttribute("y")) + Number(lastRow.getAttribute("height"));
+
+    expect(svg).toHaveAttribute("data-visible-layer-count", "9");
+    expect(viewBoxHeight).toBeGreaterThan(620);
+    expect(lastRowBottom).toBeLessThanOrEqual(legendBottom);
+  });
+
+  it("mirrors laterality around the source-image axis without changing native placement", () => {
+    const rightPlan = createPresetPlan("ossiculoplasty");
+    const leftPlan = {
+      ...rightPlan,
+      laterality: "left" as const,
+      layers: rightPlan.layers.map((layer) => ({
+        ...layer,
+        side: "left" as const,
+      })),
+    };
+
+    const right = render(
+      <MedicalIllustrationDiagram plan={rightPlan} phase="procedure" />,
+    );
+    const rightProsthesis = right.container.querySelector(
+      '[data-prosthesis-method="porp"]',
+    );
+    const sourcePlacement = {
+      headplate: rightProsthesis?.getAttribute(
+        "data-prosthesis-headplate-source",
+      ),
+      distal: rightProsthesis?.getAttribute("data-prosthesis-distal-source"),
+      shaftStart: rightProsthesis?.getAttribute(
+        "data-prosthesis-shaft-start-source",
+      ),
+      shaftEnd: rightProsthesis?.getAttribute(
+        "data-prosthesis-shaft-end-source",
+      ),
+    };
+    expect(
+      right.container.querySelector('[data-anatomy-orientation="source-right"]'),
+    ).toBeInTheDocument();
+    expect(
+      right.container.querySelector("[data-anatomy-source-transform]"),
+    ).toHaveAttribute("data-anatomy-source-transform", "identity");
+    right.unmount();
+
+    const left = render(
+      <MedicalIllustrationDiagram plan={leftPlan} phase="procedure" />,
+    );
+    const leftProsthesis = left.container.querySelector(
+      '[data-prosthesis-method="porp"]',
+    );
+    expect(
+      left.container.querySelector(
+        '[data-anatomy-orientation="mirrored-left"]',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      left.container.querySelector("[data-anatomy-source-transform]"),
+    ).toHaveAttribute(
+      "data-anatomy-source-transform",
+      "translate(644 0) scale(-1 1)",
+    );
+    expect({
+      headplate: leftProsthesis?.getAttribute(
+        "data-prosthesis-headplate-source",
+      ),
+      distal: leftProsthesis?.getAttribute("data-prosthesis-distal-source"),
+      shaftStart: leftProsthesis?.getAttribute(
+        "data-prosthesis-shaft-start-source",
+      ),
+      shaftEnd: leftProsthesis?.getAttribute(
+        "data-prosthesis-shaft-end-source",
+      ),
+    }).toEqual(sourcePlacement);
+  });
+
+  it("places a neutral PORP from the protected TM headplate to the capitulum", () => {
     const { container } = render(
       <DiagramPanel
         operativeCase={getSyntheticCase("porp-reconstruction").expected}
@@ -352,20 +529,48 @@ describe("core UI components", () => {
     expect(prosthesis).toHaveAttribute("data-prosthesis-medial-endpoint", "stapes_capitulum");
     expect(prosthesis).toHaveAttribute(
       "data-prosthesis-rendering",
-      "headplate-shaft-capitulum-cup",
+      "neutral-headplate-shaft-capitulum-seat",
     );
     expect(prosthesis).toHaveAttribute(
       "data-prosthesis-calibration",
-      "servier-inner-ear-ossicles-2026-07",
+      "servier-inner-ear-layered-2026-07",
     );
+    expect(prosthesis).toHaveAttribute("data-prosthesis-source-space", "584x370");
+    expect(prosthesis).toHaveAttribute("data-prosthesis-headplate-source", "60.434,249.879");
+    expect(prosthesis).toHaveAttribute("data-prosthesis-distal-source", "181.000,211.000");
+    expect(prosthesis).toHaveAttribute(
+      "data-prosthesis-depth-order",
+      "tm-cartilage-headplate-shaft-stapes",
+    );
+    expect(prosthesis?.getAttribute("data-prosthesis-rendering")).not.toMatch(/cup|shoe/);
+
+    const protectionGraft = container.querySelector('[data-medical-graft="prosthesis-protection"]');
+    expect(protectionGraft).toHaveAttribute(
+      "data-graft-calibration",
+      "servier-inner-ear-layered-2026-07",
+    );
+    expect(protectionGraft).toHaveAttribute("data-graft-source-center", "56.936,251.818");
+    expect(protectionGraft).toHaveAttribute("data-graft-source-radii", "17,10");
+    expect(protectionGraft).toHaveAttribute("data-graft-depth-order", "tm-cartilage-headplate");
     expect(
-      container.querySelector('[data-medical-graft="prosthesis-protection"]'),
-    ).toHaveAttribute("data-graft-calibration", "servier-inner-ear-ossicles-2026-07");
-    expect(container.querySelectorAll('[data-anatomy-removal="incus-absent"]')).toHaveLength(2);
-    expect(container.querySelectorAll("image[mask]")).toHaveLength(2);
+      container.querySelector(
+        '[data-anatomy-education-treatment="translucent-foreground"]',
+      ),
+    ).toHaveAttribute("opacity", "0.52");
+
+    expect(container.querySelectorAll('[data-anatomy-component="incus"]')).toHaveLength(0);
+    expect(
+      container.querySelectorAll(
+        '[data-anatomy-component="stapes"][data-anatomy-component-state="intact"]',
+      ),
+    ).toHaveLength(2);
+    expect(
+      container.querySelector('image[href="/medical-art/servier/inner-ear.png"]'),
+    ).not.toBeInTheDocument();
+    expect(container.querySelector('image[mask*="anatomy-mask"]')).not.toBeInTheDocument();
   });
 
-  it("uses a footplate shoe for TORP and removes the absent stapes arch", () => {
+  it("uses neutral TORP contact on the retained official footplate without inventing a shoe", () => {
     const { container } = render(
       <DiagramPanel
         operativeCase={getSyntheticCase("torp-reconstruction").expected}
@@ -378,11 +583,82 @@ describe("core UI components", () => {
     expect(prosthesis).toHaveAttribute("data-prosthesis-medial-endpoint", "stapes_footplate");
     expect(prosthesis).toHaveAttribute(
       "data-prosthesis-rendering",
-      "headplate-shaft-footplate-shoe",
+      "neutral-headplate-shaft-footplate-contact",
     );
+    expect(prosthesis).toHaveAttribute(
+      "data-prosthesis-calibration",
+      "servier-inner-ear-layered-2026-07",
+    );
+    expect(prosthesis).toHaveAttribute("data-prosthesis-headplate-source", "60.434,249.879");
+    expect(prosthesis).toHaveAttribute("data-prosthesis-distal-source", "236.000,180.000");
+    expect(prosthesis).toHaveAttribute(
+      "data-prosthesis-depth-order",
+      "tm-cartilage-headplate-shaft-stapes",
+    );
+    expect(prosthesis?.getAttribute("data-prosthesis-rendering")).not.toMatch(/cup|shoe/);
+
+    const retainedFootplates = container.querySelectorAll(
+      '[data-anatomy-component="stapes"][data-anatomy-component-state="footplate-only"]',
+    );
+    expect(retainedFootplates).toHaveLength(2);
+    for (const footplate of retainedFootplates) {
+      expect(footplate.getAttribute("clip-path")).toMatch(/stapes-footplate/);
+      expect(footplate).not.toHaveAttribute("mask");
+    }
+    expect(container.querySelectorAll('[data-anatomy-component="incus"]')).toHaveLength(0);
     expect(
-      container.querySelectorAll('[data-anatomy-removal="stapes-superstructure"]'),
-    ).toHaveLength(4);
+      container.querySelector('image[href="/medical-art/servier/inner-ear.png"]'),
+    ).not.toBeInTheDocument();
+    expect(container.querySelector('image[mask*="anatomy-mask"]')).not.toBeInTheDocument();
+  });
+
+  it("keeps an aborted stapedotomy from altering the final stapes anatomy", () => {
+    const preset = createPresetPlan("stapes_surgery");
+    const stapedotomy = preset.layers.find(
+      (
+        layer,
+      ): layer is Extract<SurgeryLayer, { kind: "stapes_procedure" }> =>
+        layer.kind === "stapes_procedure",
+    );
+    expect(stapedotomy).toBeDefined();
+    if (!stapedotomy) return;
+
+    const aborted: Extract<
+      SurgeryLayer,
+      { kind: "intraoperative_deviation" }
+    > = {
+      id: "aborted-stapedotomy",
+      side: stapedotomy.side,
+      documentation: "documented",
+      evidence: [],
+      enteredBy: "clinician",
+      kind: "intraoperative_deviation",
+      role: "deviation",
+      deviation: "aborted",
+      affectedLayerIds: [stapedotomy.id],
+    };
+    const plan = {
+      ...preset,
+      layers: [...preset.layers, aborted],
+    };
+
+    const { container } = render(
+      <MedicalIllustrationDiagram plan={plan} phase="procedure" />,
+    );
+
+    expect(
+      container.querySelectorAll(
+        '[data-anatomy-component="stapes"][data-anatomy-component-state="footplate-only"]',
+      ),
+    ).toHaveLength(0);
+    expect(
+      container.querySelectorAll(
+        '[data-anatomy-component="stapes"][data-anatomy-component-state="intact"]',
+      ),
+    ).toHaveLength(1);
+    expect(
+      container.querySelector('[data-anatomy-layer="stapes_procedure"]'),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps the composable diagram available while flagging uncertain placement", () => {

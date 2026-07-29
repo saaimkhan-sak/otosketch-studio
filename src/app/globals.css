@@ -5397,8 +5397,12 @@ body {
 
 .medical-panel-hotspot,
 .medical-panel-legend-row {
-  cursor: pointer;
   outline: none;
+}
+
+.medical-panel-hotspot[data-layer-selectable="true"],
+.medical-panel-legend-row[data-layer-selectable="true"] {
+  cursor: pointer;
 }
 
 .medical-panel-hotspot {
@@ -5417,7 +5421,7 @@ body {
   transition: fill 150ms ease, stroke 150ms ease;
 }
 
-.medical-panel-legend-row:hover > rect,
+.medical-panel-legend-row[data-layer-selectable="true"]:hover > rect,
 .medical-panel-legend-row:focus-visible > rect,
 .medical-panel-legend-row.is-selected > rect {
   fill: #ffffff;

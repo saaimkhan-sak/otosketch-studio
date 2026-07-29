@@ -67,6 +67,12 @@ if (!existsSync(OUT_DIR)) {
     "medical-art/nih/inner-ear.svg",
     "medical-art/servier/ear-cutaway.png",
     "medical-art/servier/inner-ear.png",
+    "medical-art/servier/inner-ear-components/auditory-nerve.png",
+    "medical-art/servier/inner-ear-components/cochlea.png",
+    "medical-art/servier/inner-ear-components/eardrum.png",
+    "medical-art/servier/inner-ear-components/incus.png",
+    "medical-art/servier/inner-ear-components/malleus.png",
+    "medical-art/servier/inner-ear-components/stapes.png",
   ];
 
   for (const required of requiredFiles) {

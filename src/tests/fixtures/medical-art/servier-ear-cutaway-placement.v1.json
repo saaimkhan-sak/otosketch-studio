@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "coordinateSystem": {
+    "origin": "top-left",
+    "unit": "source-pixel",
+    "width": 1256,
+    "height": 1083
+  },
+  "source": {
+    "assetId": "servier-ear-cutaway",
+    "sourcePage": "https://smart.servier.com/smart_image/smart-ear/",
+    "sha256": "41b8a21a64945eadabb0a40ceb666c6e880d1790cff116e8bfe8afce7711c8f0",
+    "license": "CC BY 4.0"
+  },
+  "review": {
+    "status": "reference-calibrated-pending-ent-signoff",
+    "reviewedAt": "2026-07-29",
+    "basis": [
+      "official Servier source image",
+      "source-pixel tympanic membrane contour",
+      "deterministic perforation-to-graft expansion"
+    ],
+    "limitation": "Generic education geometry; not patient-specific."
+  },
+  "tympanicSupport": {
+    "alphaThreshold": 128,
+    "bounds": {
+      "minX": 734,
+      "minY": 505,
+      "maxX": 837,
+      "maxY": 681
+    },
+    "occupiedPixels": 6574
+  },
+  "regions": {
+    "anterior": {
+      "centroid": { "x": 785.146, "y": 581.459 },
+      "area": 458.816,
+      "graftArea": 1398.797
+    },
+    "posterior": {
+      "centroid": { "x": 777.506, "y": 596.35 },
+      "area": 481.868,
+      "graftArea": 1457.765
+    },
+    "central": {
+      "centroid": { "x": 781.207, "y": 588.7 },
+      "area": 500.102,
+      "graftArea": 1479.559
+    },
+    "subtotal": {
+      "centroid": { "x": 781.01, "y": 587.664 },
+      "area": 2815.246,
+      "graftArea": 3976.287
+    }
+  },
+  "tolerances": {
+    "centroidPixels": 0.5,
+    "areaPixels": 0.5,
+    "minimumGraftAreaRatio": 1.35
+  }
+}

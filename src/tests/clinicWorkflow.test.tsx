@@ -7,6 +7,17 @@ import { createPresetPlan } from "@/components/app/SurgeryBuilder";
 import { getSyntheticCase } from "@/fixtures/syntheticCases";
 
 describe("clinic procedure workflow", () => {
+  it("does not expose repairable anatomy-view configuration as a review blocker", () => {
+    render(<AppShell />);
+
+    expect(
+      screen.queryByText(/has no compatible anatomy view in this plan/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Complete the clinician review checklist before approval/i),
+    ).toBeInTheDocument();
+  });
+
   it("uses professional open medical art for postoperative preview", () => {
     const { container } = render(
       <DiagramPanel

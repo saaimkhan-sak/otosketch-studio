@@ -111,3 +111,24 @@ test("clinic preset stays selected until reset", async ({ page }) => {
   await expect(preset).toHaveValue("");
   await expect(page.getByRole("heading", { name: "Your planned ear procedure" })).toBeVisible();
 });
+
+test("case input tabs support keyboard navigation", async ({ page }) => {
+  await page.goto("/");
+  const exampleTab = page.getByRole("tab", { name: "Example" });
+  const noteTab = page.getByRole("tab", { name: "Paste note" });
+  const manualTab = page.getByRole("tab", { name: "Build manually" });
+
+  await expect(exampleTab).toHaveAttribute("tabindex", "0");
+  await exampleTab.focus();
+  await exampleTab.press("ArrowRight");
+  await expect(noteTab).toBeFocused();
+  await expect(noteTab).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tabpanel")).toHaveAttribute(
+    "aria-labelledby",
+    "case-input-tab-note",
+  );
+
+  await noteTab.press("End");
+  await expect(manualTab).toBeFocused();
+  await expect(manualTab).toHaveAttribute("aria-selected", "true");
+});

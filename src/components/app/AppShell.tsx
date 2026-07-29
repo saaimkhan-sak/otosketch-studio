@@ -1,6 +1,11 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import {
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { AlertTriangle, BadgeCheck, RotateCcw, Undo2 } from "lucide-react";
 import type { EducationMode } from "@/domain/educationMode";
 import { detectPossiblePhi } from "@/domain/safety";
@@ -11,7 +16,7 @@ import {
   createEmptySurgeryPlan,
   deriveSurgeryPlanFromCase,
   getActiveSurgeryLayers,
-  validateSurgeryPlan,
+  normalizeSurgeryPlan,
   type SurgeryPlan,
 } from "@/domain/surgeryPlan";
 import type { CaseFieldPath } from "@/domain/types";
@@ -37,6 +42,8 @@ import { TeachingProcedureGuide } from "./TeachingProcedureGuide";
 const defaultProvider = (process.env.NEXT_PUBLIC_DEFAULT_EXTRACTOR ?? "mock") as ExtractorProvider;
 const allowProviderSwitcher = process.env.NEXT_PUBLIC_ALLOW_PROVIDER_SWITCHER !== "false";
 const publicCloudflareWorkerUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_WORKER_EXTRACT_URL?.trim();
+const inputModes = ["example", "note", "manual"] as const;
+type InputMode = (typeof inputModes)[number];
 
 const reviewChecklistItemsByMode = {
   postoperative_summary: [
@@ -123,14 +130,17 @@ export function AppShell() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [inputMode, setInputMode] = useState<"example" | "note" | "manual">("example");
+  const [inputMode, setInputMode] = useState<InputMode>("example");
   const diagramRegionRef = useRef<HTMLElement | null>(null);
   const reviewChecklistItems = reviewChecklistItemsByMode[educationMode];
   const isTeaching = sessionPurpose === "teaching_walkthrough";
 
   const phiDetection = useMemo(() => detectPossiblePhi(note), [note]);
   const resultIsStale = operativeCase !== null && note !== lastExtractedNote;
-  const surgeryPlanValidation = useMemo(() => validateSurgeryPlan(surgeryPlan), [surgeryPlan]);
+  const surgeryPlanValidation = useMemo(
+    () => normalizeSurgeryPlan(surgeryPlan),
+    [surgeryPlan],
+  );
   const surgeryPlanReviewBlockers = useMemo(
     () =>
       surgeryPlanValidation.issues
@@ -408,7 +418,7 @@ export function AppShell() {
     setSelectedFeatureId(null);
   };
 
-  const handleInputModeChange = (mode: "example" | "note" | "manual") => {
+  const handleInputModeChange = (mode: InputMode) => {
     setInputMode(mode);
     if (mode === "example") {
       handleSelectCase(selectedCaseId);
@@ -434,6 +444,33 @@ export function AppShell() {
       setError(null);
       setSelectedFeatureId(null);
     }
+  };
+
+  const handleInputModeKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    mode: InputMode,
+  ) => {
+    const currentIndex = inputModes.indexOf(mode);
+    let nextIndex: number | null = null;
+
+    if (event.key === "ArrowRight") {
+      nextIndex = (currentIndex + 1) % inputModes.length;
+    } else if (event.key === "ArrowLeft") {
+      nextIndex =
+        (currentIndex - 1 + inputModes.length) % inputModes.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = inputModes.length - 1;
+    }
+
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const nextMode = inputModes[nextIndex];
+    handleInputModeChange(nextMode);
+    event.currentTarget.parentElement
+      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+      [nextIndex]?.focus();
   };
 
   const handleReviewChecklistChange = (id: string, checked: boolean) => {
@@ -603,15 +640,23 @@ export function AppShell() {
                     ["example", "Example"],
                     ["note", "Paste note"],
                     ["manual", "Build manually"],
-                  ] as const
+                  ] as const satisfies ReadonlyArray<
+                    readonly [InputMode, string]
+                  >
                 ).map(([mode, label]) => (
                   <button
                     key={mode}
+                    id={`case-input-tab-${mode}`}
                     type="button"
                     role="tab"
                     aria-selected={inputMode === mode}
+                    aria-controls="case-input-panel"
+                    tabIndex={inputMode === mode ? 0 : -1}
                     className={inputMode === mode ? "is-active" : undefined}
                     onClick={() => handleInputModeChange(mode)}
+                    onKeyDown={(event) =>
+                      handleInputModeKeyDown(event, mode)
+                    }
                   >
                     {label}
                   </button>
@@ -627,7 +672,13 @@ export function AppShell() {
               }
             >
               {educationMode === "postoperative_summary" ? (
-                <div className="case-source-panel">
+                <div
+                  id="case-input-panel"
+                  className="case-source-panel"
+                  role="tabpanel"
+                  aria-labelledby={`case-input-tab-${inputMode}`}
+                  tabIndex={0}
+                >
                   {inputMode === "example" ? (
                     <>
                       <ExampleCasePicker
