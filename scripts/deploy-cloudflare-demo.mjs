@@ -129,7 +129,7 @@ async function runWithRetry(label, commandFactory, attempts = 3) {
 const plan = [
   "Check Wrangler authentication.",
   "Build the lightweight static Pages artifact with the same-origin extraction endpoint embedded.",
-  "Verify the static artifact size, headers, atlas index, and extraction endpoint.",
+  "Verify the static artifact size, headers, medical-art assets, and extraction endpoint.",
   "Smoke-test the static artifact locally.",
   "Compile the Pages Function that reuses the safe Cloudflare extraction Worker handler.",
   "Create the Cloudflare Pages project if it does not already exist.",
@@ -144,7 +144,7 @@ try {
   if (dryRun) {
     const plannedCommands = [
       commandString("pnpm", ["exec", "wrangler", "whoami"]),
-      `NEXT_PUBLIC_CLOUDFLARE_WORKER_EXTRACT_URL=${extractionEndpoint} pnpm build:static:remote-atlas`,
+      `NEXT_PUBLIC_CLOUDFLARE_WORKER_EXTRACT_URL=${extractionEndpoint} pnpm build:static`,
       `EXPECT_PUBLIC_WORKER_URL=${extractionEndpoint} pnpm verify:static`,
       "pnpm verify:static:runtime",
       commandString("pnpm", [
@@ -185,7 +185,7 @@ try {
 
   await assertAuthenticated();
 
-  const staticBuild = await run("pnpm", ["build:static:remote-atlas"], {
+  const staticBuild = await run("pnpm", ["build:static"], {
     env: {
       NEXT_PUBLIC_CLOUDFLARE_WORKER_EXTRACT_URL: extractionEndpoint,
     },

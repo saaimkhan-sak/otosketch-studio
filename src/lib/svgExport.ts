@@ -142,3 +142,42 @@ export function serializeDiagramPanels(panels: SVGSVGElement[]): string {
 
   return `${serializer.serializeToString(root)}\n`;
 }
+
+function blobToDataUrl(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error ?? new Error("Unable to read image resource."));
+    reader.onload = () => resolve(String(reader.result));
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
+ * Produces a portable SVG by embedding locally hosted medical-art resources.
+ * The deterministic callouts remain vector elements; only the licensed source
+ * illustration is converted to a data URL.
+ */
+export async function serializeDiagramPanelsWithEmbeddedImages(
+  panels: SVGSVGElement[],
+): Promise<string> {
+  const serialized = serializeDiagramPanels(panels);
+  if (!serialized) return serialized;
+
+  const parsed = new DOMParser().parseFromString(serialized, "image/svg+xml");
+  const images = Array.from(parsed.querySelectorAll("image"));
+
+  await Promise.all(
+    images.map(async (image) => {
+      const href = image.getAttribute("href") ?? image.getAttribute("xlink:href");
+      if (!href || href.startsWith("data:")) return;
+      const response = await fetch(new URL(href, window.location.href));
+      if (!response.ok) {
+        throw new Error(`Unable to embed medical illustration resource: ${response.status}`);
+      }
+      image.setAttribute("href", await blobToDataUrl(await response.blob()));
+      image.removeAttribute("xlink:href");
+    }),
+  );
+
+  return `${new XMLSerializer().serializeToString(parsed.documentElement)}\n`;
+}

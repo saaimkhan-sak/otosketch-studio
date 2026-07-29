@@ -5,7 +5,7 @@ import { buildFeatureMap } from "@/domain/diagramMapping";
 import { anatomyFieldLabels, labelValue } from "@/domain/ontology";
 import type { OperativeCase } from "@/domain/schema";
 import type { SurgeryPlan } from "@/domain/surgeryPlan";
-import { labelSurgeryLayer } from "@/components/diagram/ComposedSurgeryDiagram";
+import { labelSurgeryLayer } from "@/domain/diagramLabels";
 import { cn } from "@/lib/cn";
 
 interface FindingsPanelProps {

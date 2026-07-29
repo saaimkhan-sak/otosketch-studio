@@ -1,61 +1,58 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { AppShell } from "@/components/app/AppShell";
 import { DiagramPanel } from "@/components/diagram/DiagramPanel";
 import { createPresetPlan } from "@/components/app/SurgeryBuilder";
 import { getSyntheticCase } from "@/fixtures/syntheticCases";
 
 describe("clinic procedure workflow", () => {
-  it("uses the exact atlas compositor for an internal postoperative preview when rights are configured", () => {
+  it("uses professional open medical art for postoperative preview", () => {
     const { container } = render(
       <DiagramPanel
         operativeCase={getSyntheticCase("porp-reconstruction").expected}
-        atlasUsageRights="clinic_permission"
         selectedFeatureId={null}
         onFeatureSelect={() => undefined}
       />,
     );
 
-    expect(container.querySelector('[data-diagram-source="stanford-atlas"]')).toBeInTheDocument();
-    expect(container.querySelectorAll(".atlas-template-svg")).toHaveLength(2);
-    expect(container.querySelector(".composed-surgery-svg")).not.toBeInTheDocument();
-    expect(screen.getAllByText(/Used with permission/i).length).toBeGreaterThan(0);
+    expect(container.querySelector('[data-diagram-source="open-medical-art"]')).toBeInTheDocument();
+    expect(container.querySelectorAll(".medical-illustration-svg")).toHaveLength(2);
+    expect(container.querySelector('[data-medical-illustration="servier-inner-ear"]')).toBeInTheDocument();
+    expect(screen.getAllByText(/Servier Medical Art/i).length).toBeGreaterThan(0);
   });
 
-  it("keeps an unsigned procedure atlas out of the patient-facing clinic preview", () => {
+  it("uses the NIH Illustrator vector for a cochlear-implant clinic preview", () => {
     const { container } = render(
       <DiagramPanel
-        surgeryPlan={createPresetPlan("tympanoplasty", "preoperative_education")}
+        surgeryPlan={createPresetPlan("cochlear_implant", "preoperative_education")}
         mode="preoperative_education"
-        atlasUsageRights="clinic_permission"
         selectedFeatureId={null}
         onFeatureSelect={() => undefined}
       />,
     );
 
-    expect(container.querySelector('[data-diagram-source="stanford-atlas"]')).not.toBeInTheDocument();
-    expect(container.querySelector('[data-diagram-source="original-deterministic"]')).toBeInTheDocument();
-    expect(screen.getByText(/template-level otologist sign-off/i)).toBeInTheDocument();
+    expect(container.querySelector('[data-medical-illustration="nih-inner-ear"]')).toBeInTheDocument();
+    expect(container.querySelector('image[href="/medical-art/nih/inner-ear.svg"]')).toBeInTheDocument();
+    expect(screen.getAllByText(/Adobe Illustrator 28.6/i).length).toBeGreaterThan(0);
   });
 
-  it("falls back atomically when an authorized atlas source fails to load", () => {
+  it("keeps structured medical-art callouts selectable", () => {
+    const onFeatureSelect = vi.fn();
     const { container } = render(
       <DiagramPanel
         operativeCase={getSyntheticCase("porp-reconstruction").expected}
-        atlasUsageRights="clinic_permission"
         selectedFeatureId={null}
-        onFeatureSelect={() => undefined}
+        onFeatureSelect={onFeatureSelect}
       />,
     );
 
-    const image = container.querySelector(".atlas-template-svg image");
-    expect(image).not.toBeNull();
-    fireEvent.error(image!);
-
-    expect(container.querySelector('[data-diagram-source="stanford-atlas"]')).not.toBeInTheDocument();
-    expect(container.querySelector('[data-diagram-source="original-deterministic"]')).toBeInTheDocument();
-    expect(screen.getByText("Atlas source unavailable")).toBeInTheDocument();
+    const callout = container.querySelector<SVGGElement>(
+      '.medical-illustration-svg g[role="button"]',
+    );
+    expect(callout).not.toBeNull();
+    fireEvent.click(callout!);
+    expect(onFeatureSelect).toHaveBeenCalled();
   });
 
   it("opens the diagram dialog with focus and closes it with Escape", async () => {
@@ -90,8 +87,16 @@ describe("clinic procedure workflow", () => {
 
     await user.selectOptions(screen.getByLabelText("Common planned procedure"), "tympanoplasty");
     expect(screen.getByRole("heading", { name: /Your planned Tympanoplasty/i })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: /Anatomy being discussed: Eardrum view/i })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: /Planned procedure: Eardrum view/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", {
+        name: /Anatomy being discussed: Ear and temporal-bone cutaway/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", {
+        name: /Planned procedure: Ear and temporal-bone cutaway/i,
+      }),
+    ).toBeInTheDocument();
     expect(screen.getAllByText(/Plan may change during surgery/i).length).toBeGreaterThan(0);
 
     await user.type(screen.getByLabelText("Reviewer name"), "Synthetic Clinician");

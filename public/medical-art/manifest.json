@@ -1,0 +1,28 @@
+{
+  "assets": [
+    {
+      "id": "nih-inner-ear",
+      "path": "public/medical-art/nih/inner-ear.svg",
+      "bytes": 194882,
+      "sha256": "3109bfb06a28d5ac9622a05332f2ef9738977c19f4556bbc173707d37e3f9c51",
+      "source": "https://bioart.niaid.nih.gov/bioart/256",
+      "license": "Public Domain"
+    },
+    {
+      "id": "servier-ear-cutaway",
+      "path": "public/medical-art/servier/ear-cutaway.png",
+      "bytes": 346070,
+      "sha256": "41b8a21a64945eadabb0a40ceb666c6e880d1790cff116e8bfe8afce7711c8f0",
+      "source": "https://smart.servier.com/smart_image/smart-ear/",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "servier-inner-ear",
+      "path": "public/medical-art/servier/inner-ear.png",
+      "bytes": 80031,
+      "sha256": "ec09e4aeb77652aade1e848e4f108d025597416717e15f840d64a72270e6a591",
+      "source": "https://smart.servier.com/smart_image/inner-ear/",
+      "license": "CC BY 4.0"
+    }
+  ]
+}

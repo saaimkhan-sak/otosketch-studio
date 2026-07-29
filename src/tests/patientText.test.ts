@@ -25,7 +25,7 @@ describe("patient text", () => {
       getSyntheticCase("normal-ossicular-chain").expected,
     ).join(" ");
     expect(text).toMatch(
-      /highlighted atlas region.*fascia covers the eardrum perforation and overlaps its margins.*generic reference/i,
+      /highlighted medical-art region.*fascia covers the eardrum perforation and overlaps its margins.*generic reference/i,
     );
   });
 

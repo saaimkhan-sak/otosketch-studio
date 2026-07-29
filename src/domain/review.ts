@@ -1,5 +1,4 @@
 import { buildFeatureMap } from "./diagramMapping";
-import { getAtlasTemplateBlocker } from "./atlasTemplates";
 import type { OperativeCase } from "./schema";
 
 export interface ReviewBlockerOptions {
@@ -56,16 +55,6 @@ export function getExportBlockers(
 
   if (!operativeCase.safety.suitableForRendering) {
     blockers.push(operativeCase.safety.blockRenderingReason ?? "Case is not suitable for export.");
-  }
-
-  const templateBlocker = getAtlasTemplateBlocker(operativeCase);
-  if (templateBlocker) {
-    blockers.push(
-      `Clinician-approved visual template required before patient education export: ${templateBlocker.replace(
-        "before patient-facing review or export",
-        "before patient education export",
-      )}`,
-    );
   }
 
   const approvalBlockers = getApprovalBlockers(operativeCase, {

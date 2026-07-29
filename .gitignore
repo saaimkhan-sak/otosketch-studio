@@ -12,6 +12,3 @@ test-results/
 .wrangler/
 dist/
 *.tsbuildinfo
-
-# Stanford atlas source assets can be regenerated with `pnpm scrape:atlas`.
-public/atlas-assets/stanford/files/

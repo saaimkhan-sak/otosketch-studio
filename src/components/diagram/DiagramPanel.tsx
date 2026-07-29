@@ -2,14 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Maximize2, X } from "lucide-react";
-import {
-  canDisplayStanfordAtlas,
-  getAtlasUsageRights,
-  type AtlasUsageRights,
-} from "@/domain/atlasUsage";
-import { selectAtlasDiagramTemplate } from "@/domain/atlasTemplates";
 import type { EducationMode } from "@/domain/educationMode";
-import { selectProcedureAtlas } from "@/domain/procedureAtlas";
+import { selectMedicalArtAsset } from "@/domain/medicalArt";
 import type { OperativeCase } from "@/domain/schema";
 import {
   deriveSurgeryPlanFromCase,
@@ -18,19 +12,13 @@ import {
   type SurgeryPlan,
 } from "@/domain/surgeryPlan";
 import { Button } from "@/components/ui/Button";
-import { AtlasRightsNotice } from "./AtlasRightsNotice";
-import { AtlasTemplateDiagram } from "./AtlasTemplateDiagram";
-import { ComposedSurgeryDiagram } from "./ComposedSurgeryDiagram";
+import { MedicalIllustrationDiagram } from "./MedicalIllustrationDiagram";
 import { OpenMedicalArtOverview } from "./OpenMedicalArtOverview";
-import { ProcedureAtlasDiagram } from "./ProcedureAtlasDiagram";
-import { ProcedureAtlasSummary } from "./ProcedureAtlasSummary";
-import { TemplateSummaryPanel } from "./TemplateSummaryPanel";
 
 interface DiagramPanelProps {
   operativeCase?: OperativeCase | null;
   surgeryPlan?: SurgeryPlan;
   mode?: EducationMode;
-  atlasUsageRights?: AtlasUsageRights;
   selectedFeatureId: string | null;
   onFeatureSelect: (featureId: string) => void;
 }
@@ -54,12 +42,10 @@ export function DiagramPanel({
   operativeCase,
   surgeryPlan,
   mode = "postoperative_summary",
-  atlasUsageRights = getAtlasUsageRights(),
   selectedFeatureId,
   onFeatureSelect,
 }: DiagramPanelProps) {
   const [expanded, setExpanded] = useState(false);
-  const [failedAtlasKey, setFailedAtlasKey] = useState<string | null>(null);
   const expandTriggerRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const basePlan = useMemo(() => {
@@ -69,36 +55,6 @@ export function DiagramPanel({
   }, [operativeCase, surgeryPlan]);
   const normalized = useMemo(() => normalizeSurgeryPlan(basePlan), [basePlan]);
   const plan = normalized.plan ?? basePlan;
-  const templateSelection = operativeCase ? selectAtlasDiagramTemplate(operativeCase) : null;
-  const procedureAtlasSelection = useMemo(() => selectProcedureAtlas(plan, mode), [mode, plan]);
-  const atlasSelectionKey =
-    templateSelection?.status === "ready"
-      ? `template:${templateSelection.template.id}`
-      : procedureAtlasSelection
-        ? `procedure:${procedureAtlasSelection.family}:${procedureAtlasSelection.panels.procedure.asset.id}`
-        : null;
-  const atlasLoadFailed = Boolean(atlasSelectionKey && failedAtlasKey === atlasSelectionKey);
-  const atlasAuthorized = canDisplayStanfordAtlas(atlasUsageRights, mode);
-  const templateClinicallyEligible =
-    mode === "postoperative_summary" ||
-    (templateSelection?.status === "ready" &&
-      templateSelection.template.review.status === "clinician_approved");
-  const procedureAtlasClinicallyEligible =
-    mode === "postoperative_summary" ||
-    procedureAtlasSelection?.review.status === "clinician_approved";
-  const useAtlasTemplate =
-    mode === "postoperative_summary" &&
-    templateSelection?.status === "ready" &&
-    templateClinicallyEligible &&
-    !atlasLoadFailed &&
-    atlasAuthorized;
-  const useProcedureAtlas =
-    !useAtlasTemplate &&
-    Boolean(procedureAtlasSelection) &&
-    procedureAtlasClinicallyEligible &&
-    !atlasLoadFailed &&
-    atlasAuthorized;
-  const atlasInUse = useAtlasTemplate || useProcedureAtlas;
   const selectedLayerId = selectedFeatureId
     ? (featureToLegacyLayer[selectedFeatureId] ?? selectedFeatureId)
     : null;
@@ -108,6 +64,7 @@ export function DiagramPanel({
     plan.procedureFamilies === "not_documented"
       ? "Procedure not documented"
       : plan.procedureFamilies.map(labelSurgeryProcedure).join(" + ");
+  const medicalArt = selectMedicalArtAsset(plan);
 
   useEffect(() => {
     if (!expanded) return;
@@ -120,7 +77,7 @@ export function DiagramPanel({
     );
     focusable[0]?.focus();
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
         setExpanded(false);
@@ -154,52 +111,16 @@ export function DiagramPanel({
     );
   }
 
-  const diagramPhases = useAtlasTemplate ? (
-    <div className="atlas-diagram-phases" data-diagram-source="stanford-atlas">
-      <AtlasTemplateDiagram
-        selection={templateSelection}
-        panel="found"
-        mode={mode}
-        selectedFeatureId={selectedFeatureId}
-        onFeatureSelect={onFeatureSelect}
-        onImageError={() => atlasSelectionKey && setFailedAtlasKey(atlasSelectionKey)}
-      />
-      <AtlasTemplateDiagram
-        selection={templateSelection}
-        panel="repaired"
-        mode={mode}
-        selectedFeatureId={selectedFeatureId}
-        onFeatureSelect={onFeatureSelect}
-        onImageError={() => atlasSelectionKey && setFailedAtlasKey(atlasSelectionKey)}
-      />
-    </div>
-  ) : useProcedureAtlas && procedureAtlasSelection ? (
-    <div className="atlas-diagram-phases" data-diagram-source="stanford-atlas">
-      <ProcedureAtlasDiagram
-        selection={procedureAtlasSelection}
-        phase="finding"
-        selectedFeatureId={selectedLayerId}
-        onFeatureSelect={selectLayer}
-        onImageError={() => atlasSelectionKey && setFailedAtlasKey(atlasSelectionKey)}
-      />
-      <ProcedureAtlasDiagram
-        selection={procedureAtlasSelection}
-        phase="procedure"
-        selectedFeatureId={selectedLayerId}
-        onFeatureSelect={selectLayer}
-        onImageError={() => atlasSelectionKey && setFailedAtlasKey(atlasSelectionKey)}
-      />
-    </div>
-  ) : (
-    <div className="composed-diagram-phases" data-diagram-source="original-deterministic">
-      <ComposedSurgeryDiagram
+  const diagramPhases = (
+    <div className="medical-illustration-phases" data-diagram-source="open-medical-art">
+      <MedicalIllustrationDiagram
         plan={plan}
         phase="finding"
         presentationMode={mode}
         selectedLayerId={selectedLayerId}
         onLayerSelect={selectLayer}
       />
-      <ComposedSurgeryDiagram
+      <MedicalIllustrationDiagram
         plan={plan}
         phase="procedure"
         presentationMode={mode}
@@ -218,14 +139,14 @@ export function DiagramPanel({
       />
       <div className="surgical-detail-heading">
         <div>
-          <p className="eyebrow">Surgical detail</p>
+          <p className="eyebrow">Medical illustration sequence</p>
           <h3>
             {mode === "preoperative_education"
               ? "Walk through the planned procedure"
               : "Compare findings with the completed repair"}
           </h3>
         </div>
-        <span>Structured SVG · not to scale</span>
+        <span>Professional medical art · structured overlays</span>
       </div>
       {diagramPhases}
     </div>
@@ -240,11 +161,7 @@ export function DiagramPanel({
             <span>
               {mode === "preoperative_education" ? "Upcoming procedure" : "Internal draft"}
             </span>
-            <span>
-              {atlasInUse
-                ? "Open medical art + atlas detail"
-                : "Open medical art + deterministic detail"}
-            </span>
+            <span>Professional open medical art</span>
             <span>{mode === "preoperative_education" ? "Plan may change" : "Not to scale"}</span>
           </div>
         </div>
@@ -288,37 +205,19 @@ export function DiagramPanel({
         </div>
       )}
 
-      {atlasLoadFailed ? (
-        <div role="status" className="atlas-load-fallback">
-          <strong>Atlas source unavailable</strong>
-          <span>
-            Showing the original deterministic view so no overlay appears on a blank image.
-          </span>
-        </div>
-      ) : null}
-
-      {templateSelection?.status === "ready" && !atlasAuthorized ? (
-        <AtlasRightsNotice selection={templateSelection} rights={atlasUsageRights} />
-      ) : null}
-
-      {templateSelection?.status === "ready" ? (
-        <TemplateSummaryPanel selection={templateSelection} />
-      ) : procedureAtlasSelection ? (
-        <ProcedureAtlasSummary
-          selection={procedureAtlasSelection}
-          authorized={useProcedureAtlas}
-          rights={atlasUsageRights}
-        />
-      ) : (
-        <details className="template-summary" aria-label="Sources and limitations">
-          <summary>Sources &amp; limitations · composable vector templates</summary>
-          <p className="template-review-status">Needs otologist approval</p>
-          <p className="mt-3 text-xs leading-5 text-slate-600">
-            This case uses original, deterministic anatomy views and finite visual layers. No exact
-            atlas-image pair is required, and missing details are not inferred.
-          </p>
-        </details>
-      )}
+      <details className="template-summary" aria-label="Sources and limitations">
+        <summary>Sources &amp; limitations · professional medical art</summary>
+        <p className="template-review-status">Clinician review required</p>
+        <p className="mt-3 text-xs leading-5 text-slate-600">
+          Base illustration: {medicalArt.attribution}. Created with{" "}
+          {medicalArt.illustrationSoftware}; {medicalArt.license}. OtoSketch adds only finite,
+          structured overlays from documented plan fields. The image is generic educational
+          anatomy, not patient-specific geometry.
+        </p>
+        <p className="mt-2 text-xs leading-5 text-slate-600">
+          No traced surgical-atlas artwork or source-image coordinate calibration is used.
+        </p>
+      </details>
 
       {expanded ? (
         <div className="diagram-dialog-backdrop" onClick={() => setExpanded(false)}>
@@ -333,11 +232,7 @@ export function DiagramPanel({
             <header>
               <div>
                 <h3>{procedureLabel}</h3>
-                <p>
-                  {atlasInUse
-                    ? "Atlas-backed reference preview"
-                    : "Original deterministic · composable template preview"}
-                </p>
+                <p>Professional open medical art · deterministic structured overlays</p>
               </div>
               <Button type="button" variant="secondary" onClick={() => setExpanded(false)}>
                 <X className="h-4 w-4" aria-hidden="true" />

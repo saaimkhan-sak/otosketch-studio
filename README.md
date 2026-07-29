@@ -1,4 +1,4 @@
-# Otology Visual Summary
+# OtoSketch Studio
 
 Synthetic-data-only proof of concept for converting otology operative-note-style text into a surgeon-reviewed, family-facing educational diagram.
 
@@ -20,18 +20,16 @@ pnpm typecheck
 pnpm e2e
 ```
 
-## Stanford atlas assets
+## Medical illustration engine
 
-The scraper uses the public WordPress REST media API for `https://otosurgeryatlas.stanford.edu/` and writes a provenance manifest plus downloaded image files.
+OtoSketch composes finite, deterministic overlays on professional open medical
+art. The current library uses:
 
-```bash
-pnpm scrape:atlas
-pnpm index:atlas
-pnpm verify:atlas:remote
-pnpm verify:atlas:pages
-```
+- NIH BioArt `BIOART-000256`, a Public Domain vector created in Adobe Illustrator.
+- Servier Medical Art auditory illustrations under CC BY 4.0.
 
-Downloaded binary files are ignored by git and can be regenerated.
+The asset provenance and license details live beside each source in
+`public/medical-art/`. No Stanford Oto Surgery Atlas artwork or tracing is used.
 
 ## Optional providers
 

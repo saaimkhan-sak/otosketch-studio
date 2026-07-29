@@ -2,10 +2,10 @@
 
 import { ExternalLink, Layers3 } from "lucide-react";
 import Image from "next/image";
+import { labelSurgeryLayer } from "@/domain/diagramLabels";
 import { getMedicalArtAnchor, selectMedicalArtAsset } from "@/domain/medicalArt";
 import { getActiveSurgeryLayers, type SurgeryLayer, type SurgeryPlan } from "@/domain/surgeryPlan";
 import { cn } from "@/lib/cn";
-import { labelSurgeryLayer } from "./ComposedSurgeryDiagram";
 
 interface OpenMedicalArtOverviewProps {
   plan: SurgeryPlan;
@@ -146,7 +146,7 @@ export function OpenMedicalArtOverview({
             </p>
           )}
           <a href={asset.sourcePage} target="_blank" rel="noreferrer">
-            {asset.attribution} · {asset.license}
+            {asset.attribution} · {asset.illustrationSoftware} · {asset.license}
             <ExternalLink className="h-3 w-3" aria-hidden="true" />
           </a>
         </aside>

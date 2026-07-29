@@ -1,18 +1,9 @@
 "use client";
 
 import { Download, Printer } from "lucide-react";
-import {
-  canDisplayStanfordAtlas,
-  canDownloadStanfordAtlasSvg,
-  canPrintStanfordAtlas,
-  getAtlasUsageRights,
-  type AtlasUsageRights,
-} from "@/domain/atlasUsage";
-import { selectAtlasDiagramTemplate } from "@/domain/atlasTemplates";
 import type { EducationMode } from "@/domain/educationMode";
 import { generatePatientExplanation, generatePatientTitle } from "@/domain/patientText";
 import { generatePreoperativePatientGuide } from "@/domain/preoperativeEducation";
-import { selectProcedureAtlas } from "@/domain/procedureAtlas";
 import type { OperativeCase } from "@/domain/schema";
 import {
   deriveSurgeryPlanFromCase,
@@ -20,18 +11,15 @@ import {
   type SurgeryPlan,
 } from "@/domain/surgeryPlan";
 import { Button } from "@/components/ui/Button";
-import { AtlasTemplateDiagram } from "@/components/diagram/AtlasTemplateDiagram";
-import { ComposedSurgeryDiagram } from "@/components/diagram/ComposedSurgeryDiagram";
 import { Legend } from "@/components/diagram/Legend";
-import { ProcedureAtlasDiagram } from "@/components/diagram/ProcedureAtlasDiagram";
-import { serializeDiagramPanels } from "@/lib/svgExport";
+import { MedicalIllustrationDiagram } from "@/components/diagram/MedicalIllustrationDiagram";
+import { serializeDiagramPanelsWithEmbeddedImages } from "@/lib/svgExport";
 import { PatientProcedureGuide } from "./PatientProcedureGuide";
 
 interface ExportPanelProps {
   operativeCase?: OperativeCase | null;
   surgeryPlan?: SurgeryPlan;
   mode?: EducationMode;
-  atlasUsageRights?: AtlasUsageRights;
   exportBlockers?: string[];
 }
 
@@ -39,7 +27,6 @@ export function ExportPanel({
   operativeCase,
   surgeryPlan,
   mode = "postoperative_summary",
-  atlasUsageRights = getAtlasUsageRights(),
   exportBlockers = [],
 }: ExportPanelProps) {
   if (!operativeCase && !surgeryPlan) return null;
@@ -76,41 +63,14 @@ export function ExportPanel({
         ? generatePatientTitle(operativeCase)
         : "Ear surgery visual summary"
     : "Patient education preview unavailable";
-  const templateSelection = operativeCase ? selectAtlasDiagramTemplate(operativeCase) : null;
-  const procedureAtlasSelection = selectProcedureAtlas(plan, mode);
-  const templateClinicallyApproved =
-    templateSelection?.status === "ready" &&
-    templateSelection.template.review.status === "clinician_approved";
-  const procedureAtlasClinicallyApproved =
-    procedureAtlasSelection?.review.status === "clinician_approved";
-  const useAtlasTemplate =
-    mode === "postoperative_summary" &&
-    templateSelection?.status === "ready" &&
-    canDisplayStanfordAtlas(atlasUsageRights, mode);
-  const useProcedureAtlas =
-    !useAtlasTemplate &&
-    Boolean(procedureAtlasSelection) &&
-    (mode === "postoperative_summary" || procedureAtlasClinicallyApproved) &&
-    canDisplayStanfordAtlas(atlasUsageRights, mode);
-  const atlasInUse = useAtlasTemplate || useProcedureAtlas;
-  const atlasSvgDownloadBlocked =
-    atlasInUse && !canDownloadStanfordAtlasSvg(atlasUsageRights);
-  const printAtlasTemplate =
-    useAtlasTemplate && templateClinicallyApproved && canPrintStanfordAtlas(atlasUsageRights);
-  const printProcedureAtlas =
-    useProcedureAtlas &&
-    procedureAtlasClinicallyApproved &&
-    canPrintStanfordAtlas(atlasUsageRights);
-
-  const downloadSvg = () => {
-    if (atlasSvgDownloadBlocked) return;
+  const downloadSvg = async () => {
     const panels = Array.from(
       document.querySelectorAll<SVGSVGElement>(
         "#preview-verify .diagram-workbench [data-diagram-source] .diagram-svg",
       ),
     );
     if (panels.length === 0) return;
-    const svg = serializeDiagramPanels(panels);
+    const svg = await serializeDiagramPanelsWithEmbeddedImages(panels);
     const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = url;
@@ -121,20 +81,10 @@ export function ExportPanel({
     URL.revokeObjectURL(url);
   };
 
-  const printDiagrams = printAtlasTemplate ? (
+  const printDiagrams = (
     <div className="print-diagram-stack">
-      <AtlasTemplateDiagram selection={templateSelection} panel="found" mode={mode} />
-      <AtlasTemplateDiagram selection={templateSelection} panel="repaired" mode={mode} />
-    </div>
-  ) : printProcedureAtlas && procedureAtlasSelection ? (
-    <div className="print-diagram-stack">
-      <ProcedureAtlasDiagram selection={procedureAtlasSelection} phase="finding" />
-      <ProcedureAtlasDiagram selection={procedureAtlasSelection} phase="procedure" />
-    </div>
-  ) : (
-    <div className="print-diagram-stack">
-      <ComposedSurgeryDiagram plan={plan} phase="finding" presentationMode={mode} />
-      <ComposedSurgeryDiagram plan={plan} phase="procedure" presentationMode={mode} />
+      <MedicalIllustrationDiagram plan={plan} phase="finding" presentationMode={mode} />
+      <MedicalIllustrationDiagram plan={plan} phase="procedure" presentationMode={mode} />
     </div>
   );
 
@@ -151,12 +101,7 @@ export function ExportPanel({
             type="button"
             variant="secondary"
             onClick={downloadSvg}
-            disabled={exportBlocked || atlasSvgDownloadBlocked}
-            title={
-              atlasSvgDownloadBlocked
-                ? "A self-contained licensed image source is required for SVG download."
-                : undefined
-            }
+            disabled={exportBlocked}
           >
             <Download className="h-4 w-4" aria-hidden="true" />
             Download SVG
@@ -178,12 +123,6 @@ export function ExportPanel({
           <div role="alert" className="text-sm text-red-800">
             <strong>Export is blocked.</strong> <span>{exportBlockers[0]}</span>
           </div>
-        ) : null}
-        {atlasSvgDownloadBlocked ? (
-          <p className="atlas-export-note">
-            SVG download is off because a remote third-party image would not make a stable,
-            self-contained handout. Printing remains available only under clinic permission.
-          </p>
         ) : null}
         {draft ? (
           <p className="inline-flex rounded-md border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-bold text-amber-950">
@@ -227,7 +166,7 @@ export function ExportPanel({
                 </div>
                 <aside className="space-y-3 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-600 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
                   <p className="font-semibold text-slate-900">Reference illustration guardrails</p>
-                  <p>Uses finite, deterministic visual templates and reviewed combinations only.</p>
+                  <p>Uses licensed professional medical art and finite, deterministic overlays only.</p>
                   <p>Does not represent exact patient anatomy or replace the surgeon&apos;s explanation.</p>
                 </aside>
               </div>
@@ -289,8 +228,7 @@ export function ExportPanel({
           </>
         ) : (
           <p className="print-disclaimer">
-            Patient education handout unavailable until all review and visual-template blockers are
-            resolved.
+            Patient education handout unavailable until all review requirements are resolved.
           </p>
         )}
       </div>

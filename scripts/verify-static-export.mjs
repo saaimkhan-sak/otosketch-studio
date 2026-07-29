@@ -59,24 +59,20 @@ async function staticTextHaystack() {
 const failures = [];
 
 if (!existsSync(OUT_DIR)) {
-  failures.push("Static export directory out/ does not exist. Run pnpm build:static:remote-atlas first.");
+  failures.push("Static export directory out/ does not exist. Run pnpm build:static first.");
 } else {
   const requiredFiles = [
     "index.html",
     "_headers",
-    "atlas-assets/stanford/index.json",
-    "atlas-assets/stanford/manifest.json",
+    "medical-art/nih/inner-ear.svg",
+    "medical-art/servier/ear-cutaway.png",
+    "medical-art/servier/inner-ear.png",
   ];
 
   for (const required of requiredFiles) {
     if (!(await fileExists(path.join(OUT_DIR, required)))) {
       failures.push(`Missing required static export file: out/${required}`);
     }
-  }
-
-  const localAtlasFilesDir = path.join(OUT_DIR, "atlas-assets", "stanford", "files");
-  if (existsSync(localAtlasFilesDir)) {
-    failures.push("out/atlas-assets/stanford/files exists; use build:static:remote-atlas to avoid shipping local atlas binaries.");
   }
 
   const bytes = await directorySize(OUT_DIR);
@@ -90,16 +86,6 @@ if (!existsSync(OUT_DIR)) {
       if (!headers.includes(expected)) {
         failures.push(`out/_headers is missing ${expected}`);
       }
-    }
-  }
-
-  if (await fileExists(path.join(OUT_DIR, "atlas-assets", "stanford", "index.json"))) {
-    const index = JSON.parse(await readFile(path.join(OUT_DIR, "atlas-assets", "stanford", "index.json"), "utf8"));
-    if (index.assetCount !== 1140 || index.assets?.length !== 1140) {
-      failures.push(`Static atlas index count mismatch: assetCount=${index.assetCount}, assets=${index.assets?.length}.`);
-    }
-    if (!index.assets?.[0]?.sourceUrl?.startsWith("https://")) {
-      failures.push("Static atlas index is missing HTTPS sourceUrl values.");
     }
   }
 
@@ -124,7 +110,7 @@ if (failures.length > 0) {
         bytes,
         maxBytes: MAX_BYTES,
         workerUrlChecked: Boolean(EXPECT_PUBLIC_WORKER_URL),
-        atlasFilesPruned: !existsSync(path.join(OUT_DIR, "atlas-assets", "stanford", "files")),
+        medicalArtReady: await fileExists(path.join(OUT_DIR, "medical-art", "nih", "inner-ear.svg")),
       },
       null,
       2,

@@ -1,6 +1,9 @@
 import type { SurgeryLayer, SurgeryPlan } from "./surgeryPlan";
 
-export type MedicalArtAssetId = "servier-ear-cutaway" | "servier-inner-ear";
+export type MedicalArtAssetId =
+  | "nih-inner-ear"
+  | "servier-ear-cutaway"
+  | "servier-inner-ear";
 
 export interface MedicalArtAsset {
   id: MedicalArtAssetId;
@@ -11,11 +14,29 @@ export interface MedicalArtAsset {
   sourceImage: string;
   width: number;
   height: number;
-  license: "CC BY 4.0";
+  license: "CC BY 4.0" | "Public Domain";
+  licenseUrl: string;
   attribution: string;
+  illustrationSoftware: string;
 }
 
 export const medicalArtAssets: Record<MedicalArtAssetId, MedicalArtAsset> = {
+  "nih-inner-ear": {
+    id: "nih-inner-ear",
+    title: "Inner-ear surgical anatomy",
+    description:
+      "Professional vector cross-section of the vestibular system, cochlea, ossicles, and temporal bone.",
+    localPath: "/medical-art/nih/inner-ear.svg",
+    sourcePage: "https://bioart.niaid.nih.gov/bioart/256",
+    sourceImage: "https://bioart.niaid.nih.gov/api/bioarts/256/files/631212",
+    width: 1386,
+    height: 1385,
+    license: "Public Domain",
+    licenseUrl: "https://bioart.niaid.nih.gov/faqs#usage-restrictions-bioart",
+    attribution:
+      "Ryan Kissinger, NIAID Visual & Medical Arts · Courtesy of NIAID · BIOART-000256",
+    illustrationSoftware: "Adobe Illustrator 28.6",
+  },
   "servier-ear-cutaway": {
     id: "servier-ear-cutaway",
     title: "Ear and temporal-bone cutaway",
@@ -27,7 +48,9 @@ export const medicalArtAssets: Record<MedicalArtAssetId, MedicalArtAsset> = {
     width: 1256,
     height: 1083,
     license: "CC BY 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
     attribution: "Servier Medical Art by Servier",
+    illustrationSoftware: "Servier Medical Art",
   },
   "servier-inner-ear": {
     id: "servier-inner-ear",
@@ -40,16 +63,24 @@ export const medicalArtAssets: Record<MedicalArtAssetId, MedicalArtAsset> = {
     width: 584,
     height: 370,
     license: "CC BY 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
     attribution: "Servier Medical Art by Servier",
+    illustrationSoftware: "Servier Medical Art",
   },
 };
 
-const focusedFamilies = new Set(["ossiculoplasty", "stapes_surgery", "cochlear_implant"]);
+const nihFocusedFamilies = new Set(["stapes_surgery", "cochlear_implant"]);
 
 export function selectMedicalArtAsset(plan: SurgeryPlan): MedicalArtAsset {
   if (
     plan.procedureFamilies !== "not_documented" &&
-    plan.procedureFamilies.some((family) => focusedFamilies.has(family))
+    plan.procedureFamilies.some((family) => nihFocusedFamilies.has(family))
+  ) {
+    return medicalArtAssets["nih-inner-ear"];
+  }
+  if (
+    plan.procedureFamilies !== "not_documented" &&
+    plan.procedureFamilies.includes("ossiculoplasty")
   ) {
     return medicalArtAssets["servier-inner-ear"];
   }
@@ -59,6 +90,18 @@ export function selectMedicalArtAsset(plan: SurgeryPlan): MedicalArtAsset {
 type MedicalArtAnchor = { x: number; y: number };
 
 const anchors: Record<MedicalArtAssetId, Record<string, MedicalArtAnchor>> = {
+  "nih-inner-ear": {
+    tympanic_membrane: { x: 30.5, y: 65.5 },
+    malleus: { x: 30.4, y: 39.5 },
+    incus: { x: 37.2, y: 43.1 },
+    stapes: { x: 45.1, y: 45.2 },
+    middle_ear: { x: 38.5, y: 48.1 },
+    cochlea: { x: 70.1, y: 49.7 },
+    mastoid: { x: 21.4, y: 29.2 },
+    postauricular: { x: 14.8, y: 24.6 },
+    ear_canal: { x: 15.8, y: 67.4 },
+    eustachian_tube: { x: 58.4, y: 82.5 },
+  },
   "servier-ear-cutaway": {
     tympanic_membrane: { x: 63.2, y: 52.7 },
     middle_ear: { x: 69.5, y: 48.5 },

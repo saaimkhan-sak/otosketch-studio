@@ -9,14 +9,14 @@ function buildPanel(viewBox: string, className: string): SVGSVGElement {
   panel.classList.add("diagram-svg", className);
   panel.innerHTML = `
     <defs>
-      <linearGradient id="atlas-test-gradient">
+      <linearGradient id="medical-test-gradient">
         <stop offset="0" stop-color="#ffffff" />
         <stop offset="1" stop-color="#c58a4b" />
       </linearGradient>
-      <filter id="atlas-test-shadow"><feGaussianBlur stdDeviation="2" /></filter>
+      <filter id="medical-test-shadow"><feGaussianBlur stdDeviation="2" /></filter>
     </defs>
-    <path class="atlas-test-tissue" d="M10 10 H90 V70 H10 Z" />
-    <text class="atlas-test-label" x="20" y="40">Repair</text>
+    <path class="medical-test-tissue" d="M10 10 H90 V70 H10 Z" />
+    <text class="medical-test-label" x="20" y="40">Repair</text>
   `;
   document.body.append(panel);
   return panel;
@@ -32,15 +32,15 @@ describe("standalone SVG export", () => {
     const style = document.createElement("style");
     style.dataset.svgExportTest = "true";
     style.textContent = `
-      .atlas-test-tissue {
-        fill: url("https://example.test/diagram#atlas-test-gradient");
+      .medical-test-tissue {
+        fill: url("https://example.test/diagram#medical-test-gradient");
         stroke: rgb(117, 65, 53);
         stroke-width: 3px;
-        filter: url("https://example.test/diagram#atlas-test-shadow");
+        filter: url("https://example.test/diagram#medical-test-shadow");
         opacity: 0.82;
         vector-effect: non-scaling-stroke;
       }
-      .atlas-test-label {
+      .medical-test-label {
         fill: rgb(23, 48, 45);
         font-family: sans-serif;
         font-size: 15px;
@@ -54,8 +54,8 @@ describe("standalone SVG export", () => {
 
     const exported = serializeDiagramPanels([panel]);
 
-    expect(exported).toContain("fill:url(#atlas-test-gradient)");
-    expect(exported).toContain("filter:url(#atlas-test-shadow)");
+    expect(exported).toContain("fill:url(#medical-test-gradient)");
+    expect(exported).toContain("filter:url(#medical-test-shadow)");
     expect(exported).toContain("stroke-width:3px");
     expect(exported).toContain("vector-effect:non-scaling-stroke");
     expect(exported).toContain("font-weight:700");

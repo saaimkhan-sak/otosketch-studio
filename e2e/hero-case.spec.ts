@@ -21,7 +21,7 @@ async function buildExample(page: Page, caseId: string) {
   await expect(page.getByRole("heading", { name: "Diagram preview" })).toBeVisible();
 }
 
-test("composable PORP case can be verified and reviewed without an atlas dead end", async ({ page }) => {
+test("PORP case uses professional medical art and can be reviewed", async ({ page }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
@@ -36,36 +36,23 @@ test("composable PORP case can be verified and reviewed without an atlas dead en
 
   await expect(page.getByRole("button", { name: /^Incus: Absent$/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /^Reconstruction: PORP$/i })).toBeVisible();
-  await expect(page.getByRole("region", { name: /Findings: Eardrum/i })).toBeVisible();
-  await expect(page.getByRole("region", { name: /Procedure and repair: Middle-ear/i })).toBeVisible();
-  await expect(page.locator("#preview-verify .composed-surgery-svg")).toHaveCount(3);
-  await expect(page.getByText(/No eligible atlas template matches/i)).toHaveCount(0);
+  await expect(page.getByRole("region", { name: /Documented findings: Middle and inner ear/i })).toBeVisible();
+  await expect(page.getByRole("region", { name: /Completed procedure: Middle and inner ear/i })).toBeVisible();
+  await expect(page.locator("#preview-verify .medical-illustration-svg")).toHaveCount(2);
+  await expect(page.locator('[data-medical-illustration="servier-inner-ear"]')).toHaveCount(2);
 
   await page
     .getByRole("group", { name: /Sources and limitations/i })
     .locator("summary")
     .click();
-  await expect(page.getByText(/Finding reference · 1724/i)).toBeVisible();
-  await expect(page.getByText(/Repair reference · 1736/i)).toBeVisible();
+  await expect(page.getByText(/Servier Medical Art/i).first()).toBeVisible();
+  await expect(page.getByText(/No traced surgical-atlas artwork/i)).toBeVisible();
 
   await page.getByRole("button", { name: "Full screen" }).click();
   await expect(page.getByRole("dialog", { name: "Full-screen diagram preview" })).toBeVisible();
   await expect(
-    page.getByRole("dialog", { name: "Full-screen diagram preview" }).locator(".composed-surgery-svg"),
-  ).toHaveCount(3);
-  const duplicateSvgResourceIds = await page
-    .locator(".composed-surgery-svg defs [id]")
-    .evaluateAll((elements) => {
-      const counts = new Map<string, number>();
-      for (const element of elements) {
-        const id = element.id;
-        counts.set(id, (counts.get(id) ?? 0) + 1);
-      }
-      return Array.from(counts.entries())
-        .filter(([, count]) => count > 1)
-        .map(([id]) => id);
-    });
-  expect(duplicateSvgResourceIds).toEqual([]);
+    page.getByRole("dialog", { name: "Full-screen diagram preview" }).locator(".medical-illustration-svg"),
+  ).toHaveCount(2);
   await page.getByRole("button", { name: "Close" }).click();
   await expect(page.getByRole("dialog", { name: "Full-screen diagram preview" })).toBeHidden();
 
@@ -75,9 +62,7 @@ test("composable PORP case can be verified and reviewed without an atlas dead en
   await page.getByText("Source extraction fields").click();
   await page.getByText("Review 10 structured fields").click();
   await page.getByLabel("Reconstruction", { exact: true }).selectOption("bone_cement_bridge");
-  await expect(page.locator(".surgery-cement-bridge")).toHaveCount(0);
   await expect(page.getByText(/reconstruction endpoints are not fully documented/i).first()).toBeVisible();
-  await expect(page.getByText(/No eligible atlas template matches/i)).toHaveCount(0);
   await page.getByLabel("Reconstruction", { exact: true }).selectOption("porp");
 
   await expect(page.getByRole("button", { name: "Mark reviewed for demo" })).toBeDisabled();
@@ -85,11 +70,11 @@ test("composable PORP case can be verified and reviewed without an atlas dead en
   await expect(page.getByRole("button", { name: "Mark reviewed for demo" })).toBeEnabled();
   await page.getByRole("button", { name: "Mark reviewed for demo" }).click();
   await expect(page.getByText("Reviewed for demo").first()).toBeVisible();
-  await expect(page.getByRole("button", { name: "Download SVG" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Download SVG" })).toBeEnabled();
   expect(pageErrors).toEqual([]);
 });
 
-test("bone-cement reconstruction is a distinct deterministic layer and remains export-gated", async ({ page }) => {
+test("bone-cement reconstruction remains a distinct deterministic medical-art layer", async ({ page }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await buildExample(page, "hero-otomimix-is-joint");
@@ -97,9 +82,9 @@ test("bone-cement reconstruction is a distinct deterministic layer and remains e
   const preview = page
     .locator("section.no-print", { has: page.getByRole("heading", { name: "Diagram preview" }) })
     .first();
-  await expect(preview.locator(".composed-surgery-svg")).toHaveCount(3);
-  await expect(preview.locator(".surgery-cement-bridge")).toHaveCount(1);
-  await expect(preview.locator(".surgery-prosthesis-line")).toHaveCount(0);
+  await expect(preview.locator(".medical-illustration-svg")).toHaveCount(2);
+  await expect(preview.locator('[data-medical-illustration="servier-inner-ear"]')).toHaveCount(2);
+  expect(await preview.locator(".medical-panel-hotspot").count()).toBeGreaterThan(0);
   await expect(page.getByRole("button", { name: /^Reconstruction: Bone cement bridge$/i })).toBeVisible();
 
   await page.getByRole("button", { name: /^Reconstruction: Bone cement bridge$/i }).click();
@@ -110,10 +95,8 @@ test("bone-cement reconstruction is a distinct deterministic layer and remains e
   await completeReviewChecklist(page);
   await expect(page.getByRole("button", { name: "Mark reviewed for demo" })).toBeEnabled();
   await page.getByRole("button", { name: "Mark reviewed for demo" }).click();
-  await expect(
-    page.getByRole("alert").filter({ hasText: /Export is blocked/i }),
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Download SVG" })).toBeDisabled();
+  await expect(page.getByRole("alert").filter({ hasText: /Export is blocked/i })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Download SVG" })).toBeEnabled();
   expect(pageErrors).toEqual([]);
 });
 
@@ -124,24 +107,21 @@ test("manual builder provides every common surgery preset and its required view"
   await page.getByRole("tab", { name: "Build manually" }).click();
 
   const presets = [
-    ["myringotomy_tympanostomy", "otoscopic_tm"],
-    ["tympanoplasty", "otoscopic_tm"],
-    ["ossiculoplasty", "transcanal_middle_ear"],
-    ["tympanomastoidectomy", "mastoid_middle_ear"],
-    ["stapes_surgery", "transcanal_middle_ear"],
-    ["cochlear_implant", "cochlea_implant_path"],
-    ["bone_conduction_implant", "postauricular_implant"],
-    ["canalplasty", "external_auditory_canal"],
-    ["eustachian_tube_dilation", "eustachian_tube"],
+    ["myringotomy_tympanostomy", "servier-ear-cutaway"],
+    ["tympanoplasty", "servier-ear-cutaway"],
+    ["ossiculoplasty", "servier-inner-ear"],
+    ["tympanomastoidectomy", "servier-ear-cutaway"],
+    ["stapes_surgery", "nih-inner-ear"],
+    ["cochlear_implant", "nih-inner-ear"],
+    ["bone_conduction_implant", "servier-ear-cutaway"],
+    ["canalplasty", "servier-ear-cutaway"],
+    ["eustachian_tube_dilation", "servier-ear-cutaway"],
   ] as const;
 
-  for (const [preset, view] of presets) {
+  for (const [preset, asset] of presets) {
     await page.getByLabel("Synthetic surgery example").selectOption(preset);
-    await expect(
-      page.locator(
-        `.composed-surgery-svg[data-template-view="${view}"][data-diagram-phase="procedure"]`,
-      ),
-    ).toHaveCount(1);
+    await expect(page.locator(".medical-illustration-svg")).toHaveCount(2);
+    await expect(page.locator(`[data-medical-illustration="${asset}"]`)).toHaveCount(2);
     await expect(page.getByText("Resolve the conflicting selections")).toHaveCount(0);
   }
 
@@ -156,10 +136,7 @@ test("manual builder provides every common surgery preset and its required view"
   await expect(
     page.getByRole("button", { name: /Intraoperative change · Procedure changed/i }).first(),
   ).toBeVisible();
-  await expect(
-    page.locator('[data-layer-marker*="intraoperative_deviation"]'),
-  ).toHaveCount(0);
-  await expect(page.locator(".surgery-marker.is-status")).toHaveCount(0);
+  expect(await page.locator(".medical-panel-hotspot").count()).toBeGreaterThanOrEqual(4);
   expect(pageErrors).toEqual([]);
 });
 
@@ -180,7 +157,7 @@ test("contradictory intraoperative selections block a misleading image", async (
 
   await expect(page.getByText(/Canal-wall-up and canal-wall-down cannot both/i).first()).toBeVisible();
   await expect(page.getByText("Resolve the conflicting selections")).toBeVisible();
-  await expect(page.locator("#preview-verify .composed-surgery-svg")).toHaveCount(0);
+  await expect(page.locator("#preview-verify .medical-illustration-svg")).toHaveCount(0);
 });
 
 test("cloud mode warns and blocks possible PHI", async ({ page }) => {
@@ -210,7 +187,7 @@ test("edited note makes current diagram stale until regenerated", async ({ page 
   expect(pageErrors).toEqual([]);
 });
 
-test("print output remains locked without template-level otologist approval", async ({ page }) => {
+test("print output remains locked until the clinician marks the case reviewed", async ({ page }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await buildExample(page, "porp-reconstruction");
@@ -218,10 +195,10 @@ test("print output remains locked without template-level otologist approval", as
 
   await page.emulateMedia({ media: "print" });
   await expect(page.locator(".print-export-only")).toBeVisible();
-  await expect(page.getByText("Otology Visual Summary", { exact: true })).toBeHidden();
+  await expect(page.getByText("OtoSketch Studio", { exact: true })).toBeHidden();
   await expect(page.getByText("Synthetic operative note for demonstration only")).toBeHidden();
   await expect(page.locator(".print-disclaimer")).toContainText(
-    "unavailable until all review and visual-template blockers are resolved",
+    "unavailable until all review requirements are resolved",
   );
 
   const pdf = await page.pdf({

@@ -462,7 +462,7 @@ export function AppShell() {
     setSurgeryPlan((current) => ({
       ...current,
       review: {
-        status: "requires_clinician_review",
+        status: "approved_by_clinician",
         reviewerName: reviewerName.trim() || undefined,
         reviewedAtIso: new Date().toISOString(),
       },

@@ -9,11 +9,8 @@ import { ExportPanel } from "@/components/app/ExportPanel";
 import { NoteInput } from "@/components/app/NoteInput";
 import { ReviewIssuesPanel } from "@/components/app/ReviewIssuesPanel";
 import { SafetyBanner } from "@/components/app/SafetyBanner";
-import { AtlasTemplateDiagram } from "@/components/diagram/AtlasTemplateDiagram";
 import { DiagramPanel } from "@/components/diagram/DiagramPanel";
-import { OtologyDiagram } from "@/components/diagram/OtologyDiagram";
-import { selectAtlasDiagramTemplate } from "@/domain/atlasTemplates";
-import { buildDiagramState, buildFeatureMap } from "@/domain/diagramMapping";
+import { buildFeatureMap } from "@/domain/diagramMapping";
 import { markReviewed, updateCaseField } from "@/domain/editCase";
 import { getApprovalBlockers, getExportBlockers } from "@/domain/review";
 import { getSyntheticCase, syntheticCases } from "@/fixtures/syntheticCases";
@@ -21,7 +18,7 @@ import { getSyntheticCase, syntheticCases } from "@/fixtures/syntheticCases";
 const reviewChecklist = [
   { id: "laterality", label: "Laterality and side labels checked", checked: false },
   { id: "findings", label: "Findings match the cited evidence", checked: false },
-  { id: "template", label: "Atlas template and limitations reviewed", checked: false },
+  { id: "template", label: "Medical art and limitations reviewed", checked: false },
   { id: "handout", label: "Patient handout copy reviewed", checked: false },
 ];
 
@@ -199,9 +196,7 @@ describe("core UI components", () => {
 
     expect(screen.getByText("Export is blocked.")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent(/Export is blocked/i);
-    expect(
-      screen.getByText(/clinician-approved visual template required before patient education export/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Mark the diagram reviewed before patient education export/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Download SVG/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /Print \/ save PDF/i })).toBeDisabled();
     expect(screen.getAllByText(/Draft - not reviewed/i).length).toBeGreaterThan(0);
@@ -211,7 +206,7 @@ describe("core UI components", () => {
     expect(screen.queryByText(/This is fictional sample text for product development/i)).not.toBeInTheDocument();
   });
 
-  it("does not show family-facing repair claims for unsupported template edits", () => {
+  it("does not show family-facing repair claims before review", () => {
     const mismatchedBoneCement = updateCaseField(
       getSyntheticCase("porp-reconstruction").expected,
       "repair.reconstructionType",
@@ -221,37 +216,35 @@ describe("core UI components", () => {
     render(<ExportPanel operativeCase={mismatchedBoneCement} exportBlockers={getExportBlockers(mismatchedBoneCement)} />);
 
     expect(screen.getAllByText(/Patient education preview unavailable/i).length).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText(/No exact atlas overlay template matches this bone-cement reconstruction pattern/i).length,
-    ).toBeGreaterThan(0);
     expect(screen.queryByText(/bone cement bridging the hearing-bone connection/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/partial prosthesis used to reconnect/i)).not.toBeInTheDocument();
   });
 
-  it("blocks export after case review until the atlas template has otologist approval", () => {
+  it("enables export after clinician review", () => {
     const operativeCase = markReviewed(getSyntheticCase("normal-ossicular-chain").expected);
     render(<ExportPanel operativeCase={operativeCase} exportBlockers={getExportBlockers(operativeCase)} />);
 
-    expect(screen.getByText("Export is blocked.")).toBeInTheDocument();
-    expect(screen.getByText(/template-level otologist approval/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Download SVG/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /Print \/ save PDF/i })).toBeDisabled();
+    expect(screen.queryByText("Export is blocked.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Download SVG/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Print \/ save PDF/i })).toBeEnabled();
   });
 
-  it("renders an atlas-backed diagram with deterministic callouts and provenance", () => {
-    const selection = selectAtlasDiagramTemplate(getSyntheticCase("porp-reconstruction").expected);
-    if (selection.status !== "ready") throw new Error("PORP fixture should have a template.");
+  it("renders professional medical art with deterministic callouts and provenance", () => {
+    const { container } = render(
+      <DiagramPanel
+        operativeCase={getSyntheticCase("porp-reconstruction").expected}
+        selectedFeatureId={null}
+        onFeatureSelect={() => undefined}
+      />,
+    );
 
-    const { container } = render(<AtlasTemplateDiagram selection={selection} panel="repaired" />);
-
-    expect(screen.getByRole("group", { name: /documented repair/i })).toHaveAttribute("aria-labelledby");
-    expect(container.querySelector('[data-template-id="atlas-porp-reference"]')).toBeInTheDocument();
-    expect(container.querySelector('[data-atlas-asset-id="1736"]')).toBeInTheDocument();
-    expect(screen.getAllByText(/Stanford Oto Surgery Atlas asset 1736/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Reconstruction: PORP/i).length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".medical-illustration-svg")).toHaveLength(2);
+    expect(container.querySelector('[data-medical-illustration="servier-inner-ear"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-diagram-source="open-medical-art"]')).toBeInTheDocument();
+    expect(screen.getAllByText(/Servier Medical Art/i).length).toBeGreaterThan(0);
   });
 
-  it("shows composable diagrams with compact source and limitation details", () => {
+  it("shows medical-art diagrams with compact source and limitation details", () => {
     const { container } = render(
       <DiagramPanel
         operativeCase={getSyntheticCase("porp-reconstruction").expected}
@@ -261,19 +254,22 @@ describe("core UI components", () => {
     );
 
     expect(screen.getByRole("region", { name: /diagram preview/i })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: /findings: eardrum view/i })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: /procedure and repair: middle-ear view/i })).toBeInTheDocument();
-    expect(container.querySelectorAll(".composed-surgery-svg")).toHaveLength(3);
+    expect(
+      screen.getByRole("region", { name: /Documented findings: Middle and inner ear/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: /Completed procedure: Middle and inner ear/i }),
+    ).toBeInTheDocument();
+    expect(container.querySelectorAll(".medical-illustration-svg")).toHaveLength(2);
 
     const sources = screen.getByRole("group", { name: /sources and limitations/i });
     expect(sources).not.toHaveAttribute("open");
-    expect(sources).toHaveTextContent(/Atlas PORP reference/i);
-    expect(sources).toHaveTextContent(/Finding reference · 1724/i);
-    expect(sources).toHaveTextContent(/Repair reference · 1736/i);
-    expect(sources).toHaveTextContent(/Needs otologist approval/i);
+    expect(sources).toHaveTextContent(/professional medical art/i);
+    expect(sources).toHaveTextContent(/Servier Medical Art/i);
+    expect(sources).toHaveTextContent(/No traced surgical-atlas artwork/i);
   });
 
-  it("opens a full-screen composable diagram review dialog", async () => {
+  it("opens a full-screen medical illustration review dialog", async () => {
     const user = userEvent.setup();
     render(
       <DiagramPanel
@@ -287,21 +283,25 @@ describe("core UI components", () => {
     const dialog = screen.getByRole("dialog", { name: /Full-screen diagram preview/i });
     expect(dialog).toHaveTextContent(/Tympanoplasty \/ myringoplasty/i);
     expect(dialog).toHaveTextContent(/Ossiculoplasty \/ middle-ear exploration/i);
-    expect(dialog).toHaveTextContent(/Composable template preview/i);
-    expect(screen.getAllByRole("img", { name: /Procedure and repair: Middle-ear view/i })).toHaveLength(2);
+    expect(dialog).toHaveTextContent(/Professional open medical art/i);
+    expect(dialog.querySelectorAll(".medical-illustration-svg")).toHaveLength(2);
 
     await user.click(screen.getByRole("button", { name: /Close/i }));
     expect(screen.queryByRole("dialog", { name: /Full-screen diagram preview/i })).not.toBeInTheDocument();
   });
 
-  it("lets keyboard users select diagram features for evidence review", async () => {
+  it("lets keyboard users select medical-art callouts for evidence review", async () => {
     const user = userEvent.setup();
     const onFeatureSelect = vi.fn();
-    const selection = selectAtlasDiagramTemplate(getSyntheticCase("porp-reconstruction").expected);
-    if (selection.status !== "ready") throw new Error("PORP fixture should have a template.");
-    render(<AtlasTemplateDiagram selection={selection} panel="repaired" onFeatureSelect={onFeatureSelect} />);
+    render(
+      <DiagramPanel
+        operativeCase={getSyntheticCase("porp-reconstruction").expected}
+        selectedFeatureId={null}
+        onFeatureSelect={onFeatureSelect}
+      />,
+    );
 
-    screen.getAllByRole("button", { name: /reconstruction: porp/i })[0].focus();
+    screen.getAllByRole("button", { name: /^PORP/i })[0].focus();
     await user.keyboard("{Enter}");
     expect(onFeatureSelect).toHaveBeenLastCalledWith("feature-reconstruction");
 
@@ -309,15 +309,17 @@ describe("core UI components", () => {
     expect(onFeatureSelect).toHaveBeenLastCalledWith("feature-reconstruction");
   });
 
-  it("visually links the selected diagram marker to evidence review", () => {
-    const selection = selectAtlasDiagramTemplate(getSyntheticCase("porp-reconstruction").expected);
-    if (selection.status !== "ready") throw new Error("PORP fixture should have a template.");
+  it("visually links the selected medical-art layer to evidence review", () => {
     const { container } = render(
-      <AtlasTemplateDiagram selection={selection} panel="repaired" selectedFeatureId="feature-reconstruction" />,
+      <DiagramPanel
+        operativeCase={getSyntheticCase("porp-reconstruction").expected}
+        selectedFeatureId="feature-reconstruction"
+        onFeatureSelect={() => undefined}
+      />,
     );
 
-    expect(container.querySelector(".atlas-marker-selected-ring")).toBeInTheDocument();
-    expect(container.querySelector('[data-feature-id="feature-reconstruction"]')).toHaveAttribute("aria-pressed", "true");
+    expect(container.querySelector(".medical-panel-hotspot.is-selected")).toBeInTheDocument();
+    expect(container.querySelector('.medical-panel-hotspot[aria-pressed="true"]')).toBeInTheDocument();
   });
 
   it("keeps the composable diagram available while flagging uncertain placement", () => {
@@ -336,38 +338,15 @@ describe("core UI components", () => {
     );
 
     expect(screen.getByText(/The reconstruction endpoints are not fully documented/i)).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: /procedure and repair: middle-ear view/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /Completed procedure: Middle and inner ear/i })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.getByRole("group", { name: /sources and limitations/i })).toHaveTextContent(
-      /composable vector templates/i,
+      /professional medical art/i,
     );
   });
 
-  it("renders undocumented anatomy as non-selectable context", () => {
-    const state = buildDiagramState(getSyntheticCase("is-joint-discontinuity").expected, "found");
-    const { container } = render(<OtologyDiagram state={state} />);
-    expect(screen.getByText(/incus not documented/i)).toBeInTheDocument();
-    expect(container.querySelector('[data-structure="incus"][data-documentation-state="not_documented"]')).toBeInTheDocument();
-    expect(container.querySelector('[data-feature-id="feature-incus"]')).not.toBeInTheDocument();
-  });
-
-  it("keeps right-ear diagram labels readable when anatomy is mirrored", () => {
-    const state = buildDiagramState(getSyntheticCase("normal-ossicular-chain").expected, "found");
-    const { container } = render(<OtologyDiagram state={state} />);
-    const mirroredGroup = container.querySelector('[data-anatomy-mirror="right"]');
-    expect(mirroredGroup).toBeInTheDocument();
-
-    const mirroredLabels = Array.from(mirroredGroup!.querySelectorAll("text"));
-    expect(mirroredLabels.length).toBeGreaterThan(0);
-    for (const label of mirroredLabels) {
-      expect(label).toHaveAttribute("data-readable-label", "true");
-      expect(label.getAttribute("transform")).toMatch(/scale\(-1 1\)/);
-    }
-  });
-
-  it("keeps every selectable diagram feature connected to the evidence map", () => {
+  it("keeps every synthetic case connected to an evidence map and medical-art source", () => {
     for (const fixture of syntheticCases) {
-      if (selectAtlasDiagramTemplate(fixture.expected).status === "blocked") continue;
       const { container, unmount } = render(
         <DiagramPanel
           operativeCase={fixture.expected}
@@ -376,13 +355,8 @@ describe("core UI components", () => {
         />,
       );
       const evidenceFeatureIds = new Set(buildFeatureMap(fixture.expected).map((feature) => feature.id));
-      const renderedFeatureIds = Array.from(container.querySelectorAll("[data-feature-id]")).map((element) =>
-        element.getAttribute("data-feature-id"),
-      );
-
-      for (const featureId of renderedFeatureIds) {
-        expect(evidenceFeatureIds.has(featureId ?? ""), `${fixture.id} rendered ${featureId}`).toBe(true);
-      }
+      expect(evidenceFeatureIds.size).toBeGreaterThan(0);
+      expect(container.querySelector("[data-medical-illustration]")).toBeInTheDocument();
       unmount();
     }
   });

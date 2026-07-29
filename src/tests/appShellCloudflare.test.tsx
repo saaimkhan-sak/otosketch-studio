@@ -17,17 +17,6 @@ describe("AppShell Cloudflare extraction", () => {
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === "string" ? input : input.toString();
-      if (url === "/atlas-assets/stanford/index.json") {
-        return new Response(
-          JSON.stringify({
-            source: "https://otosurgeryatlas.stanford.edu",
-            builtAt: new Date().toISOString(),
-            assetCount: 0,
-            assets: [],
-          }),
-          { status: 200, headers: { "Content-Type": "application/json" } },
-        );
-      }
       if (url === workerUrl) {
         return new Response(
           JSON.stringify({

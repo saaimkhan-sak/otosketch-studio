@@ -23,9 +23,9 @@ jobs:
       - run: pnpm test
       - run: pnpm evaluate:synthetic
       - run: pnpm verify:privacy
-      - run: pnpm verify:atlas:pages
+      - run: pnpm verify:artifacts
       - run: pnpm build
-      - run: pnpm build:static:remote-atlas
+      - run: pnpm build:static
       - run: pnpm verify:static
       - run: pnpm verify:static:runtime
       - run: pnpm exec wrangler deploy --dry-run --config worker/wrangler.toml

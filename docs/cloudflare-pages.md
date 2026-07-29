@@ -15,7 +15,7 @@ Worker.
 Use the lightweight static build for Pages:
 
 ```bash
-NEXT_PUBLIC_CLOUDFLARE_WORKER_EXTRACT_URL=/api/extract pnpm build:static:remote-atlas
+NEXT_PUBLIC_CLOUDFLARE_WORKER_EXTRACT_URL=/api/extract pnpm build:static
 EXPECT_PUBLIC_WORKER_URL=/api/extract pnpm verify:static
 pnpm verify:static:runtime
 ```
@@ -29,7 +29,7 @@ out
 Build command for Cloudflare Pages:
 
 ```bash
-pnpm build:static:remote-atlas
+pnpm build:static
 ```
 
 Environment variables for Pages:
@@ -38,10 +38,10 @@ Environment variables for Pages:
 NEXT_PUBLIC_DEFAULT_EXTRACTOR=mock
 NEXT_PUBLIC_ALLOW_PROVIDER_SWITCHER=true
 NEXT_PUBLIC_CLOUDFLARE_WORKER_EXTRACT_URL=/api/extract
-NEXT_PUBLIC_ATLAS_IMAGE_SOURCE=remote
 ```
 
-`NEXT_PUBLIC_ATLAS_IMAGE_SOURCE=remote` keeps the scraped Stanford atlas manifest/index in the app while loading atlas thumbnails from their source image URLs. The local scrape still exists in `public/atlas-assets/stanford/files/`, but those binaries are pruned from `out/` to keep the Pages artifact small.
+The static build includes the small, locally stored NIH BioArt and Servier Medical Art files declared
+in `public/medical-art/manifest.json`. It contains no Stanford Oto Surgery Atlas files.
 
 ## Deploy
 

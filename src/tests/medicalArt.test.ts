@@ -3,13 +3,20 @@ import { getMedicalArtAnchor, medicalArtAssets, selectMedicalArtAsset } from "@/
 import { createPresetPlan } from "@/components/app/SurgeryBuilder";
 
 describe("open medical art registry", () => {
-  it("uses the focused middle and inner-ear asset for ossicular and cochlear work", () => {
+  it("uses focused professional art for ossicular and cochlear work", () => {
     expect(
       selectMedicalArtAsset(createPresetPlan("ossiculoplasty", "preoperative_education")).id,
     ).toBe("servier-inner-ear");
     expect(
       selectMedicalArtAsset(createPresetPlan("cochlear_implant", "preoperative_education")).id,
-    ).toBe("servier-inner-ear");
+    ).toBe("nih-inner-ear");
+    expect(
+      selectMedicalArtAsset(createPresetPlan("stapes_surgery", "preoperative_education")).id,
+    ).toBe("nih-inner-ear");
+    expect(medicalArtAssets["nih-inner-ear"].illustrationSoftware).toBe(
+      "Adobe Illustrator 28.6",
+    );
+    expect(medicalArtAssets["nih-inner-ear"].license).toBe("Public Domain");
   });
 
   it("uses the full ear cutaway for canal and pressure procedures", () => {

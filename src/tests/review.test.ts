@@ -4,7 +4,7 @@ import { getApprovalBlockers, getExportBlockers } from "@/domain/review";
 import { getSyntheticCase } from "@/fixtures/syntheticCases";
 
 describe("review and export gating", () => {
-  it("allows clinician review when no exact atlas template matches", () => {
+  it("allows clinician review when a structured medical-art composition exists", () => {
     const mismatchedCase = updateCaseField(
       getSyntheticCase("porp-reconstruction").expected,
       "repair.reconstructionType",
@@ -14,7 +14,7 @@ describe("review and export gating", () => {
     expect(getApprovalBlockers(mismatchedCase)).toEqual([]);
   });
 
-  it("keeps patient export blocked without a clinician-approved visual template", () => {
+  it("allows patient export after review without a traced-template dependency", () => {
     const mismatchedCase = markReviewed(
       updateCaseField(
         getSyntheticCase("porp-reconstruction").expected,
@@ -22,21 +22,15 @@ describe("review and export gating", () => {
         "bone_cement_bridge",
       ),
     );
-    const blockers = getExportBlockers(mismatchedCase).join(" ");
-
-    expect(blockers).toMatch(/clinician-approved visual template/i);
-    expect(blockers).toMatch(/no exact atlas overlay template matches/i);
-    expect(blockers).not.toMatch(/before patient-facing review/i);
+    expect(getExportBlockers(mismatchedCase)).toEqual([]);
   });
 
-  it("allows review of an unsigned internal composition but still blocks its export", () => {
+  it("allows export of a reviewed structured composition", () => {
     const operativeCase = getSyntheticCase("hero-otomimix-is-joint").expected;
 
     expect(getApprovalBlockers(operativeCase)).toEqual([]);
 
-    const exportBlockers = getExportBlockers(markReviewed(operativeCase)).join(" ");
-    expect(exportBlockers).toMatch(/clinician-approved visual template/i);
-    expect(exportBlockers).toMatch(/unsigned/i);
+    expect(getExportBlockers(markReviewed(operativeCase))).toEqual([]);
   });
 
   it("preserves non-template review blockers", () => {
@@ -72,6 +66,6 @@ describe("review and export gating", () => {
 
     expect(blockers).toMatch(/regenerate before export/i);
     expect(blockers).toMatch(/mark the diagram reviewed/i);
-    expect(blockers).toMatch(/clinician-approved visual template/i);
+    expect(blockers).not.toMatch(/visual template/i);
   });
 });

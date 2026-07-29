@@ -78,7 +78,7 @@ if (!existsSync(path.join(OUT_DIR, "index.html"))) {
     JSON.stringify(
       {
         ok: false,
-        error: "Static export is missing out/index.html. Run pnpm build:static:remote-atlas first.",
+        error: "Static export is missing out/index.html. Run pnpm build:static first.",
       },
       null,
       2,
@@ -109,18 +109,13 @@ try {
   });
 
   await page.goto(url);
-  await expect(page.getByRole("heading", { name: "Otology Visual Summary" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "OtoSketch Studio" })).toBeVisible();
   await expect(page.getByText(/Synthetic demo — do not enter patient information/i)).toBeVisible();
   await expect(page.getByLabel("Example case")).toHaveValue("normal-ossicular-chain");
   const initialPreview = page.getByRole("region", { name: "Diagram preview" });
-  await expect(initialPreview.locator(".composed-surgery-svg")).toHaveCount(4);
-  await expect(initialPreview.locator(".surgery-graft-overlay")).toHaveCount(1);
-  await expect(initialPreview.locator(".surgery-repaired-defect-outline")).toHaveCount(1);
-  await expect(
-    initialPreview.locator(
-      'svg[data-diagram-phase="procedure"][data-template-view="otoscopic_tm"] .surgery-perforation',
-    ),
-  ).toHaveCount(0);
+  await expect(initialPreview.locator(".medical-illustration-svg")).toHaveCount(2);
+  await expect(initialPreview.locator('[data-diagram-source="open-medical-art"]')).toBeVisible();
+  await expect(initialPreview.locator("image[data-medical-art-source]")).toHaveCount(2);
 
   await page.getByLabel("Example case").selectOption("porp-reconstruction");
   await page.getByRole("button", { name: /Build diagram/i }).click();
@@ -129,15 +124,11 @@ try {
     .first();
   await expect(page.getByRole("button", { name: /^Incus: Absent$/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /^Reconstruction: PORP$/i })).toBeVisible();
-  await expect(porpPreview.locator(".surgery-prosthesis-line")).toHaveCount(1);
-  await expect(porpPreview.locator(".surgery-prosthesis-head")).toHaveCount(1);
-  await expect(porpPreview.locator(".surgery-prosthesis-cup")).toHaveCount(1);
-  await expect(porpPreview.locator(".surgery-prosthesis-foot")).toHaveCount(0);
-  await expect(
-    porpPreview.locator('svg[data-diagram-phase="procedure"][data-template-view="otoscopic_tm"]'),
-  ).toHaveCount(0);
+  await expect(porpPreview.locator(".medical-illustration-svg")).toHaveCount(2);
+  await expect(porpPreview.locator('[data-medical-illustration="servier-inner-ear"]')).toHaveCount(2);
+  await expect(porpPreview.locator(".medical-panel-hotspot").first()).toBeVisible();
   await expect(page.getByRole("group", { name: /Sources and limitations/i })).toContainText(
-    /Repair reference · 1736/i,
+    /Servier Medical Art/i,
   );
   await page
     .getByRole("button", { name: /Incus: Absent/i })
@@ -151,7 +142,7 @@ try {
   await completeReviewChecklist(page);
   await expect(page.getByRole("button", { name: /Mark reviewed for demo/i })).toBeEnabled();
   await page.getByRole("button", { name: /Mark reviewed for demo/i }).click();
-  await expect(page.getByRole("button", { name: /Download SVG/i })).toBeDisabled();
+  await expect(page.getByRole("button", { name: /Download SVG/i })).toBeEnabled();
 
   await page.getByLabel("Example case").selectOption("hero-otomimix-is-joint");
   await page.getByRole("button", { name: /Build diagram/i }).click();
@@ -161,7 +152,7 @@ try {
   await expect(
     page.getByRole("button", { name: /^Reconstruction: Bone cement bridge$/i }),
   ).toBeVisible();
-  await expect(diagramPreview.locator(".surgery-cement-bridge")).toHaveCount(1);
+  await expect(diagramPreview.locator(".medical-panel-hotspot").first()).toBeVisible();
   await expect(page.getByRole("button", { name: /Download SVG/i })).toBeDisabled();
 
   await page.getByText("Advanced", { exact: true }).click();
@@ -195,9 +186,9 @@ try {
         url,
         checked: [
           "load",
-          "deterministic composed diagrams",
-          "verified graft coverage",
-          "PORP reconstruction template",
+          "licensed medical-art images",
+          "deterministic structured overlays",
+          "PORP reconstruction layer",
           "keyboard evidence",
           "clinician review and patient-export gate",
           "OtoMimix overlay",

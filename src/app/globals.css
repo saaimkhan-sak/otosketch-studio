@@ -5321,3 +5321,147 @@ body {
     border-width: 2px;
   }
 }
+
+.medical-illustration-phases {
+  display: grid;
+  gap: 18px;
+}
+
+.medical-illustration-panel {
+  overflow: hidden;
+  border: 1px solid #d7e1e3;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 25% 14%, rgba(19, 137, 131, 0.08), transparent 36%),
+    #f6f9f8;
+  box-shadow: 0 18px 46px rgba(18, 39, 47, 0.08);
+}
+
+.medical-illustration-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.medical-panel-shell {
+  fill: #f7faf9;
+  stroke: #d5dfe1;
+  stroke-width: 1.5;
+}
+
+.medical-panel-image-bg {
+  fill: #ffffff;
+  stroke: #dce6e8;
+  stroke-width: 1.5;
+}
+
+.medical-panel-eyebrow {
+  fill: #167f7a;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.medical-panel-title {
+  fill: #17323b;
+  font-size: 19px;
+  font-weight: 750;
+}
+
+.medical-panel-side {
+  fill: #38555f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.medical-panel-legend-bg {
+  fill: #edf3f3;
+  stroke: #d4e0e2;
+  stroke-width: 1.5;
+}
+
+.medical-panel-legend-heading {
+  fill: #29454f;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.medical-panel-count {
+  fill: #167f7a;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.medical-panel-hotspot,
+.medical-panel-legend-row {
+  cursor: pointer;
+  outline: none;
+}
+
+.medical-panel-hotspot {
+  transition: filter 160ms ease, opacity 160ms ease;
+}
+
+.medical-panel-hotspot:hover,
+.medical-panel-hotspot:focus-visible,
+.medical-panel-hotspot.is-selected {
+  filter: drop-shadow(0 0 7px rgba(15, 138, 131, 0.65));
+}
+
+.medical-panel-legend-row > rect {
+  fill: transparent;
+  stroke: transparent;
+  transition: fill 150ms ease, stroke 150ms ease;
+}
+
+.medical-panel-legend-row:hover > rect,
+.medical-panel-legend-row:focus-visible > rect,
+.medical-panel-legend-row.is-selected > rect {
+  fill: #ffffff;
+  stroke: #9bcac7;
+  stroke-width: 1.5;
+}
+
+.medical-panel-number {
+  fill: #ffffff;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.medical-panel-label {
+  fill: #213e47;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.medical-panel-empty-title {
+  fill: #36535d;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.medical-panel-empty {
+  fill: #617981;
+  font-size: 12px;
+}
+
+.medical-panel-provenance {
+  fill: #60747b;
+  font-size: 10px;
+  font-weight: 550;
+}
+
+@media (max-width: 720px) {
+  .medical-illustration-panel {
+    border-radius: 14px;
+  }
+
+  .medical-illustration-svg {
+    min-width: 720px;
+  }
+
+  .medical-illustration-panel {
+    overflow-x: auto;
+  }
+}

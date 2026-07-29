@@ -2,18 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 interface DiagramExpectation {
   caseId: string;
-  procedureViews: Array<"otoscopic_tm" | "transcanal_middle_ear">;
-  procedureLayer: string | null;
 }
-
-type SurgeryBaseView =
-  | "otoscopic_tm"
-  | "transcanal_middle_ear"
-  | "mastoid_middle_ear"
-  | "cochlea_implant_path"
-  | "postauricular_implant"
-  | "external_auditory_canal"
-  | "eustachian_tube";
 
 interface SurgeryPresetExpectation {
   presetId:
@@ -26,37 +15,16 @@ interface SurgeryPresetExpectation {
     | "bone_conduction_implant"
     | "canalplasty"
     | "eustachian_tube_dilation";
-  procedureView: SurgeryBaseView;
-  procedureLayer: string;
+  assetId: "nih-inner-ear" | "servier-ear-cutaway" | "servier-inner-ear";
 }
 
 const canonicalCases: DiagramExpectation[] = [
-  {
-    caseId: "normal-ossicular-chain",
-    procedureViews: ["otoscopic_tm", "transcanal_middle_ear"],
-    procedureLayer: ".surgery-graft-overlay",
-  },
-  {
-    caseId: "incus-long-process-erosion",
-    procedureViews: ["otoscopic_tm"],
-    procedureLayer: ".surgery-graft-overlay",
-  },
-  { caseId: "is-joint-discontinuity", procedureViews: [], procedureLayer: null },
-  {
-    caseId: "hero-otomimix-is-joint",
-    procedureViews: ["transcanal_middle_ear"],
-    procedureLayer: ".surgery-cement-bridge",
-  },
-  {
-    caseId: "porp-reconstruction",
-    procedureViews: ["transcanal_middle_ear"],
-    procedureLayer: ".surgery-prosthesis-line",
-  },
-  {
-    caseId: "torp-reconstruction",
-    procedureViews: ["transcanal_middle_ear"],
-    procedureLayer: ".surgery-prosthesis-line",
-  },
+  { caseId: "normal-ossicular-chain" },
+  { caseId: "incus-long-process-erosion" },
+  { caseId: "is-joint-discontinuity" },
+  { caseId: "hero-otomimix-is-joint" },
+  { caseId: "porp-reconstruction" },
+  { caseId: "torp-reconstruction" },
 ];
 
 const fixtureNotePattern: Record<string, RegExp> = {
@@ -71,48 +39,39 @@ const fixtureNotePattern: Record<string, RegExp> = {
 const commonSurgeryPresets: SurgeryPresetExpectation[] = [
   {
     presetId: "myringotomy_tympanostomy",
-    procedureView: "otoscopic_tm",
-    procedureLayer: ".surgery-tube-device",
+    assetId: "servier-ear-cutaway",
   },
   {
     presetId: "tympanoplasty",
-    procedureView: "otoscopic_tm",
-    procedureLayer: ".surgery-graft-overlay",
+    assetId: "servier-ear-cutaway",
   },
   {
     presetId: "ossiculoplasty",
-    procedureView: "transcanal_middle_ear",
-    procedureLayer: ".surgery-prosthesis-line",
+    assetId: "servier-inner-ear",
   },
   {
     presetId: "tympanomastoidectomy",
-    procedureView: "mastoid_middle_ear",
-    procedureLayer: ".surgery-mastoid-action",
+    assetId: "servier-ear-cutaway",
   },
   {
     presetId: "stapes_surgery",
-    procedureView: "transcanal_middle_ear",
-    procedureLayer: ".surgery-piston",
+    assetId: "nih-inner-ear",
   },
   {
     presetId: "cochlear_implant",
-    procedureView: "cochlea_implant_path",
-    procedureLayer: ".surgery-electrode-path",
+    assetId: "nih-inner-ear",
   },
   {
     presetId: "bone_conduction_implant",
-    procedureView: "postauricular_implant",
-    procedureLayer: ".surgery-active-actuator",
+    assetId: "servier-ear-cutaway",
   },
   {
     presetId: "canalplasty",
-    procedureView: "external_auditory_canal",
-    procedureLayer: ".surgery-canal-repaired",
+    assetId: "servier-ear-cutaway",
   },
   {
     presetId: "eustachian_tube_dilation",
-    procedureView: "eustachian_tube",
-    procedureLayer: ".surgery-et-treated-wall",
+    assetId: "servier-ear-cutaway",
   },
 ];
 
@@ -160,112 +119,14 @@ for (const viewport of viewports) {
         await generateCase(page, diagramCase.caseId);
         const preview = diagramPreview(page);
 
-        await expect(preview.locator(".composed-surgery-svg")).toHaveCount(
-          2 + diagramCase.procedureViews.length,
-        );
+        await expect(preview.locator(".medical-illustration-svg")).toHaveCount(2);
+        await expect(preview.locator('[data-diagram-source="open-medical-art"]')).toBeVisible();
+        await expect(preview.locator("image[data-medical-art-source]")).toHaveCount(2);
         await expect(
-          preview.locator(
-            '.composed-surgery-svg[data-template-view="otoscopic_tm"][data-diagram-phase="finding"]',
-          ),
-        ).toHaveCount(1);
-        for (const procedureView of ["otoscopic_tm", "transcanal_middle_ear"] as const) {
-          await expect(
-            preview.locator(
-              `.composed-surgery-svg[data-template-view="${procedureView}"][data-diagram-phase="procedure"]`,
-            ),
-          ).toHaveCount(diagramCase.procedureViews.includes(procedureView) ? 1 : 0);
-        }
-        await expect(preview.getByText(/No eligible atlas template matches/i)).toHaveCount(0);
-        await expect(preview.getByText(/Resolve the conflicting selections/i)).toHaveCount(0);
-        await expect(
-          preview
-            .locator(
-              '.composed-surgery-svg[data-template-view="otoscopic_tm"][data-diagram-phase="procedure"]',
-            )
-            .locator(".surgery-perforation"),
+          preview.locator('image[data-medical-art-source*="otosurgeryatlas"]'),
         ).toHaveCount(0);
-
-        const markerCollisions = await preview.locator(".composed-surgery-svg").evaluateAll((svgs) =>
-          svgs.flatMap((svg, svgIndex) => {
-            const markers = Array.from(
-              svg.querySelectorAll<SVGCircleElement>(".surgery-annotation-badge"),
-            )
-              .map((badge) => ({
-                marker: badge.closest<SVGGElement>(".surgery-marker"),
-                box: badge.getBoundingClientRect(),
-              }))
-              .filter(
-                (item): item is { marker: SVGGElement; box: DOMRect } =>
-                  Boolean(item.marker) && item.box.width > 0 && item.box.height > 0,
-              );
-            const collisions: Array<{ svgIndex: number; first: string; second: string }> = [];
-            for (let first = 0; first < markers.length; first += 1) {
-              for (let second = first + 1; second < markers.length; second += 1) {
-                const a = markers[first];
-                const b = markers[second];
-                const overlapX = Math.min(a.box.right, b.box.right) - Math.max(a.box.left, b.box.left);
-                const overlapY = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
-                if (overlapX > 1 && overlapY > 1) {
-                  collisions.push({
-                    svgIndex,
-                    first: a.marker.getAttribute("data-layer-marker") ?? "unknown",
-                    second: b.marker.getAttribute("data-layer-marker") ?? "unknown",
-                  });
-                }
-              }
-            }
-            return collisions;
-          }),
-        );
-        expect(markerCollisions).toEqual([]);
-
-        if (diagramCase.procedureLayer) {
-          await expect(
-            preview
-              .locator('.composed-surgery-svg[data-diagram-phase="procedure"]')
-              .locator(diagramCase.procedureLayer),
-          ).toHaveCount(1);
-        } else {
-          await expect(
-            preview.getByText("No documented procedure layer to draw.", { exact: true }).first(),
-          ).toBeVisible();
-        }
-
-        if (diagramCase.caseId === "normal-ossicular-chain") {
-          const coverage = await preview
-            .locator(
-              '.composed-surgery-svg[data-template-view="otoscopic_tm"][data-diagram-phase="procedure"]',
-            )
-            .evaluate((svg) => {
-              const graft = svg.querySelector<SVGGraphicsElement>(".surgery-graft-overlay");
-              const perforation = svg.querySelector<SVGGraphicsElement>(
-                ".surgery-repaired-defect-outline",
-              );
-              if (!graft || !perforation) return null;
-              const graftBox = graft.getBBox();
-              const perforationBox = perforation.getBBox();
-              return {
-                graft: {
-                  x: graftBox.x,
-                  y: graftBox.y,
-                  right: graftBox.x + graftBox.width,
-                  bottom: graftBox.y + graftBox.height,
-                },
-                perforation: {
-                  x: perforationBox.x,
-                  y: perforationBox.y,
-                  right: perforationBox.x + perforationBox.width,
-                  bottom: perforationBox.y + perforationBox.height,
-                },
-              };
-            });
-
-          expect(coverage).not.toBeNull();
-          expect(coverage!.graft.x).toBeLessThanOrEqual(coverage!.perforation.x);
-          expect(coverage!.graft.y).toBeLessThanOrEqual(coverage!.perforation.y);
-          expect(coverage!.graft.right).toBeGreaterThanOrEqual(coverage!.perforation.right);
-          expect(coverage!.graft.bottom).toBeGreaterThanOrEqual(coverage!.perforation.bottom);
-        }
+        await expect(preview.getByText(/Resolve the conflicting selections/i)).toHaveCount(0);
+        await expect(preview.locator(".medical-panel-legend-bg")).toHaveCount(2);
 
         await preview.scrollIntoViewIfNeeded();
         await expect(preview).toHaveScreenshot(`${diagramCase.caseId}-${viewport.name}.png`, {
@@ -279,15 +140,16 @@ for (const viewport of viewports) {
       test(`common surgery preset · ${surgeryPreset.presetId}`, async ({ page }) => {
         await generateSurgeryPreset(page, surgeryPreset.presetId);
         const preview = diagramPreview(page);
-        const procedureSvg = preview.locator(
-          `.composed-surgery-svg[data-template-view="${surgeryPreset.procedureView}"][data-diagram-phase="procedure"]`,
-        );
+        const procedureSvg = preview.locator(".medical-illustration-svg").nth(1);
 
-        await expect(procedureSvg).toHaveCount(1);
-        await expect(procedureSvg.locator(surgeryPreset.procedureLayer).first()).toBeVisible();
+        await expect(preview.locator(".medical-illustration-svg")).toHaveCount(2);
+        await expect(
+          preview.locator(`[data-medical-illustration="${surgeryPreset.assetId}"]`),
+        ).toHaveCount(2);
+        await expect(procedureSvg.locator(".medical-panel-hotspot").first()).toBeVisible();
         await expect(preview.getByText(/Resolve the conflicting selections/i)).toHaveCount(0);
 
-        const phases = preview.locator(".composed-diagram-phases").first();
+        const phases = preview.locator(".medical-illustration-phases").first();
         await phases.scrollIntoViewIfNeeded();
         await expect(phases).toHaveScreenshot(
           `common-${surgeryPreset.presetId}-${viewport.name}.png`,

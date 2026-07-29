@@ -11,10 +11,18 @@ test("clinic can build, approve, and print an upcoming procedure guide", async (
   await expect(page.getByLabel("Operative note")).toHaveCount(0);
   await page.getByLabel("Common planned procedure").selectOption("tympanoplasty");
 
-  await expect(page.getByRole("region", { name: /Anatomy being discussed: Eardrum view/i })).toBeVisible();
-  await expect(page.getByRole("region", { name: /Planned procedure: Eardrum view/i })).toBeVisible();
+  await expect(
+    page.getByRole("region", {
+      name: /Anatomy being discussed: Ear and temporal-bone cutaway/i,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", {
+      name: /Planned procedure: Ear and temporal-bone cutaway/i,
+    }),
+  ).toBeVisible();
   await expect(page.getByRole("heading", { name: /Your planned Tympanoplasty/i })).toBeVisible();
-  await expect(page.getByText(/Stanford background is prepared but not embedded/i)).toBeVisible();
+  await expect(page.getByText(/Servier Medical Art/i).first()).toBeVisible();
 
   await page.getByLabel("Reviewer name").fill("Synthetic Clinician");
   await page.getByLabel("Planned procedure and side checked").check();
@@ -58,7 +66,7 @@ for (const viewport of [
         "button", "a", "p", "h1", "h2", "h3", "h4", "label", "li", "summary",
         ".status-pill", ".diagram-status-row span", ".preop-guide-card",
         ".surgery-builder-layer-card", ".surgery-builder-layer-summary",
-        ".procedure-atlas-callout", "input", "select", "textarea",
+        "input", "select", "textarea",
       ].join(",");
       const overflowingText = Array.from(document.querySelectorAll<HTMLElement>(selector))
         .filter((element) => {

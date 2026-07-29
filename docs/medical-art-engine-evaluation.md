@@ -4,14 +4,16 @@ Evaluated July 2026 for a synthetic-data-only proof of concept.
 
 ## Decision
 
-Use [Servier Medical Art (SMART)](https://smart.servier.com/category/anatomy-and-the-human-body/auditory-system/)
-as the open anatomical art foundation, delivered locally and composed with
-validated, deterministic overlays.
+Use [NIH NIAID BioArt](https://bioart.niaid.nih.gov/) and
+[Servier Medical Art (SMART)](https://smart.servier.com/category/anatomy-and-the-human-body/auditory-system/)
+as the open anatomical art foundation, delivered locally and composed with validated,
+deterministic overlays.
 
-SMART provides ear and auditory-system illustrations under CC BY 4.0. The
-application stores the selected assets locally, records their source and
-license, and never sends note text to the art provider. The structured
-SurgeryPlan remains the source of truth.
+The selected NIH vector is public domain and was produced by a professional medical illustrator
+in Adobe Illustrator. SMART provides ear and auditory-system illustrations under CC BY 4.0. The
+application stores the selected assets locally, records their source, software, hash, and license,
+and never sends note text to an art provider. The structured SurgeryPlan remains the source of
+truth.
 
 This is an asset-library integration rather than a hosted generation API. No
 evaluated service offered all of the following at once: free production use,
@@ -20,12 +22,17 @@ commercial rights, deterministic output, and zero note-text disclosure.
 
 ## Engine candidates
 
-| Candidate                                                                            | What it offers                                                                | Cost/rights fit                                                                                       | Decision                                         |
-| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| [Servier Medical Art](https://servier.com/en/newsroom/smart-medical-education/)      | More than 3,000 downloadable medical images; 10 auditory-system illustrations | CC BY 4.0; commercial reuse and adaptation permitted with attribution                                 | Selected anatomical foundation                   |
-| [BioIcons](https://github.com/duerrsimon/bioicons)                                   | Open SVG aggregator for scientific and medical illustrations                  | Free; license and attribution vary by asset                                                           | Approved expansion source after per-asset review |
-| [BioDigital Human Viewer API](https://www.biodigital.com/product/developer-toolkits) | Embeddable interactive 3D anatomy through JavaScript APIs                     | Developer toolkits are part of Business plans; the free Personal plan is not for business integration | Not a zero-cost production dependency            |
-| [BioRender](https://www.biorender.com/library)                                       | Large professionally illustrated life-science library and authoring canvas    | Free authoring tier, but no public free production API for embedding as this product’s engine         | Design reference only                            |
+| Candidate | What it offers | Cost/rights fit | Decision |
+|---|---|---|---|
+| [NIH NIAID BioArt](https://bioart.niaid.nih.gov/) | Downloadable professional biomedical vectors | Selected asset is public domain; no account or per-user license required | Selected vector foundation |
+| [Servier Medical Art](https://servier.com/en/newsroom/smart-medical-education/) | More than 3,000 downloadable medical images; 10 auditory-system illustrations | CC BY 4.0; reuse and adaptation permitted with attribution | Selected auditory-system foundation |
+| [BioIcons](https://github.com/duerrsimon/bioicons) | Open SVG aggregator and diagrams.net extension | Free; license and attribution vary by asset | Approved expansion source after per-asset review |
+| [BioDigital Human Viewer API](https://www.biodigital.com/product/developer-toolkits) | Embeddable interactive 3D anatomy | Personal plan excludes publishing and developer toolkits; May 2026 free tier is also view/content limited | Not a free application engine |
+| [BioRender](https://www.biorender.com/basic-license) | Large professional life-science library and authoring canvas | Basic license covers finished, watermarked personal graphics; it does not permit redistributing content as this application's drawing engine | Design reference only |
+
+There is no third-party personal account to obtain for the selected engine. The public-domain and
+CC BY licenses apply automatically and are broader, more deployable rights than a single-user
+personal license. OtoSketch still preserves attribution for both sources.
 
 ## Comparable products and design lessons
 

@@ -52,7 +52,7 @@ export function generatePatientExplanation(operativeCase: OperativeCase): string
   const graftType = operativeCase.repair.graftType.value;
   if (graftType === "temporalis_fascia") {
     lines.push(
-      "The highlighted atlas region shows how the documented fascia covers the eardrum perforation and overlaps its margins; it remains a generic reference, not patient-specific geometry.",
+      "The highlighted medical-art region shows how the documented fascia covers the eardrum perforation and overlaps its margins; it remains a generic reference, not patient-specific geometry.",
     );
   } else if (
     graftType === "cartilage" &&
@@ -68,7 +68,7 @@ export function generatePatientExplanation(operativeCase: OperativeCase): string
   }
 
   lines.push(
-    "Only labeled callouts are case-specific; unnumbered atlas anatomy is generic reference material and is not documented by the note.",
+    "Only labeled callouts are case-specific; the professional medical-art anatomy is generic reference material and is not documented by the note.",
   );
   lines.push("This not-to-scale educational illustration must be reviewed with the surgeon.");
   return lines;

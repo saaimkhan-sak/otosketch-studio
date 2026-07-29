@@ -4,7 +4,7 @@ import {
   labelSurgeryProcedure,
   type SurgeryPlan,
 } from "@/domain/surgeryPlan";
-import { labelSurgeryLayer } from "@/components/diagram/ComposedSurgeryDiagram";
+import { labelSurgeryLayer } from "@/domain/diagramLabels";
 
 interface TeachingProcedureGuideProps {
   plan: SurgeryPlan;

@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  canDisplayStanfordAtlas,
-  canDownloadStanfordAtlasSvg,
-  parseAtlasUsageRights,
-} from "@/domain/atlasUsage";
+import { selectMedicalArtAsset } from "@/domain/medicalArt";
 import { generatePreoperativePatientGuide } from "@/domain/preoperativeEducation";
-import { selectProcedureAtlas } from "@/domain/procedureAtlas";
 import {
   createDefaultLayer,
   createEmptySurgeryPlan,
@@ -63,69 +58,33 @@ describe("preoperative patient education", () => {
   });
 });
 
-describe("procedure atlas selection", () => {
-  it.each(procedureCatalog)("selects curated sources for $label", ({ id }) => {
-    const selection = selectProcedureAtlas(
+describe("professional medical-art selection", () => {
+  it.each(procedureCatalog)("selects a licensed source for $label", ({ id }) => {
+    const selection = selectMedicalArtAsset(
       createPresetPlan(id, "preoperative_education"),
-      "preoperative_education",
     );
 
-    expect(selection).not.toBeNull();
-    expect(selection?.panels.finding.asset.pageLink).toMatch(/^https:\/\/otosurgeryatlas\.stanford\.edu\//);
-    expect(selection?.panels.procedure.asset.pageLink).toMatch(/^https:\/\/otosurgeryatlas\.stanford\.edu\//);
-    expect(selection?.coverageNote.length).toBeGreaterThan(20);
-    expect(selection?.review.status).toBe("needs_clinician_signoff");
+    expect(selection.sourcePage).toMatch(/^https:\/\//);
+    expect(["CC BY 4.0", "Public Domain"]).toContain(selection.license);
+    expect(selection.localPath).toMatch(/^\/medical-art\//);
   });
 
-  it("labels the bone-conduction source as a generic substrate", () => {
-    const selection = selectProcedureAtlas(
-      createPresetPlan("bone_conduction_implant", "preoperative_education"),
-      "preoperative_education",
+  it("uses the NIH Illustrator vector for cochlear and stapes work", () => {
+    for (const family of ["cochlear_implant", "stapes_surgery"] as const) {
+      const selection = selectMedicalArtAsset(
+        createPresetPlan(family, "preoperative_education"),
+      );
+      expect(selection.id).toBe("nih-inner-ear");
+      expect(selection.illustrationSoftware).toBe("Adobe Illustrator 28.6");
+      expect(selection.license).toBe("Public Domain");
+    }
+  });
+
+  it("uses Servier middle-ear art for ossiculoplasty", () => {
+    const selection = selectMedicalArtAsset(
+      createPresetPlan("ossiculoplasty", "preoperative_education"),
     );
-    expect(selection?.coverage).toBe("generic_substrate");
-    expect(selection?.coverageNote).toMatch(/no bone-conduction implant source/i);
-  });
-
-  it("does not infer a completed image from an undocumented action", () => {
-    expect(selectProcedureAtlas(planForFamily("tympanoplasty"), "preoperative_education")).toBeNull();
-  });
-
-  it("does not place mixed-family actions on the first family background", () => {
-    const plan = createPresetPlan("tympanoplasty", "preoperative_education");
-    plan.procedureFamilies = ["tympanoplasty", "cochlear_implant"];
-    plan.layers.push(
-      ...createPresetPlan("cochlear_implant", "preoperative_education").layers,
-    );
-
-    expect(selectProcedureAtlas(plan, "preoperative_education")).toBeNull();
-  });
-
-  it("rejects unsupported action variants instead of falling through", () => {
-    const plan = createPresetPlan("ossiculoplasty", "preoperative_education");
-    plan.layers = plan.layers.map((layer) =>
-      layer.kind === "ossicular_reconstruction"
-        ? { ...layer, method: "bone_cement_bridge" as const }
-        : layer,
-    );
-
-    expect(selectProcedureAtlas(plan, "preoperative_education")).toBeNull();
-  });
-});
-
-describe("Stanford usage policy", () => {
-  it("defaults unknown rights states to unverified", () => {
-    expect(parseAtlasUsageRights("unexpected")).toBe("unverified");
-    expect(parseAtlasUsageRights(undefined)).toBe("unverified");
-  });
-
-  it("requires clinic permission for the preoperative workflow", () => {
-    expect(canDisplayStanfordAtlas("teaching_only", "postoperative_summary")).toBe(true);
-    expect(canDisplayStanfordAtlas("teaching_only", "preoperative_education")).toBe(false);
-    expect(canDisplayStanfordAtlas("clinic_permission", "preoperative_education")).toBe(true);
-  });
-
-  it("does not allow atlas SVG download until image bytes are embedded", () => {
-    expect(canDownloadStanfordAtlasSvg("clinic_permission", "remote")).toBe(false);
-    expect(canDownloadStanfordAtlasSvg("clinic_permission", "local")).toBe(false);
+    expect(selection.id).toBe("servier-inner-ear");
+    expect(selection.license).toBe("CC BY 4.0");
   });
 });
