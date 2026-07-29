@@ -339,6 +339,52 @@ describe("core UI components", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("keeps PORP placement on the calibrated TM-to-capitulum path in both phases", () => {
+    const { container } = render(
+      <DiagramPanel
+        operativeCase={getSyntheticCase("porp-reconstruction").expected}
+        selectedFeatureId={null}
+        onFeatureSelect={() => undefined}
+      />,
+    );
+
+    const prosthesis = container.querySelector('[data-prosthesis-method="porp"]');
+    expect(prosthesis).toHaveAttribute("data-prosthesis-medial-endpoint", "stapes_capitulum");
+    expect(prosthesis).toHaveAttribute(
+      "data-prosthesis-rendering",
+      "headplate-shaft-capitulum-cup",
+    );
+    expect(prosthesis).toHaveAttribute(
+      "data-prosthesis-calibration",
+      "servier-inner-ear-ossicles-2026-07",
+    );
+    expect(
+      container.querySelector('[data-medical-graft="prosthesis-protection"]'),
+    ).toHaveAttribute("data-graft-calibration", "servier-inner-ear-ossicles-2026-07");
+    expect(container.querySelectorAll('[data-anatomy-removal="incus-absent"]')).toHaveLength(2);
+    expect(container.querySelectorAll("image[mask]")).toHaveLength(2);
+  });
+
+  it("uses a footplate shoe for TORP and removes the absent stapes arch", () => {
+    const { container } = render(
+      <DiagramPanel
+        operativeCase={getSyntheticCase("torp-reconstruction").expected}
+        selectedFeatureId={null}
+        onFeatureSelect={() => undefined}
+      />,
+    );
+
+    const prosthesis = container.querySelector('[data-prosthesis-method="torp"]');
+    expect(prosthesis).toHaveAttribute("data-prosthesis-medial-endpoint", "stapes_footplate");
+    expect(prosthesis).toHaveAttribute(
+      "data-prosthesis-rendering",
+      "headplate-shaft-footplate-shoe",
+    );
+    expect(
+      container.querySelectorAll('[data-anatomy-removal="stapes-superstructure"]'),
+    ).toHaveLength(4);
+  });
+
   it("keeps the composable diagram available while flagging uncertain placement", () => {
     const mismatchedBoneCement = updateCaseField(
       getSyntheticCase("porp-reconstruction").expected,

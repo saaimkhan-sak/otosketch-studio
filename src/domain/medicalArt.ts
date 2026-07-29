@@ -97,11 +97,14 @@ export function selectMedicalArtAsset(plan: SurgeryPlan): MedicalArtAsset {
 export type MedicalArtAnatomyTarget =
   | "tympanic_membrane"
   | "tympanic_membrane_medial"
+  | "tm_prosthesis_contact"
   | "tm_anteroinferior"
   | "malleus"
+  | "malleus_manubrium"
   | "incus_body"
   | "incus_long_process"
   | "incudostapedial_joint"
+  | "stapes_capitulum"
   | "stapes_superstructure"
   | "stapes_footplate"
   | "middle_ear"
@@ -114,6 +117,102 @@ export type MedicalArtAnatomyTarget =
   | "eustachian_tube";
 
 export type MedicalArtAnchor = { x: number; y: number };
+export type MedicalArtSourcePoint = { x: number; y: number };
+
+export interface MedicalArtSourceGeometry {
+  calibrationId: string;
+  tympanicMembrane?: {
+    repairGraftPath: string;
+    repairHighlightPath: string;
+    planeAngle: number;
+  };
+  ossicles?: {
+    incusAbsentMaskPath: string;
+    incusLongProcessMaskPath: string;
+    stapesSuperstructureMaskPaths: string[];
+  };
+}
+
+/**
+ * Pixel coordinates measured on the checked-in, unmodified source artwork.
+ * Procedure-device placement uses this table as its single source of truth.
+ * Percentage anchors below are derived from these pixels so they remain
+ * stable if the SVG canvas changes while the licensed image does not.
+ */
+export const medicalArtPixelAnchors: Partial<
+  Record<MedicalArtAssetId, Partial<Record<MedicalArtAnatomyTarget, MedicalArtSourcePoint>>>
+> = {
+  "servier-inner-ear": {
+    tympanic_membrane: { x: 51, y: 267 },
+    tympanic_membrane_medial: { x: 49, y: 255 },
+    tm_prosthesis_contact: { x: 53, y: 254 },
+    tm_anteroinferior: { x: 72, y: 302 },
+    malleus: { x: 53, y: 124 },
+    malleus_manubrium: { x: 61, y: 198 },
+    incus_body: { x: 78, y: 105 },
+    incus_long_process: { x: 149, y: 193 },
+    incudostapedial_joint: { x: 177, y: 211 },
+    stapes_capitulum: { x: 181, y: 211 },
+    stapes_superstructure: { x: 207, y: 191 },
+    stapes_footplate: { x: 230, y: 183 },
+    middle_ear: { x: 132, y: 195 },
+    round_window: { x: 286, y: 211 },
+    cochlea: { x: 353, y: 224 },
+  },
+};
+
+/**
+ * Source-pixel paths follow the actual outlines in the licensed illustrations.
+ * They are rendered through the fitted-image transform rather than being
+ * stretched from a generic anatomy template.
+ */
+export const medicalArtSourceGeometry: Partial<
+  Record<MedicalArtAssetId, MedicalArtSourceGeometry>
+> = {
+  "servier-ear-cutaway": {
+    calibrationId: "servier-ear-cutaway-tm-2026-07",
+    tympanicMembrane: {
+      repairGraftPath:
+        "M 734 505 C 756 517 780 544 796 566 C 813 589 831 635 838 682 C 817 669 792 646 771 618 C 752 591 738 551 734 505 Z",
+      repairHighlightPath:
+        "M 747 520 C 768 540 786 563 801 588 C 814 611 825 641 831 665",
+      planeAngle: 61,
+    },
+  },
+  "servier-inner-ear": {
+    calibrationId: "servier-inner-ear-ossicles-2026-07",
+    tympanicMembrane: {
+      repairGraftPath:
+        "M 5 179 C 20 188 39 213 52 240 C 68 270 88 322 106 355 C 93 351 74 334 54 307 C 31 276 12 231 5 179 Z",
+      repairHighlightPath:
+        "M 15 192 C 31 217 47 246 61 276 C 75 306 90 334 99 347",
+      planeAngle: 61,
+    },
+    ossicles: {
+      incusAbsentMaskPath:
+        "M 58 73 C 78 67 101 84 110 105 C 118 124 119 146 132 166 C 143 184 158 195 174 202 C 183 205 189 213 185 220 C 181 228 171 231 161 225 C 145 216 126 211 111 195 C 96 179 87 158 82 137 C 78 119 72 108 62 99 C 54 91 52 80 58 73 Z",
+      incusLongProcessMaskPath:
+        "M 112 145 C 124 168 140 190 160 200 C 169 204 178 204 182 211 C 184 217 179 224 172 225 C 161 226 152 215 142 211 C 124 202 108 184 99 164 Z",
+      stapesSuperstructureMaskPaths: [
+        "M 179 211 C 183 194 190 177 203 168 C 211 163 220 163 229 168",
+        "M 179 211 C 192 217 210 209 230 196",
+      ],
+    },
+  },
+};
+
+function pixelAnchor(
+  assetId: MedicalArtAssetId,
+  target: MedicalArtAnatomyTarget,
+): MedicalArtAnchor | undefined {
+  const point = medicalArtPixelAnchors[assetId]?.[target];
+  if (!point) return undefined;
+  const asset = medicalArtAssets[assetId];
+  return {
+    x: (point.x / asset.width) * 100,
+    y: (point.y / asset.height) * 100,
+  };
+}
 
 /**
  * Source-specific calibration points measured against the unmodified licensed
@@ -156,18 +255,21 @@ export const medicalArtAnchors: Record<
     eustachian_tube: { x: 84.0, y: 74.0 },
   },
   "servier-inner-ear": {
-    tympanic_membrane: { x: 8.8, y: 72.2 },
-    tympanic_membrane_medial: { x: 20.4, y: 58.3 },
-    tm_anteroinferior: { x: 10.8, y: 77.4 },
-    malleus: { x: 18.7, y: 45.5 },
-    incus_body: { x: 30.2, y: 52.1 },
-    incus_long_process: { x: 34.8, y: 56.2 },
-    incudostapedial_joint: { x: 37.8, y: 55.4 },
-    stapes_superstructure: { x: 40.6, y: 51.2 },
-    stapes_footplate: { x: 44.2, y: 50.4 },
-    middle_ear: { x: 33.0, y: 53.5 },
-    round_window: { x: 49.0, y: 57.0 },
-    cochlea: { x: 60.4, y: 60.6 },
+    tympanic_membrane: pixelAnchor("servier-inner-ear", "tympanic_membrane"),
+    tympanic_membrane_medial: pixelAnchor("servier-inner-ear", "tympanic_membrane_medial"),
+    tm_prosthesis_contact: pixelAnchor("servier-inner-ear", "tm_prosthesis_contact"),
+    tm_anteroinferior: pixelAnchor("servier-inner-ear", "tm_anteroinferior"),
+    malleus: pixelAnchor("servier-inner-ear", "malleus"),
+    malleus_manubrium: pixelAnchor("servier-inner-ear", "malleus_manubrium"),
+    incus_body: pixelAnchor("servier-inner-ear", "incus_body"),
+    incus_long_process: pixelAnchor("servier-inner-ear", "incus_long_process"),
+    incudostapedial_joint: pixelAnchor("servier-inner-ear", "incudostapedial_joint"),
+    stapes_capitulum: pixelAnchor("servier-inner-ear", "stapes_capitulum"),
+    stapes_superstructure: pixelAnchor("servier-inner-ear", "stapes_superstructure"),
+    stapes_footplate: pixelAnchor("servier-inner-ear", "stapes_footplate"),
+    middle_ear: pixelAnchor("servier-inner-ear", "middle_ear"),
+    round_window: pixelAnchor("servier-inner-ear", "round_window"),
+    cochlea: pixelAnchor("servier-inner-ear", "cochlea"),
     mastoid: { x: 19.2, y: 37.1 },
     postauricular: { x: 9.2, y: 31.2 },
     ear_canal: { x: 7.8, y: 67.3 },

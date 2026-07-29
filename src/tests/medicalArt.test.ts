@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   getMedicalArtAnchor,
+  getMedicalArtAnchorForTarget,
   medicalArtAnchors,
   medicalArtAssets,
+  medicalArtPixelAnchors,
+  medicalArtSourceGeometry,
   selectMedicalArtAsset,
 } from "@/domain/medicalArt";
 import {
@@ -86,10 +89,65 @@ describe("open medical art registry", () => {
     };
 
     expect(getMedicalArtAnchor("servier-inner-ear", layer)).toEqual({
-      x: 34.8,
-      y: 56.2,
+      x: (149 / 584) * 100,
+      y: (193 / 370) * 100,
     });
     expect(getMedicalArtAnchor("servier-inner-ear", layer)?.y).toBeGreaterThan(50);
+  });
+
+  it("separates the PORP capitulum seat from the stapes arch and footplate", () => {
+    const pixels = medicalArtPixelAnchors["servier-inner-ear"];
+    expect(pixels?.tm_prosthesis_contact).toEqual({ x: 53, y: 254 });
+    expect(pixels?.stapes_capitulum).toEqual({ x: 181, y: 211 });
+    expect(pixels?.stapes_superstructure).toEqual({ x: 207, y: 191 });
+    expect(pixels?.stapes_footplate).toEqual({ x: 230, y: 183 });
+
+    const capitulum = getMedicalArtAnchorForTarget(
+      "servier-inner-ear",
+      "stapes_capitulum",
+    );
+    const footplate = getMedicalArtAnchorForTarget(
+      "servier-inner-ear",
+      "stapes_footplate",
+    );
+    expect(capitulum?.x).toBeLessThan(footplate?.x ?? 0);
+    expect((pixels?.stapes_footplate?.x ?? 0) - (pixels?.stapes_capitulum?.x ?? 0)).toBe(49);
+
+    const contact = pixels?.tm_prosthesis_contact;
+    const porpSeat = pixels?.stapes_capitulum;
+    const torpSeat = pixels?.stapes_footplate;
+    expect(contact).toBeDefined();
+    expect(porpSeat).toBeDefined();
+    expect(torpSeat).toBeDefined();
+    if (contact && porpSeat && torpSeat) {
+      expect(Math.hypot(porpSeat.x - contact.x, porpSeat.y - contact.y)).toBeCloseTo(
+        135.03,
+        1,
+      );
+      expect(
+        (Math.atan2(porpSeat.y - contact.y, porpSeat.x - contact.x) * 180) / Math.PI,
+      ).toBeCloseTo(-18.56, 1);
+      expect(Math.hypot(torpSeat.x - contact.x, torpSeat.y - contact.y)).toBeCloseTo(
+        190.71,
+        1,
+      );
+      expect(
+        (Math.atan2(torpSeat.y - contact.y, torpSeat.x - contact.x) * 180) / Math.PI,
+      ).toBeCloseTo(-21.86, 1);
+    }
+  });
+
+  it("keeps graft and erosion shapes calibrated to their licensed source pixels", () => {
+    const innerEarGeometry = medicalArtSourceGeometry["servier-inner-ear"];
+    const cutawayGeometry = medicalArtSourceGeometry["servier-ear-cutaway"];
+
+    expect(innerEarGeometry?.calibrationId).toBe(
+      "servier-inner-ear-ossicles-2026-07",
+    );
+    expect(innerEarGeometry?.tympanicMembrane?.repairGraftPath).toContain("M 5 179");
+    expect(innerEarGeometry?.ossicles?.incusLongProcessMaskPath).toContain("M 112 145");
+    expect(innerEarGeometry?.ossicles?.stapesSuperstructureMaskPaths).toHaveLength(2);
+    expect(cutawayGeometry?.tympanicMembrane?.repairGraftPath).toContain("M 734 505");
   });
 
   it("never invents anatomy coordinates for non-anatomic status layers", () => {

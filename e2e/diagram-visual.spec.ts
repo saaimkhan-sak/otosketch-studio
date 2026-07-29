@@ -144,6 +144,39 @@ for (const viewport of viewports) {
         await expect(preview.locator(".medical-panel-legend-bg")).toHaveCount(
           diagramCase.phaseCount,
         );
+        if (diagramCase.caseId === "porp-reconstruction") {
+          const prosthesis = preview.locator('[data-prosthesis-method="porp"]');
+          await expect(prosthesis).toHaveCount(1);
+          await expect(prosthesis).toHaveAttribute(
+            "data-prosthesis-medial-endpoint",
+            "stapes_capitulum",
+          );
+          await expect(prosthesis).toHaveAttribute(
+            "data-prosthesis-rendering",
+            "headplate-shaft-capitulum-cup",
+          );
+          await expect(
+            preview.locator('[data-medical-graft="prosthesis-protection"]'),
+          ).toHaveCount(1);
+          await expect(preview.locator('[data-anatomy-removal="incus-absent"]')).toHaveCount(
+            diagramCase.phaseCount,
+          );
+        }
+        if (diagramCase.caseId === "torp-reconstruction") {
+          const prosthesis = preview.locator('[data-prosthesis-method="torp"]');
+          await expect(prosthesis).toHaveCount(1);
+          await expect(prosthesis).toHaveAttribute(
+            "data-prosthesis-medial-endpoint",
+            "stapes_footplate",
+          );
+          await expect(prosthesis).toHaveAttribute(
+            "data-prosthesis-rendering",
+            "headplate-shaft-footplate-shoe",
+          );
+          await expect(
+            preview.locator('[data-anatomy-removal="stapes-superstructure"]'),
+          ).toHaveCount(diagramCase.phaseCount * 2);
+        }
 
         await preview.scrollIntoViewIfNeeded();
         await expect(preview).toHaveScreenshot(`${diagramCase.caseId}-${viewport.name}.png`, {
@@ -166,6 +199,19 @@ for (const viewport of viewports) {
         await expect(preview.locator('[data-anatomy-layer="verification_status"]')).toHaveCount(0);
         await expect(preview.locator(".medical-panel-hotspot").first()).toBeVisible();
         await expect(preview.getByText(/Resolve the conflicting selections/i)).toHaveCount(0);
+        if (surgeryPreset.presetId === "ossiculoplasty") {
+          const prosthesis = preview.locator('[data-prosthesis-method="porp"]');
+          await expect(prosthesis).toHaveAttribute(
+            "data-prosthesis-medial-endpoint",
+            "stapes_capitulum",
+          );
+          await expect(
+            preview.locator('[data-medical-graft="prosthesis-protection"]'),
+          ).toHaveAttribute(
+            "data-graft-calibration",
+            "servier-inner-ear-ossicles-2026-07",
+          );
+        }
 
         const phases = preview.locator(".medical-illustration-phases").first();
         await phases.scrollIntoViewIfNeeded();
