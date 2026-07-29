@@ -28,6 +28,11 @@ art. The current library uses:
 - NIH BioArt `BIOART-000256`, a Public Domain vector created in Adobe Illustrator.
 - Servier Medical Art auditory illustrations under CC BY 4.0.
 
+Spatial overlays are cross-validated against one calibrated descriptor for the
+numbered callout, protected leader endpoint, and legend row. Status-only
+metadata does not receive an anatomy marker, and unsupported visual variants
+are identified as not illustrated instead of receiving a misleading marker.
+
 The asset provenance and license details live beside each source in
 `public/medical-art/`. No Stanford Oto Surgery Atlas artwork or tracing is used.
 

@@ -23,6 +23,54 @@
       "sha256": "ec09e4aeb77652aade1e848e4f108d025597416717e15f840d64a72270e6a591",
       "source": "https://smart.servier.com/smart_image/inner-ear/",
       "license": "CC BY 4.0"
+    },
+    {
+      "id": "servier-inner-ear-auditory-nerve",
+      "path": "public/medical-art/servier/inner-ear-components/auditory-nerve.png",
+      "bytes": 17410,
+      "sha256": "1197eeb2e2d9b739c6424812c1c9fb4efb579e971e36c758aaa9417ca96d9b15",
+      "source": "https://smart.servier.com/wp-content/uploads/2016/10/Oreille_interne_6.png",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "servier-inner-ear-cochlea",
+      "path": "public/medical-art/servier/inner-ear-components/cochlea.png",
+      "bytes": 29829,
+      "sha256": "9c2ca8282901f284677808d559450fe3cd772f2f0ddfb4507d8c3338b4a9d71b",
+      "source": "https://smart.servier.com/wp-content/uploads/2016/10/Oreille_interne_5.png",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "servier-inner-ear-eardrum",
+      "path": "public/medical-art/servier/inner-ear-components/eardrum.png",
+      "bytes": 12044,
+      "sha256": "609ee45cfae7d450263e32112cf4965b900265c23c2b7cdb0fb4afb4908dc64b",
+      "source": "https://smart.servier.com/wp-content/uploads/2016/10/Oreille_interne_1.png",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "servier-inner-ear-incus",
+      "path": "public/medical-art/servier/inner-ear-components/incus.png",
+      "bytes": 7732,
+      "sha256": "70fe5b944dd167bb87141fccbe6f94bf2c92a06b8f1c67c172c42d2aa7d985a8",
+      "source": "https://smart.servier.com/wp-content/uploads/2016/10/Oreille_interne_3.png",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "servier-inner-ear-malleus",
+      "path": "public/medical-art/servier/inner-ear-components/malleus.png",
+      "bytes": 6093,
+      "sha256": "36adabac939fc8c024c58e995a9e949342c3626514b0ce02e93e9a6ed252445a",
+      "source": "https://smart.servier.com/wp-content/uploads/2016/10/Oreille_interne_2.png",
+      "license": "CC BY 4.0"
+    },
+    {
+      "id": "servier-inner-ear-stapes",
+      "path": "public/medical-art/servier/inner-ear-components/stapes.png",
+      "bytes": 5543,
+      "sha256": "5cf310a74f5ea95607d320083c98061f25de67530b41eee6f8a8695ef993e8bb",
+      "source": "https://smart.servier.com/wp-content/uploads/2016/10/Oreille_interne_4.png",
+      "license": "CC BY 4.0"
     }
   ]
 }

@@ -1,7 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { AlertTriangle, BadgeCheck, Layers3, RotateCcw, ShieldCheck, Undo2 } from "lucide-react";
+import {
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
+import { AlertTriangle, BadgeCheck, RotateCcw, Undo2 } from "lucide-react";
 import type { EducationMode } from "@/domain/educationMode";
 import { detectPossiblePhi } from "@/domain/safety";
 import { clearReview, markReviewed, updateCaseField } from "@/domain/editCase";
@@ -11,7 +16,7 @@ import {
   createEmptySurgeryPlan,
   deriveSurgeryPlanFromCase,
   getActiveSurgeryLayers,
-  validateSurgeryPlan,
+  normalizeSurgeryPlan,
   type SurgeryPlan,
 } from "@/domain/surgeryPlan";
 import type { CaseFieldPath } from "@/domain/types";
@@ -37,6 +42,8 @@ import { TeachingProcedureGuide } from "./TeachingProcedureGuide";
 const defaultProvider = (process.env.NEXT_PUBLIC_DEFAULT_EXTRACTOR ?? "mock") as ExtractorProvider;
 const allowProviderSwitcher = process.env.NEXT_PUBLIC_ALLOW_PROVIDER_SWITCHER !== "false";
 const publicCloudflareWorkerUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_WORKER_EXTRACT_URL?.trim();
+const inputModes = ["example", "note", "manual"] as const;
+type InputMode = (typeof inputModes)[number];
 
 const reviewChecklistItemsByMode = {
   postoperative_summary: [
@@ -123,14 +130,17 @@ export function AppShell() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [inputMode, setInputMode] = useState<"example" | "note" | "manual">("example");
+  const [inputMode, setInputMode] = useState<InputMode>("example");
   const diagramRegionRef = useRef<HTMLElement | null>(null);
   const reviewChecklistItems = reviewChecklistItemsByMode[educationMode];
   const isTeaching = sessionPurpose === "teaching_walkthrough";
 
   const phiDetection = useMemo(() => detectPossiblePhi(note), [note]);
   const resultIsStale = operativeCase !== null && note !== lastExtractedNote;
-  const surgeryPlanValidation = useMemo(() => validateSurgeryPlan(surgeryPlan), [surgeryPlan]);
+  const surgeryPlanValidation = useMemo(
+    () => normalizeSurgeryPlan(surgeryPlan),
+    [surgeryPlan],
+  );
   const surgeryPlanReviewBlockers = useMemo(
     () =>
       surgeryPlanValidation.issues
@@ -408,7 +418,7 @@ export function AppShell() {
     setSelectedFeatureId(null);
   };
 
-  const handleInputModeChange = (mode: "example" | "note" | "manual") => {
+  const handleInputModeChange = (mode: InputMode) => {
     setInputMode(mode);
     if (mode === "example") {
       handleSelectCase(selectedCaseId);
@@ -434,6 +444,33 @@ export function AppShell() {
       setError(null);
       setSelectedFeatureId(null);
     }
+  };
+
+  const handleInputModeKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    mode: InputMode,
+  ) => {
+    const currentIndex = inputModes.indexOf(mode);
+    let nextIndex: number | null = null;
+
+    if (event.key === "ArrowRight") {
+      nextIndex = (currentIndex + 1) % inputModes.length;
+    } else if (event.key === "ArrowLeft") {
+      nextIndex =
+        (currentIndex - 1 + inputModes.length) % inputModes.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = inputModes.length - 1;
+    }
+
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const nextMode = inputModes[nextIndex];
+    handleInputModeChange(nextMode);
+    event.currentTarget.parentElement
+      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+      [nextIndex]?.focus();
   };
 
   const handleReviewChecklistChange = (id: string, checked: boolean) => {
@@ -488,7 +525,6 @@ export function AppShell() {
             <span />
           </div>
           <div>
-            <p className="product-kicker">Surgeon-reviewed visual education</p>
             <h1>OtoSketch Studio</h1>
           </div>
         </div>
@@ -507,18 +543,13 @@ export function AppShell() {
         aria-labelledby="education-mode-heading"
       >
         <div>
-          <p className="eyebrow">Start with the audience</p>
           <h2 id="education-mode-heading">
             {isTeaching
-              ? "Teach the operation as a structured sequence"
+              ? "Teaching walkthrough"
               : educationMode === "preoperative_education"
-                ? "Explain an upcoming procedure"
-                : "Summarize a completed procedure"}
+                ? "Upcoming procedure"
+                : "Completed procedure"}
           </h2>
-          <p className="education-mode-summary">
-            Build one clinically grounded visual for the consult room, postoperative discussion, or
-            resident teaching session.
-          </p>
         </div>
         <div className="purpose-tabs" role="group" aria-label="Patient education purpose">
           <button
@@ -528,8 +559,7 @@ export function AppShell() {
             aria-pressed={sessionPurpose === "preoperative_education"}
             onClick={() => handleSessionPurposeChange("preoperative_education")}
           >
-            <strong>Upcoming procedure</strong>
-            <span>Plan a clinic conversation</span>
+            Upcoming
           </button>
           <button
             type="button"
@@ -538,8 +568,7 @@ export function AppShell() {
             aria-pressed={sessionPurpose === "postoperative_summary"}
             onClick={() => handleSessionPurposeChange("postoperative_summary")}
           >
-            <strong>Completed procedure</strong>
-            <span>Explain findings and repair</span>
+            Completed
           </button>
           <button
             type="button"
@@ -548,8 +577,7 @@ export function AppShell() {
             aria-pressed={sessionPurpose === "teaching_walkthrough"}
             onClick={() => handleSessionPurposeChange("teaching_walkthrough")}
           >
-            <strong>Teaching walkthrough</strong>
-            <span>Guide a trainee step by step</span>
+            Teaching
           </button>
         </div>
       </section>
@@ -583,20 +611,6 @@ export function AppShell() {
                   : "Review & export"}
             </a>
           </nav>
-          <div className="engine-card">
-            <Layers3 className="h-4 w-4" aria-hidden="true" />
-            <div>
-              <strong>Open medical art engine</strong>
-              <p>Servier anatomy under CC BY 4.0 with finite, deterministic overlays.</p>
-            </div>
-          </div>
-          <div className="privacy-card">
-            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-            <div>
-              <strong>Synthetic demo</strong>
-              <p>No patient information. No note text is logged.</p>
-            </div>
-          </div>
         </aside>
         <div className="stage-stack">
           <section
@@ -616,13 +630,6 @@ export function AppShell() {
                       ? "Plan procedure"
                       : "Create case"}
                 </h2>
-                <p>
-                  {isTeaching
-                    ? "Start from a common operation, then select the anatomy and steps you want to teach."
-                    : educationMode === "preoperative_education"
-                      ? "Choose a common procedure, then customize only the surgeon's planned steps."
-                      : "Start from an example, a synthetic note, or structured controls."}
-                </p>
               </div>
             </header>
 
@@ -633,15 +640,23 @@ export function AppShell() {
                     ["example", "Example"],
                     ["note", "Paste note"],
                     ["manual", "Build manually"],
-                  ] as const
+                  ] as const satisfies ReadonlyArray<
+                    readonly [InputMode, string]
+                  >
                 ).map(([mode, label]) => (
                   <button
                     key={mode}
+                    id={`case-input-tab-${mode}`}
                     type="button"
                     role="tab"
                     aria-selected={inputMode === mode}
+                    aria-controls="case-input-panel"
+                    tabIndex={inputMode === mode ? 0 : -1}
                     className={inputMode === mode ? "is-active" : undefined}
                     onClick={() => handleInputModeChange(mode)}
+                    onKeyDown={(event) =>
+                      handleInputModeKeyDown(event, mode)
+                    }
                   >
                     {label}
                   </button>
@@ -657,7 +672,13 @@ export function AppShell() {
               }
             >
               {educationMode === "postoperative_summary" ? (
-                <div className="case-source-panel">
+                <div
+                  id="case-input-panel"
+                  className="case-source-panel"
+                  role="tabpanel"
+                  aria-labelledby={`case-input-tab-${inputMode}`}
+                  tabIndex={0}
+                >
                   {inputMode === "example" ? (
                     <>
                       <ExampleCasePicker
@@ -676,9 +697,6 @@ export function AppShell() {
                   {inputMode === "manual" ? (
                     <div className="manual-mode-intro">
                       <strong>Structured builder</strong>
-                      <span>
-                        Choose only documented details. Unselected details stay not documented.
-                      </span>
                     </div>
                   ) : null}
                   {phiDetection.containsPossiblePhi ? (
@@ -720,23 +738,11 @@ export function AppShell() {
                 </div>
               ) : (
                 <aside className="clinic-plan-intro" aria-label="Clinic planning guardrails">
-                  <strong>
-                    {isTeaching ? "Faculty-led teaching view" : "No patient note is needed"}
-                  </strong>
                   <p>
                     {isTeaching
-                      ? "Build a reusable walkthrough from structured selections. Keep case-specific details out of this demo."
-                      : "Build from structured selections only. Do not enter names, dates of birth, record numbers, or free-text patient details."}
+                      ? "Use generic anatomy only."
+                      : "Structured selections only. Do not enter patient information."}
                   </p>
-                  <ul>
-                    <li>Generic educational anatomy</li>
-                    <li>
-                      {isTeaching
-                        ? "Stepwise cognitive walkthrough"
-                        : "Plan may change during surgery"}
-                    </li>
-                    <li>Clinician approval required before printing</li>
-                  </ul>
                 </aside>
               )}
               <div className="structured-builder-column">
@@ -823,13 +829,6 @@ export function AppShell() {
                       ? "Preview discussion"
                       : "Preview & verify"}
                 </h2>
-                <p>
-                  {isTeaching
-                    ? "Orient to the anatomy, then move through each selected operative step."
-                    : educationMode === "preoperative_education"
-                      ? "Use the diagram and short guide to explain what is planned and what may change."
-                      : "Select a visual label to inspect its source."}
-                </p>
               </div>
             </header>
             {operativeCase ? (
@@ -887,13 +886,6 @@ export function AppShell() {
                         ? "Approve & print"
                         : "Review & export"}
                   </h2>
-                  <p>
-                    {isTeaching
-                      ? "A named clinician must confirm the anatomy, sequence, and limitations."
-                      : educationMode === "preoperative_education"
-                        ? "A named clinician must confirm the plan and patient-facing language."
-                        : "Confirm the draft before preparing patient education."}
-                  </p>
                 </div>
               </header>
               {exportBlockers.length > 0 ? (

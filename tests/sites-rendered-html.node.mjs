@@ -29,7 +29,7 @@ test("Sites worker server-renders OtoSketch Studio", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>OtoSketch Studio<\/title>/i);
-  assert.match(html, /Surgeon-reviewed visual education/i);
+  assert.match(html, /Surgeon-reviewed otology visuals/i);
   assert.match(html, /Synthetic demo/i);
   assert.doesNotMatch(html, /codex-preview/i);
 });

@@ -7,13 +7,13 @@ import { selectMedicalArtAsset } from "@/domain/medicalArt";
 import type { OperativeCase } from "@/domain/schema";
 import {
   deriveSurgeryPlanFromCase,
+  getActiveSurgeryLayers,
   labelSurgeryProcedure,
   normalizeSurgeryPlan,
   type SurgeryPlan,
 } from "@/domain/surgeryPlan";
 import { Button } from "@/components/ui/Button";
 import { MedicalIllustrationDiagram } from "./MedicalIllustrationDiagram";
-import { OpenMedicalArtOverview } from "./OpenMedicalArtOverview";
 
 interface DiagramPanelProps {
   operativeCase?: OperativeCase | null;
@@ -65,6 +65,14 @@ export function DiagramPanel({
       ? "Procedure not documented"
       : plan.procedureFamilies.map(labelSurgeryProcedure).join(" + ");
   const medicalArt = selectMedicalArtAsset(plan);
+  const activeLayers = getActiveSurgeryLayers(plan).filter(
+    (layer) =>
+      layer.documentation === "documented" &&
+      layer.kind !== "verification_status" &&
+      layer.kind !== "intraoperative_deviation",
+  );
+  const hasFindingPhase = activeLayers.some((layer) => layer.role === "finding");
+  const hasProcedurePhase = activeLayers.some((layer) => layer.role === "action");
 
   useEffect(() => {
     if (!expanded) return;
@@ -113,58 +121,33 @@ export function DiagramPanel({
 
   const diagramPhases = (
     <div className="medical-illustration-phases" data-diagram-source="open-medical-art">
-      <MedicalIllustrationDiagram
-        plan={plan}
-        phase="finding"
-        presentationMode={mode}
-        selectedLayerId={selectedLayerId}
-        onLayerSelect={selectLayer}
-      />
-      <MedicalIllustrationDiagram
-        plan={plan}
-        phase="procedure"
-        presentationMode={mode}
-        selectedLayerId={selectedLayerId}
-        onLayerSelect={selectLayer}
-      />
+      {hasFindingPhase || !hasProcedurePhase ? (
+        <MedicalIllustrationDiagram
+          plan={plan}
+          phase="finding"
+          presentationMode={mode}
+          selectedLayerId={selectedLayerId}
+          onLayerSelect={selectLayer}
+        />
+      ) : null}
+      {hasProcedurePhase ? (
+        <MedicalIllustrationDiagram
+          plan={plan}
+          phase="procedure"
+          presentationMode={mode}
+          selectedLayerId={selectedLayerId}
+          onLayerSelect={selectLayer}
+        />
+      ) : null}
     </div>
   );
 
-  const diagramExperience = (
-    <div className="diagram-experience">
-      <OpenMedicalArtOverview
-        plan={plan}
-        selectedLayerId={selectedLayerId}
-        onLayerSelect={selectLayer}
-      />
-      <div className="surgical-detail-heading">
-        <div>
-          <p className="eyebrow">Medical illustration sequence</p>
-          <h3>
-            {mode === "preoperative_education"
-              ? "Walk through the planned procedure"
-              : "Compare findings with the completed repair"}
-          </h3>
-        </div>
-        <span>Professional medical art · structured overlays</span>
-      </div>
-      {diagramPhases}
-    </div>
-  );
+  const diagramExperience = <div className="diagram-experience">{diagramPhases}</div>;
 
   return (
     <section className="diagram-workbench no-print" aria-label="Diagram preview">
       <div className="diagram-workbench-header">
-        <div>
-          <h2 className="section-heading">Diagram preview</h2>
-          <div className="diagram-status-row" aria-label="Diagram status">
-            <span>
-              {mode === "preoperative_education" ? "Upcoming procedure" : "Internal draft"}
-            </span>
-            <span>Professional open medical art</span>
-            <span>{mode === "preoperative_education" ? "Plan may change" : "Not to scale"}</span>
-          </div>
-        </div>
+        <h2 className="section-heading">Diagram</h2>
         <Button
           type="button"
           variant="secondary"
@@ -206,16 +189,10 @@ export function DiagramPanel({
       )}
 
       <details className="template-summary" aria-label="Sources and limitations">
-        <summary>Sources &amp; limitations · professional medical art</summary>
-        <p className="template-review-status">Clinician review required</p>
+        <summary>Source &amp; limitations</summary>
         <p className="mt-3 text-xs leading-5 text-slate-600">
-          Base illustration: {medicalArt.attribution}. Created with{" "}
-          {medicalArt.illustrationSoftware}; {medicalArt.license}. OtoSketch adds only finite,
-          structured overlays from documented plan fields. The image is generic educational
-          anatomy, not patient-specific geometry.
-        </p>
-        <p className="mt-2 text-xs leading-5 text-slate-600">
-          No traced surgical-atlas artwork or source-image coordinate calibration is used.
+          {medicalArt.attribution} · {medicalArt.license}. Calibrated structured overlays on
+          generic, non-patient-specific anatomy. Clinician review required.
         </p>
       </details>
 
@@ -232,7 +209,6 @@ export function DiagramPanel({
             <header>
               <div>
                 <h3>{procedureLabel}</h3>
-                <p>Professional open medical art · deterministic structured overlays</p>
               </div>
               <Button type="button" variant="secondary" onClick={() => setExpanded(false)}>
                 <X className="h-4 w-4" aria-hidden="true" />

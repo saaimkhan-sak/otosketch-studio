@@ -437,6 +437,43 @@ describe("composable surgery plans", () => {
     );
   });
 
+  it("blocks contradictory tympanostomy action and device selections", () => {
+    const tube: LayerOf<"tympanostomy"> = {
+      ...clinicianLayer(),
+      id: "tube",
+      kind: "tympanostomy",
+      role: "action",
+      action: "tube_placed",
+      quadrant: "anteroinferior",
+      tubeType: "short_term",
+    };
+    expect(issueCodes(reviewedPlan("myringotomy_tympanostomy", [tube]))).not.toEqual(
+      expect.arrayContaining([
+        "tympanostomy_placed_without_tube",
+        "tympanostomy_nonplacement_with_tube_type",
+      ]),
+    );
+    expect(
+      issueCodes(reviewedPlan("myringotomy_tympanostomy", [{ ...tube, tubeType: "none" }])),
+    ).toContain("tympanostomy_placed_without_tube");
+
+    for (const action of ["myringotomy_only", "tube_not_placed"] as const) {
+      for (const tubeType of ["short_term", "t_tube", "other"] as const) {
+        expect(
+          issueCodes(reviewedPlan("myringotomy_tympanostomy", [{ ...tube, action, tubeType }])),
+          `${action}:${tubeType}`,
+        ).toContain("tympanostomy_nonplacement_with_tube_type");
+      }
+    }
+
+    for (const tubeType of ["t_tube", "other", "not_documented"] as const) {
+      expect(
+        issueCodes(reviewedPlan("myringotomy_tympanostomy", [{ ...tube, tubeType }])),
+        `placed:${tubeType}`,
+      ).not.toContain("tympanostomy_placed_without_tube");
+    }
+  });
+
   it("blocks competing completed cochlear routes but permits an aborted route followed by another", () => {
     const roundWindow: LayerOf<"cochlear_insertion"> = {
       ...clinicianLayer(),

@@ -7,6 +7,17 @@ import { createPresetPlan } from "@/components/app/SurgeryBuilder";
 import { getSyntheticCase } from "@/fixtures/syntheticCases";
 
 describe("clinic procedure workflow", () => {
+  it("does not expose repairable anatomy-view configuration as a review blocker", () => {
+    render(<AppShell />);
+
+    expect(
+      screen.queryByText(/has no compatible anatomy view in this plan/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Complete the clinician review checklist before approval/i),
+    ).toBeInTheDocument();
+  });
+
   it("uses professional open medical art for postoperative preview", () => {
     const { container } = render(
       <DiagramPanel
@@ -34,7 +45,7 @@ describe("clinic procedure workflow", () => {
 
     expect(container.querySelector('[data-medical-illustration="nih-inner-ear"]')).toBeInTheDocument();
     expect(container.querySelector('image[href="/medical-art/nih/inner-ear.svg"]')).toBeInTheDocument();
-    expect(screen.getAllByText(/Adobe Illustrator 28.6/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Ryan Kissinger/i).length).toBeGreaterThan(0);
   });
 
   it("keeps structured medical-art callouts selectable", () => {
@@ -83,18 +94,18 @@ describe("clinic procedure workflow", () => {
     await user.click(screen.getByRole("button", { name: "Upcoming procedure" }));
     expect(screen.queryByRole("tab", { name: "Example" })).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Operative note")).not.toBeInTheDocument();
-    expect(screen.getByText("No patient note is needed")).toBeInTheDocument();
+    expect(screen.getByText("Structured selections only. Do not enter patient information.")).toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText("Common planned procedure"), "tympanoplasty");
     expect(screen.getByRole("heading", { name: /Your planned Tympanoplasty/i })).toBeInTheDocument();
     expect(
       screen.getByRole("region", {
-        name: /Anatomy being discussed: Ear and temporal-bone cutaway/i,
+        name: /Anatomy: Ear and temporal-bone cutaway/i,
       }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("region", {
-        name: /Planned procedure: Ear and temporal-bone cutaway/i,
+        name: /Plan: Ear and temporal-bone cutaway/i,
       }),
     ).toBeInTheDocument();
     expect(screen.getAllByText(/Plan may change during surgery/i).length).toBeGreaterThan(0);
@@ -112,14 +123,14 @@ describe("clinic procedure workflow", () => {
     expect(screen.getByRole("button", { name: "Print / save PDF" })).toBeEnabled();
   });
 
-  it("resets the load-preset control with the clinic plan", async () => {
+  it("keeps the selected procedure visible until the clinic plan is reset", async () => {
     const user = userEvent.setup();
     render(<AppShell />);
 
     await user.click(screen.getByRole("button", { name: "Upcoming procedure" }));
     const preset = screen.getByLabelText("Common planned procedure");
     await user.selectOptions(preset, "tympanoplasty");
-    expect(preset).toHaveValue("");
+    expect(preset).toHaveValue("tympanoplasty");
     await user.click(screen.getByRole("button", { name: "Reset" }));
     expect(preset).toHaveValue("");
     expect(screen.getByRole("heading", { name: "Your planned ear procedure" })).toBeInTheDocument();

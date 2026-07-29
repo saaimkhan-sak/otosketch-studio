@@ -1,0 +1,134 @@
+{
+  "schemaVersion": "1.0",
+  "coordinateSystem": {
+    "origin": "top-left",
+    "unit": "source-pixel",
+    "width": 584,
+    "height": 370
+  },
+  "source": {
+    "assetId": "servier-inner-ear",
+    "sourcePage": "https://smart.servier.com/smart_image/inner-ear/",
+    "compositeSha256": "ec09e4aeb77652aade1e848e4f108d025597416717e15f840d64a72270e6a591",
+    "license": "CC BY 4.0",
+    "componentProvenance": "Official transparent Servier Medical Art source layers, independently aligned to the 584 x 370 composite at integer offsets."
+  },
+  "review": {
+    "status": "reference-calibrated-pending-ent-signoff",
+    "reviewedAt": "2026-07-29",
+    "basis": [
+      "official Servier component alpha geometry",
+      "Grace Medical PORP capitulum coupling documentation",
+      "KURZ and Medtronic cartilage/TM interface documentation",
+      "independent source-pixel audit"
+    ],
+    "limitation": "This is a generic education template. It is not patient-specific and does not replace clinician review."
+  },
+  "components": {
+    "cochlea": {
+      "offset": { "x": 116, "y": 0 },
+      "size": { "width": 259, "height": 265 },
+      "sha256": "9c2ca8282901f284677808d559450fe3cd772f2f0ddfb4507d8c3338b4a9d71b"
+    },
+    "auditory_nerve": {
+      "offset": { "x": 227, "y": 55 },
+      "size": { "width": 356, "height": 131 },
+      "sha256": "1197eeb2e2d9b739c6424812c1c9fb4efb579e971e36c758aaa9417ca96d9b15"
+    },
+    "tympanic_membrane": {
+      "offset": { "x": 0, "y": 170 },
+      "size": { "width": 133, "height": 200 },
+      "sha256": "609ee45cfae7d450263e32112cf4965b900265c23c2b7cdb0fb4afb4908dc64b"
+    },
+    "stapes": {
+      "offset": { "x": 168, "y": 160 },
+      "size": { "width": 93, "height": 64 },
+      "sha256": "5cf310a74f5ea95607d320083c98061f25de67530b41eee6f8a8695ef993e8bb"
+    },
+    "incus": {
+      "offset": { "x": 47, "y": 74 },
+      "size": { "width": 131, "height": 147 },
+      "sha256": "70fe5b944dd167bb87141fccbe6f94bf2c92a06b8f1c67c172c42d2aa7d985a8"
+    },
+    "malleus": {
+      "offset": { "x": 28, "y": 84 },
+      "size": { "width": 59, "height": 147 },
+      "sha256": "36adabac939fc8c024c58e995a9e949342c3626514b0ce02e93e9a6ed252445a"
+    }
+  },
+  "landmarks": {
+    "tympanicSurfaceContact": {
+      "center": { "x": 53, "y": 254 },
+      "tolerance": 0.5
+    },
+    "capitulum": {
+      "center": { "x": 181, "y": 211 },
+      "acceptanceEllipse": {
+        "radiusX": 7,
+        "radiusY": 5,
+        "rotation": 72
+      },
+      "tolerance": 1
+    },
+    "footplate": {
+      "center": { "x": 236, "y": 180 },
+      "acceptanceEllipse": {
+        "radiusX": 11,
+        "radiusY": 5,
+        "rotation": 14
+      },
+      "tolerance": 1
+    },
+    "incusErosionStump": {
+      "center": { "x": 116, "y": 157 },
+      "tolerance": 2
+    },
+    "incusPistonAttachment": {
+      "center": { "x": 167, "y": 209 },
+      "tolerance": 2
+    }
+  },
+  "tympanicStack": {
+    "planeAngle": 61,
+    "medialNormal": { "x": 0.87462, "y": -0.48481 },
+    "cartilageNormalOffset": { "min": 4, "max": 5 },
+    "headplateNormalOffset": { "min": 8, "max": 9 },
+    "requiredOrder": [
+      "tympanic_membrane",
+      "protection_cartilage",
+      "prosthesis_headplate",
+      "prosthesis_shaft",
+      "stapes"
+    ],
+    "cartilageMustCoverHeadplate": true
+  },
+  "anatomyStateMasks": {
+    "incusLongProcessEroded": {
+      "component": "incus",
+      "retainedReferencePoints": [
+        { "x": 78, "y": 105 },
+        { "x": 116, "y": 157 }
+      ],
+      "removedReferencePoints": [
+        { "x": 140, "y": 190 },
+        { "x": 176, "y": 211 }
+      ]
+    },
+    "stapesFootplateOnly": {
+      "component": "stapes",
+      "retainedReferencePoints": [
+        { "x": 236, "y": 180 },
+        { "x": 247, "y": 188 }
+      ],
+      "removedReferencePoints": [
+        { "x": 181, "y": 211 },
+        { "x": 212, "y": 202 }
+      ]
+    }
+  },
+  "officialAlphaOverlapCountsAt128": {
+    "incus_malleus": 1286,
+    "stapes_cochlea": 1402,
+    "stapes_incus": 46
+  }
+}

@@ -18,7 +18,7 @@ async function buildExample(page: Page, caseId: string) {
   await page.getByLabel("Example case").selectOption(caseId);
   await expect(page.getByLabel("Operative note")).toHaveValue(fixtureNotePattern[caseId]);
   await page.getByRole("button", { name: "Build diagram" }).click();
-  await expect(page.getByRole("heading", { name: "Diagram preview" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Diagram" })).toBeVisible();
 }
 
 test("PORP case uses professional medical art and can be reviewed", async ({ page }) => {
@@ -36,8 +36,8 @@ test("PORP case uses professional medical art and can be reviewed", async ({ pag
 
   await expect(page.getByRole("button", { name: /^Incus: Absent$/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /^Reconstruction: PORP$/i })).toBeVisible();
-  await expect(page.getByRole("region", { name: /Documented findings: Middle and inner ear/i })).toBeVisible();
-  await expect(page.getByRole("region", { name: /Completed procedure: Middle and inner ear/i })).toBeVisible();
+  await expect(page.getByRole("region", { name: /Findings: Middle and inner ear/i })).toBeVisible();
+  await expect(page.getByRole("region", { name: /Procedure: Middle and inner ear/i })).toBeVisible();
   await expect(page.locator("#preview-verify .medical-illustration-svg")).toHaveCount(2);
   await expect(page.locator('[data-medical-illustration="servier-inner-ear"]')).toHaveCount(2);
 
@@ -46,7 +46,7 @@ test("PORP case uses professional medical art and can be reviewed", async ({ pag
     .locator("summary")
     .click();
   await expect(page.getByText(/Servier Medical Art/i).first()).toBeVisible();
-  await expect(page.getByText(/No traced surgical-atlas artwork/i)).toBeVisible();
+  await expect(page.getByText(/Calibrated structured overlays/i)).toBeVisible();
 
   await page.getByRole("button", { name: "Full screen" }).click();
   await expect(page.getByRole("dialog", { name: "Full-screen diagram preview" })).toBeVisible();
@@ -80,7 +80,7 @@ test("bone-cement reconstruction remains a distinct deterministic medical-art la
   await buildExample(page, "hero-otomimix-is-joint");
 
   const preview = page
-    .locator("section.no-print", { has: page.getByRole("heading", { name: "Diagram preview" }) })
+    .locator("section.no-print", { has: page.getByRole("heading", { name: "Diagram" }) })
     .first();
   await expect(preview.locator(".medical-illustration-svg")).toHaveCount(2);
   await expect(preview.locator('[data-medical-illustration="servier-inner-ear"]')).toHaveCount(2);
@@ -107,21 +107,24 @@ test("manual builder provides every common surgery preset and its required view"
   await page.getByRole("tab", { name: "Build manually" }).click();
 
   const presets = [
-    ["myringotomy_tympanostomy", "servier-ear-cutaway"],
-    ["tympanoplasty", "servier-ear-cutaway"],
-    ["ossiculoplasty", "servier-inner-ear"],
-    ["tympanomastoidectomy", "servier-ear-cutaway"],
-    ["stapes_surgery", "nih-inner-ear"],
-    ["cochlear_implant", "nih-inner-ear"],
-    ["bone_conduction_implant", "servier-ear-cutaway"],
-    ["canalplasty", "servier-ear-cutaway"],
-    ["eustachian_tube_dilation", "servier-ear-cutaway"],
+    ["myringotomy_tympanostomy", "servier-ear-cutaway", 1],
+    ["tympanoplasty", "servier-ear-cutaway", 2],
+    ["ossiculoplasty", "servier-inner-ear", 2],
+    ["tympanomastoidectomy", "servier-ear-cutaway", 2],
+    ["stapes_surgery", "servier-inner-ear", 2],
+    ["cochlear_implant", "nih-inner-ear", 1],
+    ["bone_conduction_implant", "servier-ear-cutaway", 1],
+    ["canalplasty", "servier-ear-cutaway", 1],
+    ["eustachian_tube_dilation", "servier-ear-cutaway", 1],
   ] as const;
 
-  for (const [preset, asset] of presets) {
+  for (const [preset, asset, phaseCount] of presets) {
     await page.getByLabel("Synthetic surgery example").selectOption(preset);
-    await expect(page.locator(".medical-illustration-svg")).toHaveCount(2);
-    await expect(page.locator(`[data-medical-illustration="${asset}"]`)).toHaveCount(2);
+    await expect(page.locator(".medical-illustration-svg")).toHaveCount(phaseCount);
+    await expect(page.locator(`[data-medical-illustration="${asset}"]`)).toHaveCount(
+      phaseCount,
+    );
+    await expect(page.locator('[data-anatomy-layer="verification_status"]')).toHaveCount(0);
     await expect(page.getByText("Resolve the conflicting selections")).toHaveCount(0);
   }
 
@@ -136,7 +139,7 @@ test("manual builder provides every common surgery preset and its required view"
   await expect(
     page.getByRole("button", { name: /Intraoperative change · Procedure changed/i }).first(),
   ).toBeVisible();
-  expect(await page.locator(".medical-panel-hotspot").count()).toBeGreaterThanOrEqual(4);
+  expect(await page.locator(".medical-panel-hotspot").count()).toBeGreaterThanOrEqual(1);
   expect(pageErrors).toEqual([]);
 });
 

@@ -7,18 +7,20 @@ test("clinic can build, approve, and print an upcoming procedure guide", async (
   await page.goto("/");
   await page.getByRole("button", { name: "Upcoming procedure" }).click();
 
-  await expect(page.getByText("No patient note is needed")).toBeVisible();
+  await expect(
+    page.getByText("Structured selections only. Do not enter patient information."),
+  ).toBeVisible();
   await expect(page.getByLabel("Operative note")).toHaveCount(0);
   await page.getByLabel("Common planned procedure").selectOption("tympanoplasty");
 
   await expect(
     page.getByRole("region", {
-      name: /Anatomy being discussed: Ear and temporal-bone cutaway/i,
+      name: /Anatomy: Ear and temporal-bone cutaway/i,
     }),
   ).toBeVisible();
   await expect(
     page.getByRole("region", {
-      name: /Planned procedure: Ear and temporal-bone cutaway/i,
+      name: /Plan: Ear and temporal-bone cutaway/i,
     }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: /Your planned Tympanoplasty/i })).toBeVisible();
@@ -99,13 +101,34 @@ for (const viewport of [
   });
 }
 
-test("clinic reset clears the loaded procedure and preset command", async ({ page }) => {
+test("clinic preset stays selected until reset", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Upcoming procedure" }).click();
   const preset = page.getByLabel("Common planned procedure");
   await preset.selectOption("tympanoplasty");
-  await expect(preset).toHaveValue("");
+  await expect(preset).toHaveValue("tympanoplasty");
   await page.getByRole("button", { name: "Reset" }).click();
   await expect(preset).toHaveValue("");
   await expect(page.getByRole("heading", { name: "Your planned ear procedure" })).toBeVisible();
+});
+
+test("case input tabs support keyboard navigation", async ({ page }) => {
+  await page.goto("/");
+  const exampleTab = page.getByRole("tab", { name: "Example" });
+  const noteTab = page.getByRole("tab", { name: "Paste note" });
+  const manualTab = page.getByRole("tab", { name: "Build manually" });
+
+  await expect(exampleTab).toHaveAttribute("tabindex", "0");
+  await exampleTab.focus();
+  await exampleTab.press("ArrowRight");
+  await expect(noteTab).toBeFocused();
+  await expect(noteTab).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tabpanel")).toHaveAttribute(
+    "aria-labelledby",
+    "case-input-tab-note",
+  );
+
+  await noteTab.press("End");
+  await expect(manualTab).toBeFocused();
+  await expect(manualTab).toHaveAttribute("aria-selected", "true");
 });
