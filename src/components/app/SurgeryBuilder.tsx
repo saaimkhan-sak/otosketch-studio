@@ -802,7 +802,14 @@ export function SurgeryBuilder({
   const selectedProcedures = new Set(
     plan.procedureFamilies === "not_documented" ? [] : plan.procedureFamilies,
   );
+  const selectedPreset =
+    plan.procedureFamilies !== "not_documented" && plan.procedureFamilies.length === 1
+      ? plan.procedureFamilies[0]
+      : "";
   const normalized = normalizeSurgeryPlan(plan);
+  const visibleValidationIssues = normalized.issues.filter(
+    (issue) => issue.code !== "plan_not_clinician_approved",
+  );
   const visibleRoleSections = roleSections
     .filter(
       (section) =>
@@ -915,13 +922,8 @@ export function SurgeryBuilder({
     <section className="surgery-builder-root space-y-6" aria-labelledby="surgery-builder-heading">
       <header className="surgery-builder-header">
         <h2 id="surgery-builder-heading" className="text-lg font-semibold text-slate-950">
-          {mode === "preoperative_education" ? "Build the procedure discussion" : "Customize surgery"}
+          {mode === "preoperative_education" ? "Procedure" : "Surgery details"}
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
-          {mode === "preoperative_education"
-            ? "Choose only the plan the surgeon intends to discuss. Unselected details stay not documented."
-            : "Add only documented details. Missing details remain not documented."}
-        </p>
       </header>
 
       <div className="surgery-builder-preset rounded-md border border-slate-200 bg-slate-50 p-4">
@@ -931,24 +933,19 @@ export function SurgeryBuilder({
         <Select
           id="surgery-plan-preset"
           className="mt-2"
-          value=""
+          value={selectedPreset}
           onChange={(event) => {
             if (!event.target.value) return;
             onChange(createPresetPlan(event.target.value as SurgeryProcedureFamily, mode));
           }}
         >
-          <option value="">Load a common surgery example</option>
+          <option value="">Choose a procedure</option>
           {procedureCatalog.map((entry) => (
             <option key={entry.id} value={entry.id}>
               {entry.label}
             </option>
           ))}
         </Select>
-        <p className="mt-2 text-xs leading-5 text-slate-600">
-          {mode === "preoperative_education"
-            ? "Starts a generic clinic discussion plan. Customize it before review."
-            : "Replaces the current plan with synthetic demonstration details."}
-        </p>
       </div>
 
       <div className="surgery-builder-basics grid gap-4 sm:grid-cols-2">
@@ -971,7 +968,7 @@ export function SurgeryBuilder({
       <details className="surgery-builder-procedures rounded-md border border-slate-200 bg-white">
         <summary className="surgery-builder-procedure-summary">
           <span>
-            <strong>Combine procedures</strong>
+            <strong>Procedures</strong>
             <span className="text-xs text-slate-600">{selectedProcedures.size} selected</span>
           </span>
         </summary>
@@ -1081,20 +1078,17 @@ export function SurgeryBuilder({
         })}
       </div>
 
-      <section
-        className="surgery-builder-validation rounded-md border border-slate-200 bg-white p-4"
-        aria-labelledby="surgery-builder-validation-heading"
-        aria-live="polite"
-      >
-        <h3 id="surgery-builder-validation-heading" className="font-semibold text-slate-950">
-          Plan validation
-        </h3>
-        <p className="mt-1 text-sm text-slate-600">
-          {normalized.canRender ? "Compatible layers can render." : "Rendering is blocked."}
-        </p>
-        {normalized.issues.length > 0 ? (
+      {visibleValidationIssues.length > 0 ? (
+        <section
+          className="surgery-builder-validation rounded-md border border-slate-200 bg-white p-4"
+          aria-labelledby="surgery-builder-validation-heading"
+          aria-live="polite"
+        >
+          <h3 id="surgery-builder-validation-heading" className="font-semibold text-slate-950">
+            {normalized.canRender ? "Check plan" : "Resolve conflicts"}
+          </h3>
           <ul className="mt-3 space-y-2">
-            {normalized.issues.map((issue, index) => (
+            {visibleValidationIssues.map((issue, index) => (
               <li key={`${issue.code}-${issue.layerIds.join("-")}-${index}`} className="text-sm text-slate-700">
                 <span
                   className={
@@ -1109,10 +1103,8 @@ export function SurgeryBuilder({
               </li>
             ))}
           </ul>
-        ) : (
-          <p className="mt-3 text-sm font-medium text-emerald-800">No validation issues.</p>
-        )}
-      </section>
+        </section>
+      ) : null}
     </section>
   );
 }

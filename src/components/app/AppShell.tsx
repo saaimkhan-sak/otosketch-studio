@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { AlertTriangle, BadgeCheck, Layers3, RotateCcw, ShieldCheck, Undo2 } from "lucide-react";
+import { AlertTriangle, BadgeCheck, RotateCcw, Undo2 } from "lucide-react";
 import type { EducationMode } from "@/domain/educationMode";
 import { detectPossiblePhi } from "@/domain/safety";
 import { clearReview, markReviewed, updateCaseField } from "@/domain/editCase";
@@ -488,7 +488,6 @@ export function AppShell() {
             <span />
           </div>
           <div>
-            <p className="product-kicker">Surgeon-reviewed visual education</p>
             <h1>OtoSketch Studio</h1>
           </div>
         </div>
@@ -507,18 +506,13 @@ export function AppShell() {
         aria-labelledby="education-mode-heading"
       >
         <div>
-          <p className="eyebrow">Start with the audience</p>
           <h2 id="education-mode-heading">
             {isTeaching
-              ? "Teach the operation as a structured sequence"
+              ? "Teaching walkthrough"
               : educationMode === "preoperative_education"
-                ? "Explain an upcoming procedure"
-                : "Summarize a completed procedure"}
+                ? "Upcoming procedure"
+                : "Completed procedure"}
           </h2>
-          <p className="education-mode-summary">
-            Build one clinically grounded visual for the consult room, postoperative discussion, or
-            resident teaching session.
-          </p>
         </div>
         <div className="purpose-tabs" role="group" aria-label="Patient education purpose">
           <button
@@ -528,8 +522,7 @@ export function AppShell() {
             aria-pressed={sessionPurpose === "preoperative_education"}
             onClick={() => handleSessionPurposeChange("preoperative_education")}
           >
-            <strong>Upcoming procedure</strong>
-            <span>Plan a clinic conversation</span>
+            Upcoming
           </button>
           <button
             type="button"
@@ -538,8 +531,7 @@ export function AppShell() {
             aria-pressed={sessionPurpose === "postoperative_summary"}
             onClick={() => handleSessionPurposeChange("postoperative_summary")}
           >
-            <strong>Completed procedure</strong>
-            <span>Explain findings and repair</span>
+            Completed
           </button>
           <button
             type="button"
@@ -548,8 +540,7 @@ export function AppShell() {
             aria-pressed={sessionPurpose === "teaching_walkthrough"}
             onClick={() => handleSessionPurposeChange("teaching_walkthrough")}
           >
-            <strong>Teaching walkthrough</strong>
-            <span>Guide a trainee step by step</span>
+            Teaching
           </button>
         </div>
       </section>
@@ -583,20 +574,6 @@ export function AppShell() {
                   : "Review & export"}
             </a>
           </nav>
-          <div className="engine-card">
-            <Layers3 className="h-4 w-4" aria-hidden="true" />
-            <div>
-              <strong>Open medical art engine</strong>
-              <p>Servier anatomy under CC BY 4.0 with finite, deterministic overlays.</p>
-            </div>
-          </div>
-          <div className="privacy-card">
-            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-            <div>
-              <strong>Synthetic demo</strong>
-              <p>No patient information. No note text is logged.</p>
-            </div>
-          </div>
         </aside>
         <div className="stage-stack">
           <section
@@ -616,13 +593,6 @@ export function AppShell() {
                       ? "Plan procedure"
                       : "Create case"}
                 </h2>
-                <p>
-                  {isTeaching
-                    ? "Start from a common operation, then select the anatomy and steps you want to teach."
-                    : educationMode === "preoperative_education"
-                      ? "Choose a common procedure, then customize only the surgeon's planned steps."
-                      : "Start from an example, a synthetic note, or structured controls."}
-                </p>
               </div>
             </header>
 
@@ -676,9 +646,6 @@ export function AppShell() {
                   {inputMode === "manual" ? (
                     <div className="manual-mode-intro">
                       <strong>Structured builder</strong>
-                      <span>
-                        Choose only documented details. Unselected details stay not documented.
-                      </span>
                     </div>
                   ) : null}
                   {phiDetection.containsPossiblePhi ? (
@@ -720,23 +687,11 @@ export function AppShell() {
                 </div>
               ) : (
                 <aside className="clinic-plan-intro" aria-label="Clinic planning guardrails">
-                  <strong>
-                    {isTeaching ? "Faculty-led teaching view" : "No patient note is needed"}
-                  </strong>
                   <p>
                     {isTeaching
-                      ? "Build a reusable walkthrough from structured selections. Keep case-specific details out of this demo."
-                      : "Build from structured selections only. Do not enter names, dates of birth, record numbers, or free-text patient details."}
+                      ? "Use generic anatomy only."
+                      : "Structured selections only. Do not enter patient information."}
                   </p>
-                  <ul>
-                    <li>Generic educational anatomy</li>
-                    <li>
-                      {isTeaching
-                        ? "Stepwise cognitive walkthrough"
-                        : "Plan may change during surgery"}
-                    </li>
-                    <li>Clinician approval required before printing</li>
-                  </ul>
                 </aside>
               )}
               <div className="structured-builder-column">
@@ -823,13 +778,6 @@ export function AppShell() {
                       ? "Preview discussion"
                       : "Preview & verify"}
                 </h2>
-                <p>
-                  {isTeaching
-                    ? "Orient to the anatomy, then move through each selected operative step."
-                    : educationMode === "preoperative_education"
-                      ? "Use the diagram and short guide to explain what is planned and what may change."
-                      : "Select a visual label to inspect its source."}
-                </p>
               </div>
             </header>
             {operativeCase ? (
@@ -887,13 +835,6 @@ export function AppShell() {
                         ? "Approve & print"
                         : "Review & export"}
                   </h2>
-                  <p>
-                    {isTeaching
-                      ? "A named clinician must confirm the anatomy, sequence, and limitations."
-                      : educationMode === "preoperative_education"
-                        ? "A named clinician must confirm the plan and patient-facing language."
-                        : "Confirm the draft before preparing patient education."}
-                  </p>
                 </div>
               </header>
               {exportBlockers.length > 0 ? (

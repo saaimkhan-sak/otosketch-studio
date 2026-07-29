@@ -9,6 +9,7 @@ import { ExportPanel } from "@/components/app/ExportPanel";
 import { NoteInput } from "@/components/app/NoteInput";
 import { ReviewIssuesPanel } from "@/components/app/ReviewIssuesPanel";
 import { SafetyBanner } from "@/components/app/SafetyBanner";
+import { createPresetPlan } from "@/components/app/SurgeryBuilder";
 import { DiagramPanel } from "@/components/diagram/DiagramPanel";
 import { buildFeatureMap } from "@/domain/diagramMapping";
 import { markReviewed, updateCaseField } from "@/domain/editCase";
@@ -255,18 +256,18 @@ describe("core UI components", () => {
 
     expect(screen.getByRole("region", { name: /diagram preview/i })).toBeInTheDocument();
     expect(
-      screen.getByRole("region", { name: /Documented findings: Middle and inner ear/i }),
+      screen.getByRole("region", { name: /Findings: Middle and inner ear/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("region", { name: /Completed procedure: Middle and inner ear/i }),
+      screen.getByRole("region", { name: /Procedure: Middle and inner ear/i }),
     ).toBeInTheDocument();
     expect(container.querySelectorAll(".medical-illustration-svg")).toHaveLength(2);
 
     const sources = screen.getByRole("group", { name: /sources and limitations/i });
     expect(sources).not.toHaveAttribute("open");
-    expect(sources).toHaveTextContent(/professional medical art/i);
     expect(sources).toHaveTextContent(/Servier Medical Art/i);
-    expect(sources).toHaveTextContent(/No traced surgical-atlas artwork/i);
+    expect(sources).toHaveTextContent(/Calibrated structured overlays/i);
+    expect(sources).toHaveTextContent(/Clinician review required/i);
   });
 
   it("opens a full-screen medical illustration review dialog", async () => {
@@ -283,7 +284,6 @@ describe("core UI components", () => {
     const dialog = screen.getByRole("dialog", { name: /Full-screen diagram preview/i });
     expect(dialog).toHaveTextContent(/Tympanoplasty \/ myringoplasty/i);
     expect(dialog).toHaveTextContent(/Ossiculoplasty \/ middle-ear exploration/i);
-    expect(dialog).toHaveTextContent(/Professional open medical art/i);
     expect(dialog.querySelectorAll(".medical-illustration-svg")).toHaveLength(2);
 
     await user.click(screen.getByRole("button", { name: /Close/i }));
@@ -322,6 +322,23 @@ describe("core UI components", () => {
     expect(container.querySelector('.medical-panel-hotspot[aria-pressed="true"]')).toBeInTheDocument();
   });
 
+  it("renders incus erosion as an anatomy-removing lesion without fallback status marks", () => {
+    const { container } = render(
+      <DiagramPanel
+        surgeryPlan={createPresetPlan("ossiculoplasty")}
+        selectedFeatureId={null}
+        onFeatureSelect={() => undefined}
+      />,
+    );
+
+    expect(container.querySelector("image[mask]")).toBeInTheDocument();
+    expect(container.querySelector(".medical-lesion")).toBeInTheDocument();
+    expect(container.querySelector('[data-anatomy-layer="ossicle_state"]')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-anatomy-layer="verification_status"]'),
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps the composable diagram available while flagging uncertain placement", () => {
     const mismatchedBoneCement = updateCaseField(
       getSyntheticCase("porp-reconstruction").expected,
@@ -338,10 +355,10 @@ describe("core UI components", () => {
     );
 
     expect(screen.getByText(/The reconstruction endpoints are not fully documented/i)).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: /Completed procedure: Middle and inner ear/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /Procedure: Middle and inner ear/i })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.getByRole("group", { name: /sources and limitations/i })).toHaveTextContent(
-      /professional medical art/i,
+      /Calibrated structured overlays/i,
     );
   });
 

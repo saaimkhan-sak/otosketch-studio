@@ -17,7 +17,7 @@ for (const viewport of viewports) {
     await page.getByLabel("Example case").selectOption("porp-reconstruction");
     await expect(page.getByLabel("Operative note")).toHaveValue(/partial ossicular replacement prosthesis/i);
     await page.getByRole("button", { name: "Build diagram" }).click();
-    await expect(page.getByRole("heading", { name: "Diagram preview" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Diagram" })).toBeVisible();
     await page.locator("details").evaluateAll((items) =>
       items.forEach((item) => { (item as HTMLDetailsElement).open = true; }),
     );

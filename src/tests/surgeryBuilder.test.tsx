@@ -39,7 +39,7 @@ describe("SurgeryBuilder", () => {
       <BuilderHarness initialPlan={createEmptySurgeryPlan()} onPlanChange={onPlanChange} />,
     );
 
-    const procedureSummary = screen.getByText("Combine procedures").closest("summary");
+    const procedureSummary = screen.getByText("Procedures").closest("summary");
     expect(procedureSummary).not.toBeNull();
     await user.click(procedureSummary!);
     expect(screen.getByRole("region", { name: "Hearing implants" })).toBeInTheDocument();
@@ -84,6 +84,17 @@ describe("SurgeryBuilder", () => {
         procedure.id,
       ).toEqual([]);
     }
+  });
+
+  it("keeps the chosen common procedure visible in the controlled select", async () => {
+    const user = userEvent.setup();
+    render(
+      <BuilderHarness initialPlan={createEmptySurgeryPlan()} onPlanChange={vi.fn()} />,
+    );
+
+    const preset = screen.getByLabelText("Synthetic surgery example");
+    await user.selectOptions(preset, "ossiculoplasty");
+    expect(preset).toHaveValue("ossiculoplasty");
   });
 
   it("builds the tympanoplasty preset with an organic perforation and a larger contour-matched graft", async () => {
@@ -191,7 +202,7 @@ describe("SurgeryBuilder", () => {
     }
   });
 
-  it("labels blocking and clinician-review issues exactly", () => {
+  it("labels blocking issues without repeating the expected approval reminder", () => {
     const intact = {
       ...createDefaultLayer("tm_state", "right"),
       documentation: "documented" as const,
@@ -214,10 +225,10 @@ describe("SurgeryBuilder", () => {
     render(<SurgeryBuilder plan={plan} onChange={vi.fn()} />);
 
     expect(screen.getByText("Blocking")).toBeInTheDocument();
-    expect(screen.getByText("Needs review")).toBeInTheDocument();
+    expect(screen.queryByText("Needs review")).not.toBeInTheDocument();
     expect(
       screen.getByText(/cannot be both intact and perforated in the same finding state/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/requires clinician review before patient-facing export/i)).toBeInTheDocument();
+    expect(screen.queryByText(/requires clinician review before patient-facing export/i)).not.toBeInTheDocument();
   });
 });

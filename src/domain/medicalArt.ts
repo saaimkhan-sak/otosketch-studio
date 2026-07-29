@@ -69,7 +69,8 @@ export const medicalArtAssets: Record<MedicalArtAssetId, MedicalArtAsset> = {
   },
 };
 
-const nihFocusedFamilies = new Set(["stapes_surgery", "cochlear_implant"]);
+const nihFocusedFamilies = new Set(["cochlear_implant"]);
+const servierOssicularFamilies = new Set(["ossiculoplasty", "stapes_surgery"]);
 
 export function selectMedicalArtAsset(plan: SurgeryPlan): MedicalArtAsset {
   if (
@@ -78,45 +79,94 @@ export function selectMedicalArtAsset(plan: SurgeryPlan): MedicalArtAsset {
   ) {
     return medicalArtAssets["nih-inner-ear"];
   }
+  const hasDocumentedOssicularLayer = plan.layers.some(
+    (layer) =>
+      layer.documentation === "documented" &&
+      ["ossicle_state", "ossicular_reconstruction", "stapes_procedure"].includes(layer.kind),
+  );
   if (
-    plan.procedureFamilies !== "not_documented" &&
-    plan.procedureFamilies.includes("ossiculoplasty")
+    hasDocumentedOssicularLayer ||
+    (plan.procedureFamilies !== "not_documented" &&
+      plan.procedureFamilies.some((family) => servierOssicularFamilies.has(family)))
   ) {
     return medicalArtAssets["servier-inner-ear"];
   }
   return medicalArtAssets["servier-ear-cutaway"];
 }
 
-type MedicalArtAnchor = { x: number; y: number };
+export type MedicalArtAnatomyTarget =
+  | "tympanic_membrane"
+  | "tympanic_membrane_medial"
+  | "tm_anteroinferior"
+  | "malleus"
+  | "incus_body"
+  | "incus_long_process"
+  | "incudostapedial_joint"
+  | "stapes_superstructure"
+  | "stapes_footplate"
+  | "middle_ear"
+  | "round_window"
+  | "cochlea"
+  | "mastoid"
+  | "epitympanum"
+  | "postauricular"
+  | "ear_canal"
+  | "eustachian_tube";
 
-const anchors: Record<MedicalArtAssetId, Record<string, MedicalArtAnchor>> = {
+export type MedicalArtAnchor = { x: number; y: number };
+
+/**
+ * Source-specific calibration points measured against the unmodified licensed
+ * artwork. Coordinates are percentages of each source image, not percentages
+ * of a generic canvas. Keeping the anatomy target names explicit prevents a
+ * missing structure from silently falling back to an unrelated location.
+ */
+export const medicalArtAnchors: Record<
+  MedicalArtAssetId,
+  Partial<Record<MedicalArtAnatomyTarget, MedicalArtAnchor>>
+> = {
   "nih-inner-ear": {
     tympanic_membrane: { x: 30.5, y: 65.5 },
-    malleus: { x: 30.4, y: 39.5 },
-    incus: { x: 37.2, y: 43.1 },
-    stapes: { x: 45.1, y: 45.2 },
+    tympanic_membrane_medial: { x: 34.1, y: 56.2 },
+    tm_anteroinferior: { x: 32.6, y: 69.1 },
+    malleus: { x: 32.1, y: 45.6 },
+    incus_body: { x: 38.4, y: 47.3 },
+    incus_long_process: { x: 41.2, y: 50.8 },
+    incudostapedial_joint: { x: 44.2, y: 50.1 },
+    stapes_superstructure: { x: 46.1, y: 48.5 },
+    stapes_footplate: { x: 48.1, y: 49.5 },
     middle_ear: { x: 38.5, y: 48.1 },
     cochlea: { x: 70.1, y: 49.7 },
+    round_window: { x: 61.8, y: 57.4 },
     mastoid: { x: 21.4, y: 29.2 },
     postauricular: { x: 14.8, y: 24.6 },
     ear_canal: { x: 15.8, y: 67.4 },
     eustachian_tube: { x: 58.4, y: 82.5 },
   },
   "servier-ear-cutaway": {
-    tympanic_membrane: { x: 63.2, y: 52.7 },
+    tympanic_membrane: { x: 63.0, y: 54.2 },
+    tympanic_membrane_medial: { x: 64.8, y: 52.2 },
+    tm_anteroinferior: { x: 64.0, y: 57.5 },
     middle_ear: { x: 69.5, y: 48.5 },
-    mastoid: { x: 75.2, y: 35.2 },
+    mastoid: { x: 77.4, y: 35.5 },
+    epitympanum: { x: 71.7, y: 39.5 },
     cochlea: { x: 81.1, y: 45.3 },
-    postauricular: { x: 28.3, y: 23.7 },
-    ear_canal: { x: 44.5, y: 50.4 },
-    eustachian_tube: { x: 81.7, y: 73.2 },
+    postauricular: { x: 28.9, y: 20.4 },
+    ear_canal: { x: 44.8, y: 52.0 },
+    eustachian_tube: { x: 84.0, y: 74.0 },
   },
   "servier-inner-ear": {
     tympanic_membrane: { x: 8.8, y: 72.2 },
-    malleus: { x: 15.1, y: 43.1 },
-    incus: { x: 31.5, y: 42.4 },
-    stapes: { x: 39.4, y: 51.1 },
-    middle_ear: { x: 31.5, y: 47.2 },
+    tympanic_membrane_medial: { x: 20.4, y: 58.3 },
+    tm_anteroinferior: { x: 10.8, y: 77.4 },
+    malleus: { x: 18.7, y: 45.5 },
+    incus_body: { x: 30.2, y: 52.1 },
+    incus_long_process: { x: 34.8, y: 56.2 },
+    incudostapedial_joint: { x: 37.8, y: 55.4 },
+    stapes_superstructure: { x: 40.6, y: 51.2 },
+    stapes_footplate: { x: 44.2, y: 50.4 },
+    middle_ear: { x: 33.0, y: 53.5 },
+    round_window: { x: 49.0, y: 57.0 },
     cochlea: { x: 60.4, y: 60.6 },
     mastoid: { x: 19.2, y: 37.1 },
     postauricular: { x: 9.2, y: 31.2 },
@@ -125,37 +175,56 @@ const anchors: Record<MedicalArtAssetId, Record<string, MedicalArtAnchor>> = {
   },
 };
 
+export function getMedicalArtAnchorForTarget(
+  assetId: MedicalArtAssetId,
+  target: MedicalArtAnatomyTarget,
+): MedicalArtAnchor | null {
+  return medicalArtAnchors[assetId][target] ?? null;
+}
+
 export function getMedicalArtAnchor(
   assetId: MedicalArtAssetId,
   layer: SurgeryLayer,
 ): MedicalArtAnchor | null {
-  const assetAnchors = anchors[assetId];
+  const anchor = (target: MedicalArtAnatomyTarget) =>
+    getMedicalArtAnchorForTarget(assetId, target);
+
   switch (layer.kind) {
     case "tm_state":
     case "tm_perforation":
     case "tm_graft":
+      return anchor("tympanic_membrane");
     case "tympanostomy":
-      return assetAnchors.tympanic_membrane;
+      return anchor("tm_anteroinferior") ?? anchor("tympanic_membrane");
     case "ossicle_state":
-      if (layer.structure === "malleus") return assetAnchors.malleus ?? assetAnchors.middle_ear;
-      if (layer.structure === "incus" || layer.structure === "incudostapedial_joint") {
-        return assetAnchors.incus ?? assetAnchors.middle_ear;
+      if (layer.structure === "malleus") return anchor("malleus");
+      if (layer.structure === "incus") {
+        if (layer.state === "long_process_eroded") return anchor("incus_long_process");
+        return anchor("incus_body");
       }
-      return assetAnchors.stapes ?? assetAnchors.middle_ear;
+      if (layer.structure === "incudostapedial_joint") {
+        return anchor("incudostapedial_joint");
+      }
+      if (layer.structure === "stapes_footplate") return anchor("stapes_footplate");
+      return anchor("stapes_superstructure");
     case "ossicular_reconstruction":
+      return anchor("incudostapedial_joint");
     case "stapes_procedure":
-      return assetAnchors.stapes ?? assetAnchors.middle_ear;
+      return anchor("stapes_footplate");
     case "mastoid_technique":
+      return anchor("mastoid");
     case "cholesteatoma_extent":
-      return assetAnchors.mastoid;
+      return layer.regions.includes("epitympanum")
+        ? anchor("epitympanum")
+        : anchor("mastoid");
     case "cochlear_insertion":
-      return assetAnchors.cochlea;
+      return anchor("round_window");
     case "bone_conduction_implant":
-      return assetAnchors.postauricular;
+      return anchor("postauricular");
     case "canalplasty":
-      return assetAnchors.ear_canal;
+      return anchor("ear_canal");
     case "eustachian_tube_dilation":
-      return assetAnchors.eustachian_tube;
+      return anchor("eustachian_tube");
     case "intraoperative_deviation":
     case "verification_status":
       return null;

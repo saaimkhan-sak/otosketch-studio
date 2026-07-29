@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 interface DiagramExpectation {
   caseId: string;
+  phaseCount: 1 | 2;
 }
 
 interface SurgeryPresetExpectation {
@@ -16,15 +17,16 @@ interface SurgeryPresetExpectation {
     | "canalplasty"
     | "eustachian_tube_dilation";
   assetId: "nih-inner-ear" | "servier-ear-cutaway" | "servier-inner-ear";
+  phaseCount: 1 | 2;
 }
 
 const canonicalCases: DiagramExpectation[] = [
-  { caseId: "normal-ossicular-chain" },
-  { caseId: "incus-long-process-erosion" },
-  { caseId: "is-joint-discontinuity" },
-  { caseId: "hero-otomimix-is-joint" },
-  { caseId: "porp-reconstruction" },
-  { caseId: "torp-reconstruction" },
+  { caseId: "normal-ossicular-chain", phaseCount: 2 },
+  { caseId: "incus-long-process-erosion", phaseCount: 2 },
+  { caseId: "is-joint-discontinuity", phaseCount: 1 },
+  { caseId: "hero-otomimix-is-joint", phaseCount: 2 },
+  { caseId: "porp-reconstruction", phaseCount: 2 },
+  { caseId: "torp-reconstruction", phaseCount: 2 },
 ];
 
 const fixtureNotePattern: Record<string, RegExp> = {
@@ -40,38 +42,47 @@ const commonSurgeryPresets: SurgeryPresetExpectation[] = [
   {
     presetId: "myringotomy_tympanostomy",
     assetId: "servier-ear-cutaway",
+    phaseCount: 1,
   },
   {
     presetId: "tympanoplasty",
     assetId: "servier-ear-cutaway",
+    phaseCount: 2,
   },
   {
     presetId: "ossiculoplasty",
     assetId: "servier-inner-ear",
+    phaseCount: 2,
   },
   {
     presetId: "tympanomastoidectomy",
     assetId: "servier-ear-cutaway",
+    phaseCount: 2,
   },
   {
     presetId: "stapes_surgery",
-    assetId: "nih-inner-ear",
+    assetId: "servier-inner-ear",
+    phaseCount: 2,
   },
   {
     presetId: "cochlear_implant",
     assetId: "nih-inner-ear",
+    phaseCount: 1,
   },
   {
     presetId: "bone_conduction_implant",
     assetId: "servier-ear-cutaway",
+    phaseCount: 1,
   },
   {
     presetId: "canalplasty",
     assetId: "servier-ear-cutaway",
+    phaseCount: 1,
   },
   {
     presetId: "eustachian_tube_dilation",
     assetId: "servier-ear-cutaway",
+    phaseCount: 1,
   },
 ];
 
@@ -88,7 +99,7 @@ async function generateCase(page: Page, caseId: string) {
   await page.getByLabel("Example case").selectOption(caseId);
   await expect(page.getByLabel("Operative note")).toHaveValue(fixtureNotePattern[caseId]);
   await page.getByRole("button", { name: "Build diagram" }).click();
-  await expect(page.getByRole("heading", { name: "Diagram preview" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Diagram" })).toBeVisible();
 }
 
 async function generateSurgeryPreset(page: Page, presetId: SurgeryPresetExpectation["presetId"]) {
@@ -98,14 +109,14 @@ async function generateSurgeryPreset(page: Page, presetId: SurgeryPresetExpectat
   await page.waitForLoadState("networkidle");
   await page.getByRole("tab", { name: "Build manually" }).click();
   await page.getByLabel("Synthetic surgery example").selectOption(presetId);
-  await expect(page.getByRole("heading", { name: "Diagram preview" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Diagram" })).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
 }
 
 function diagramPreview(page: Page) {
   return page
     .locator("section.no-print", {
-      has: page.getByRole("heading", { name: "Diagram preview" }),
+      has: page.getByRole("heading", { name: "Diagram" }),
     })
     .first();
 }
@@ -119,14 +130,20 @@ for (const viewport of viewports) {
         await generateCase(page, diagramCase.caseId);
         const preview = diagramPreview(page);
 
-        await expect(preview.locator(".medical-illustration-svg")).toHaveCount(2);
+        await expect(preview.locator(".medical-illustration-svg")).toHaveCount(
+          diagramCase.phaseCount,
+        );
         await expect(preview.locator('[data-diagram-source="open-medical-art"]')).toBeVisible();
-        await expect(preview.locator("image[data-medical-art-source]")).toHaveCount(2);
+        await expect(preview.locator("image[data-medical-art-source]")).toHaveCount(
+          diagramCase.phaseCount,
+        );
         await expect(
           preview.locator('image[data-medical-art-source*="otosurgeryatlas"]'),
         ).toHaveCount(0);
         await expect(preview.getByText(/Resolve the conflicting selections/i)).toHaveCount(0);
-        await expect(preview.locator(".medical-panel-legend-bg")).toHaveCount(2);
+        await expect(preview.locator(".medical-panel-legend-bg")).toHaveCount(
+          diagramCase.phaseCount,
+        );
 
         await preview.scrollIntoViewIfNeeded();
         await expect(preview).toHaveScreenshot(`${diagramCase.caseId}-${viewport.name}.png`, {
@@ -140,13 +157,14 @@ for (const viewport of viewports) {
       test(`common surgery preset · ${surgeryPreset.presetId}`, async ({ page }) => {
         await generateSurgeryPreset(page, surgeryPreset.presetId);
         const preview = diagramPreview(page);
-        const procedureSvg = preview.locator(".medical-illustration-svg").nth(1);
+        const diagrams = preview.locator(".medical-illustration-svg");
 
-        await expect(preview.locator(".medical-illustration-svg")).toHaveCount(2);
+        await expect(diagrams).toHaveCount(surgeryPreset.phaseCount);
         await expect(
           preview.locator(`[data-medical-illustration="${surgeryPreset.assetId}"]`),
-        ).toHaveCount(2);
-        await expect(procedureSvg.locator(".medical-panel-hotspot").first()).toBeVisible();
+        ).toHaveCount(surgeryPreset.phaseCount);
+        await expect(preview.locator('[data-anatomy-layer="verification_status"]')).toHaveCount(0);
+        await expect(preview.locator(".medical-panel-hotspot").first()).toBeVisible();
         await expect(preview.getByText(/Resolve the conflicting selections/i)).toHaveCount(0);
 
         const phases = preview.locator(".medical-illustration-phases").first();

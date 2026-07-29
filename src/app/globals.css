@@ -4545,11 +4545,11 @@ body {
 }
 
 .product-header {
-  min-height: 82px;
+  min-height: 66px;
   border: 0;
   border-radius: 20px 20px 0 0;
   background: var(--studio-navy);
-  padding: 20px clamp(18px, 2.5vw, 34px);
+  padding: 14px clamp(18px, 2.5vw, 34px);
 }
 
 .product-identity {
@@ -4580,7 +4580,7 @@ body {
 }
 
 .product-header h1 {
-  margin-top: 4px;
+  margin-top: 0;
   color: #fff;
   font-size: 1.32rem;
   letter-spacing: -0.02em;
@@ -4594,16 +4594,16 @@ body {
 
 .education-mode-switcher {
   display: grid;
-  grid-template-columns: minmax(18rem, 0.78fr) minmax(34rem, 1.22fr);
-  gap: clamp(24px, 4vw, 64px);
-  align-items: end;
-  margin: 0 0 26px;
+  grid-template-columns: minmax(12rem, 0.48fr) minmax(28rem, 1.52fr);
+  gap: clamp(18px, 3vw, 42px);
+  align-items: center;
+  margin: 0 0 20px;
   border: 0;
   border-radius: 0 0 20px 20px;
   background:
     radial-gradient(circle at 82% 18%, rgb(79 192 181 / 0.13), transparent 23rem),
     var(--studio-navy);
-  padding: 10px clamp(18px, 2.5vw, 34px) 30px;
+  padding: 4px clamp(18px, 2.5vw, 34px) 18px;
 }
 
 .education-mode-switcher > div:first-child {
@@ -4615,9 +4615,9 @@ body {
 }
 
 .education-mode-switcher h2 {
-  margin: 8px 0 0;
+  margin: 0;
   color: #fff;
-  font-size: clamp(1.5rem, 2.1vw, 2.35rem);
+  font-size: clamp(1.05rem, 1.5vw, 1.35rem);
   font-weight: 720;
   letter-spacing: -0.035em;
   line-height: 1.08;
@@ -4642,16 +4642,18 @@ body {
 }
 
 .education-mode-switcher .purpose-tabs button {
-  display: grid;
+  display: flex;
   min-width: 0;
-  min-height: 76px;
-  align-content: center;
-  gap: 5px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
   border: 1px solid transparent;
   border-radius: 10px;
-  padding: 11px 12px;
+  padding: 8px 12px;
   color: #c2d0d8;
-  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-align: center;
 }
 
 .education-mode-switcher .purpose-tabs button:hover {
@@ -4690,8 +4692,8 @@ body {
 
 .workspace-shell-grid {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 24px;
+  grid-template-columns: 184px minmax(0, 1fr);
+  gap: 20px;
   align-items: start;
 }
 
@@ -4708,7 +4710,7 @@ body {
   margin: 0;
   border-radius: 16px;
   background: var(--studio-navy);
-  padding: 18px 14px;
+  padding: 12px 10px;
   box-shadow: 0 16px 34px rgb(13 32 48 / 0.12);
 }
 
@@ -4722,7 +4724,7 @@ body {
 }
 
 .stage-nav a {
-  min-height: 48px;
+  min-height: 42px;
   border-radius: 10px;
   padding: 8px 9px;
   color: #c0d0d9;
@@ -4778,7 +4780,7 @@ body {
 
 .stage-stack {
   min-width: 0;
-  gap: 24px;
+  gap: 18px;
 }
 
 .stage-shell {
@@ -4803,7 +4805,7 @@ body {
 
 .diagram-workbench-header {
   border-bottom: 1px solid var(--studio-line);
-  padding-bottom: 16px;
+  padding-bottom: 10px;
 }
 
 .diagram-workbench-header h2 {

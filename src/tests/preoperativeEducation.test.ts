@@ -69,22 +69,22 @@ describe("professional medical-art selection", () => {
     expect(selection.localPath).toMatch(/^\/medical-art\//);
   });
 
-  it("uses the NIH Illustrator vector for cochlear and stapes work", () => {
-    for (const family of ["cochlear_implant", "stapes_surgery"] as const) {
+  it("uses the NIH Illustrator vector for cochlear work", () => {
+    const selection = selectMedicalArtAsset(
+      createPresetPlan("cochlear_implant", "preoperative_education"),
+    );
+    expect(selection.id).toBe("nih-inner-ear");
+    expect(selection.illustrationSoftware).toBe("Adobe Illustrator 28.6");
+    expect(selection.license).toBe("Public Domain");
+  });
+
+  it("uses Servier middle-ear art for ossiculoplasty and stapes work", () => {
+    for (const family of ["ossiculoplasty", "stapes_surgery"] as const) {
       const selection = selectMedicalArtAsset(
         createPresetPlan(family, "preoperative_education"),
       );
-      expect(selection.id).toBe("nih-inner-ear");
-      expect(selection.illustrationSoftware).toBe("Adobe Illustrator 28.6");
-      expect(selection.license).toBe("Public Domain");
+      expect(selection.id).toBe("servier-inner-ear");
+      expect(selection.license).toBe("CC BY 4.0");
     }
-  });
-
-  it("uses Servier middle-ear art for ossiculoplasty", () => {
-    const selection = selectMedicalArtAsset(
-      createPresetPlan("ossiculoplasty", "preoperative_education"),
-    );
-    expect(selection.id).toBe("servier-inner-ear");
-    expect(selection.license).toBe("CC BY 4.0");
   });
 });
